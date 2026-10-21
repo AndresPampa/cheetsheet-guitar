@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { CIRCLE_OF_FIFTHS, circleIndexOf, getCircleHighlights, getKey } from './index.ts'
+import {
+  CIRCLE_OF_FIFTHS,
+  circleIndexOf,
+  getCircleHighlights,
+  getCircleSpelling,
+  getKey,
+} from './index.ts'
 
 // ORACLE — written and verified by hand. Primary spelling = fewer accidentals;
 // the F#/Gb tie goes to the sharp side (F# / D#m) so relative keys share a signature.
@@ -85,6 +91,27 @@ describe('circleIndexOf', () => {
   })
 })
 
+describe('getCircleSpelling', () => {
+  it.each([
+    ['C', 'major', 0, undefined],
+    ['F#', 'major', 6, 'Gb'],
+    ['Gb', 'major', 6, 'F#'],
+    ['Db', 'major', 7, 'C#'],
+    ['C#', 'major', 7, 'Db'],
+    ['B', 'major', 5, 'Cb'],
+    ['Cb', 'major', 5, 'B'],
+    ['D#', 'minor', 6, 'Eb'],
+    ['Ab', 'minor', 5, 'G#'],
+    ['E', 'minor', 1, undefined],
+  ] as const)('places %s %s at %i with the other spelling %s', (tonic, mode, index, alternate) => {
+    expect(getCircleSpelling(tonic, mode)).toEqual({ index, alternate })
+  })
+
+  it('rejects a tonic that is not a key on the circle', () => {
+    expect(() => getCircleSpelling('Db', 'minor')).toThrow(RangeError)
+  })
+})
+
 describe('getCircleHighlights', () => {
   it('places the six major/minor diatonic chords of C major on the circle', () => {
     expect(getCircleHighlights(getKey('C', 'major'))).toEqual([
@@ -127,6 +154,17 @@ describe('getCircleHighlights', () => {
       [6, 'major'],
       [8, 'major'],
       [7, 'minor'],
+    ])
+  })
+
+  it('keeps the key spelling on ambiguous and flat-side sectors (C# major)', () => {
+    expect(getCircleHighlights(getKey('C#', 'major'))).toEqual([
+      { index: 7, ring: 'major', roman: 'I', symbol: 'C#' },
+      { index: 6, ring: 'minor', roman: 'ii', symbol: 'D#m' },
+      { index: 8, ring: 'minor', roman: 'iii', symbol: 'E#m' },
+      { index: 6, ring: 'major', roman: 'IV', symbol: 'F#' },
+      { index: 8, ring: 'major', roman: 'V', symbol: 'G#' },
+      { index: 7, ring: 'minor', roman: 'vi', symbol: 'A#m' },
     ])
   })
 

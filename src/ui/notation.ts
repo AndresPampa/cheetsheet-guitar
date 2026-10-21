@@ -13,14 +13,19 @@ export function displaySymbol(symbol: string): string {
   return letter + accidentals.replace(/#/g, '♯').replace(/b/g, '♭') + rest
 }
 
-/** For screen readers: `F#` → `F sostenido`, `Bb` → `B bemol`. */
+/** For screen readers: `F#` → `F sostenido`, `Bbb` → `B doble bemol`; `E#m` reads its root. */
 export function spokenNote(note: string): string {
   const match = SYMBOL.exec(note)
   if (match === null) return note
   const [, letter = '', accidentals = ''] = match
-  if (accidentals === '#') return `${letter} sostenido`
-  if (accidentals === 'b') return `${letter} bemol`
-  return letter
+  const spoken: Record<string, string> = {
+    '': letter,
+    '#': `${letter} sostenido`,
+    b: `${letter} bemol`,
+    '##': `${letter} doble sostenido`,
+    bb: `${letter} doble bemol`,
+  }
+  return spoken[accidentals] ?? note
 }
 
 export function modeName(mode: KeyMode): string {

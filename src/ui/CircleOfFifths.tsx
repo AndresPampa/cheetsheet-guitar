@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent } from 'react'
+import { useRef, useState, type FocusEvent, type KeyboardEvent } from 'react'
 import {
   CIRCLE_OF_FIFTHS,
   type CircleHighlight,
@@ -48,25 +48,61 @@ function labelPosition(radius: number, index: number): { x: number; y: number } 
   return { x: radius * Math.sin(rad), y: -radius * Math.cos(rad) }
 }
 
-function sectorSymbols(spelling: CircleSpelling, ring: KeyMode): string[] {
+/** A highlighted sector shows the chord as spelled in the key; otherwise every spelling. */
+function sectorSymbols(
+  spelling: CircleSpelling,
+  ring: KeyMode,
+  highlight: CircleHighlight | undefined,
+): string[] {
+  if (highlight !== undefined) return [displaySymbol(highlight.symbol)]
   const suffix = ring === 'minor' ? 'm' : ''
   const names =
     spelling.alternate === undefined ? [spelling.tonic] : [spelling.tonic, spelling.alternate]
   return names.map((name) => displaySymbol(name + suffix))
 }
 
-function sectorName(spelling: CircleSpelling, ring: KeyMode, roman: string | undefined): string {
+function sectorName(
+  spelling: CircleSpelling,
+  ring: KeyMode,
+  highlight: CircleHighlight | undefined,
+): string {
+  if (highlight !== undefined) {
+    return `${spokenNote(highlight.symbol)} ${modeName(ring)}, grado ${highlight.roman}`
+  }
   const names = [spelling.tonic, spelling.alternate].flatMap((n) =>
     n === undefined ? [] : [spokenNote(n)],
   )
-  const name = `${names.join(' o ')} ${modeName(ring)}`
-  return roman === undefined ? name : `${name}, grado ${roman}`
+  return `${names.join(' o ')} ${modeName(ring)}`
+}
+
+function isFocusVisible(element: Element): boolean {
+  try {
+    return element.matches(':focus-visible')
+  } catch {
+    return true // engines without :focus-visible: always show the ring
+  }
+}
+
+/** Drawn after every sector so neighbours never paint over it; dark halo + light line. */
+function Outline({ at, variant }: { at: CircleSelection; variant: 'selected' | 'focus' }) {
+  const d = sectorPath(at.index, at.ring)
+  return (
+    <g className={`outline outline--${variant}`} aria-hidden="true">
+      <path className="outline-halo" d={d} />
+      <path className="outline-line" d={d} />
+    </g>
+  )
 }
 
 const sectorKey = (index: number, ring: KeyMode) => `${ring}-${index}`
 
 export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifthsProps) {
   const sectors = useRef(new Map<string, SVGGElement>())
+  const [focused, setFocused] = useState<CircleSelection | null>(null)
+
+  const handleFocus = (event: FocusEvent<SVGGElement>, index: number, ring: KeyMode) => {
+    setFocused(isFocusVisible(event.currentTarget) ? { index, ring } : null)
+  }
 
   const focusSector = (index: number, ring: KeyMode) => {
     sectors.current.get(sectorKey((index + 12) % 12, ring))?.focus()
@@ -95,14 +131,14 @@ export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifth
   }
 
   return (
-    <svg className="circle" viewBox="-215 -215 430 430" aria-label="Círculo de quintas">
+    <svg className="circle" viewBox="-215 -215 430 430" role="radiogroup" aria-label="Tonalidades">
       {(['major', 'minor'] as const).flatMap((ring) =>
         CIRCLE_OF_FIFTHS.map((position) => {
           const { index } = position
           const spelling = position[ring]
           const highlight = highlights.find((h) => h.index === index && h.ring === ring)
           const isSelected = selected.index === index && selected.ring === ring
-          const symbols = sectorSymbols(spelling, ring)
+          const symbols = sectorSymbols(spelling, ring, highlight)
           const label = labelPosition(RINGS[ring].label, index)
           const roman = labelPosition(RINGS[ring].roman, index)
           const className = [
@@ -121,12 +157,14 @@ export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifth
                 else sectors.current.set(sectorKey(index, ring), node)
               }}
               className={className}
-              role="button"
+              role="radio"
               tabIndex={isSelected ? 0 : -1}
-              aria-pressed={isSelected}
-              aria-label={sectorName(spelling, ring, highlight?.roman)}
+              aria-checked={isSelected}
+              aria-label={sectorName(spelling, ring, highlight)}
               onClick={() => onSelect({ index, ring })}
               onKeyDown={(event) => handleKeyDown(event, index, ring)}
+              onFocus={(event) => handleFocus(event, index, ring)}
+              onBlur={() => setFocused(null)}
             >
               <path d={sectorPath(index, ring)} />
               <text
@@ -151,6 +189,8 @@ export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifth
           )
         }),
       )}
+      <Outline at={selected} variant="selected" />
+      {focused !== null && <Outline at={focused} variant="focus" />}
     </svg>
   )
 }

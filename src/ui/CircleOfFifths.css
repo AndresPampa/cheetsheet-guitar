@@ -46,15 +46,29 @@
   fill: var(--minor);
 }
 
-.sector.is-selected path {
-  stroke: var(--accent);
-  stroke-width: 4;
+/* Selection and focus outlines: a dark halo plus a light line, so at least one of the two
+   contrasts >= 3:1 with any sector fill in either theme (WCAG 1.4.11). */
+.outline {
+  pointer-events: none;
 }
 
-.sector:focus-visible path {
-  stroke: var(--focus);
-  stroke-width: 4;
-  stroke-dasharray: 6 3;
+.outline path {
+  fill: none;
+  stroke-linejoin: round;
+}
+
+.outline-halo {
+  stroke: var(--bg);
+  stroke-width: 8;
+}
+
+.outline-line {
+  stroke: var(--text);
+  stroke-width: 3;
+}
+
+.outline--focus .outline-line {
+  stroke-dasharray: 7 4;
 }
 
 .sector-label,
@@ -164,4 +178,10 @@
 .chord-symbol {
   font-size: 1.05rem;
   font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sector path {
+    transition: none;
+  }
 }

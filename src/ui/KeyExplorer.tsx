@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import {
   CIRCLE_OF_FIFTHS,
-  circleIndexOf,
   getCircleHighlights,
+  getCircleSpelling,
   getKey,
   type KeyMode,
 } from '../theory/index.ts'
@@ -20,9 +20,7 @@ const DEFAULT_SELECTION: Selection = { tonic: 'C', mode: 'major' }
 export function KeyExplorer() {
   const [selection, setSelection] = useState<Selection>(DEFAULT_SELECTION)
   const keyInfo = getKey(selection.tonic, selection.mode)
-  const index = circleIndexOf(selection.tonic, selection.mode)
-  const spelling = CIRCLE_OF_FIFTHS[index]![selection.mode]
-  const alternate = selection.tonic === spelling.tonic ? spelling.alternate : spelling.tonic
+  const { index, alternate } = getCircleSpelling(selection.tonic, selection.mode)
 
   const select = ({ index: target, ring }: CircleSelection) => {
     setSelection({ tonic: CIRCLE_OF_FIFTHS[target]![ring].tonic, mode: ring })

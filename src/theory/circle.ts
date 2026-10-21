@@ -37,12 +37,18 @@ const POSITIONS: Array<[major: string, minor: string, majorAlt?: string, minorAl
   ['F', 'D'],
 ]
 
-export const CIRCLE_OF_FIFTHS: readonly CirclePosition[] = POSITIONS.map(
-  ([major, minor, majorAlt, minorAlt], index) => ({
-    index,
-    major: majorAlt === undefined ? { tonic: major } : { tonic: major, alternate: majorAlt },
-    minor: minorAlt === undefined ? { tonic: minor } : { tonic: minor, alternate: minorAlt },
-  }),
+export const CIRCLE_OF_FIFTHS: readonly Readonly<CirclePosition>[] = Object.freeze(
+  POSITIONS.map(([major, minor, majorAlt, minorAlt], index) =>
+    Object.freeze({
+      index,
+      major: Object.freeze(
+        majorAlt === undefined ? { tonic: major } : { tonic: major, alternate: majorAlt },
+      ),
+      minor: Object.freeze(
+        minorAlt === undefined ? { tonic: minor } : { tonic: minor, alternate: minorAlt },
+      ),
+    }),
+  ),
 )
 
 /** Sector of a chord root on the given ring, matched by pitch class (so Cb lands on B/Cb). */
@@ -55,6 +61,20 @@ function indexByPitch(root: string, ring: KeyMode): number {
 export function circleIndexOf(tonic: string, mode: KeyMode): number {
   getKey(tonic, mode)
   return indexByPitch(tonic, mode)
+}
+
+/**
+ * Position of a key on the circle plus the other spelling of that same key, if the sector
+ * has one (F# ↔ Gb, Db ↔ C#, B ↔ Cb and their relative minors). Throws RangeError for a
+ * tonic that is not a key on the circle.
+ */
+export function getCircleSpelling(
+  tonic: string,
+  mode: KeyMode,
+): { index: number; alternate: string | undefined } {
+  const index = circleIndexOf(tonic, mode)
+  const spelling = CIRCLE_OF_FIFTHS[index]![mode]
+  return { index, alternate: tonic === spelling.tonic ? spelling.alternate : spelling.tonic }
 }
 
 /**
