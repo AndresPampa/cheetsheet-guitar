@@ -96,26 +96,65 @@ const ORACLE: OracleCase[] = [
     romans: ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'],
     signature: { accidental: 'sharp', notes: ['F#', 'C#', 'G#', 'D#', 'A#', 'E#'] },
   },
+  // Enharmonic pairs C#/Db and B/Cb: the two 7-accidental keys pin the full signature order.
+  {
+    tonic: 'C#',
+    mode: 'major',
+    scale: ['C#', 'D#', 'E#', 'F#', 'G#', 'A#', 'B#'],
+    symbols: ['C#', 'D#m', 'E#m', 'F#', 'G#', 'A#m', 'B#°'],
+    romans: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'],
+    signature: { accidental: 'sharp', notes: ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'] },
+  },
+  {
+    tonic: 'Db',
+    mode: 'major',
+    scale: ['Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb', 'C'],
+    symbols: ['Db', 'Ebm', 'Fm', 'Gb', 'Ab', 'Bbm', 'C°'],
+    romans: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'],
+    signature: { accidental: 'flat', notes: ['Bb', 'Eb', 'Ab', 'Db', 'Gb'] },
+  },
+  {
+    tonic: 'B',
+    mode: 'major',
+    scale: ['B', 'C#', 'D#', 'E', 'F#', 'G#', 'A#'],
+    symbols: ['B', 'C#m', 'D#m', 'E', 'F#', 'G#m', 'A#°'],
+    romans: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'],
+    signature: { accidental: 'sharp', notes: ['F#', 'C#', 'G#', 'D#', 'A#'] },
+  },
+  {
+    tonic: 'Cb',
+    mode: 'major',
+    scale: ['Cb', 'Db', 'Eb', 'Fb', 'Gb', 'Ab', 'Bb'],
+    symbols: ['Cb', 'Dbm', 'Ebm', 'Fb', 'Gb', 'Abm', 'Bb°'],
+    romans: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'],
+    signature: { accidental: 'flat', notes: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'] },
+  },
+  {
+    tonic: 'A#',
+    mode: 'minor',
+    scale: ['A#', 'B#', 'C#', 'D#', 'E#', 'F#', 'G#'],
+    symbols: ['A#m', 'B#°', 'C#', 'D#m', 'E#m', 'F#', 'G#'],
+    romans: ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'],
+    signature: { accidental: 'sharp', notes: ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'] },
+  },
 ]
 
 describe('getKey', () => {
   describe.each(ORACLE)('$tonic $mode', (c) => {
-    const key = getKey(c.tonic, c.mode)
-
     it('spells the scale with one letter per degree', () => {
-      expect(key.scale).toEqual(c.scale)
+      expect(getKey(c.tonic, c.mode).scale).toEqual(c.scale)
     })
 
     it('builds the seven diatonic triads', () => {
-      expect(key.chords.map((chord) => chord.symbol)).toEqual(c.symbols)
+      expect(getKey(c.tonic, c.mode).chords.map((chord) => chord.symbol)).toEqual(c.symbols)
     })
 
     it('labels each triad with its roman-numeral degree', () => {
-      expect(key.chords.map((chord) => chord.roman)).toEqual(c.romans)
+      expect(getKey(c.tonic, c.mode).chords.map((chord) => chord.roman)).toEqual(c.romans)
     })
 
     it('reports the key signature in canonical order', () => {
-      expect(key.signature).toEqual(c.signature)
+      expect(getKey(c.tonic, c.mode).signature).toEqual(c.signature)
     })
   })
 
@@ -150,17 +189,74 @@ describe('getKey', () => {
   it.each(['', 'H', 'C##b', 'do', 'c', 'B##', 'Fbb'])('rejects the invalid tonic "%s"', (tonic) => {
     expect(() => getKey(tonic, 'major')).toThrow(RangeError)
   })
+
+  // Theoretical keys (double accidentals in the signature) are not on the circle.
+  it.each<[string, KeyMode]>([
+    ['Fb', 'major'],
+    ['E#', 'major'],
+    ['B#', 'major'],
+    ['G#', 'major'],
+    ['D#', 'major'],
+    ['Fb', 'minor'],
+    ['Cb', 'minor'],
+    ['Db', 'minor'],
+    ['B#', 'minor'],
+  ])('rejects %s %s, which is not on the circle', (tonic, mode) => {
+    expect(() => getKey(tonic, mode)).toThrow(RangeError)
+  })
+
+  it('rejects an unknown mode coming from untyped input', () => {
+    expect(() => getKey('C', 'dorian' as KeyMode)).toThrow(RangeError)
+  })
 })
 
 // Property: across every key on the circle, the theory holds structurally.
-const CIRCLE_KEYS: Array<[string, KeyMode]> = [
-  ...['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Gb', 'Db', 'C#', 'Ab', 'Eb', 'Bb', 'F', 'Cb'].map(
-    (t): [string, KeyMode] => [t, 'major'],
-  ),
-  ...['A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'Eb', 'Bb', 'A#', 'F', 'C', 'G', 'D', 'Ab'].map(
-    (t): [string, KeyMode] => [t, 'minor'],
-  ),
-]
+// Accidental count per key (+ = sharps, - = flats), written by hand from the circle.
+const CIRCLE_ACCIDENTALS: Record<KeyMode, Record<string, number>> = {
+  major: {
+    C: 0,
+    G: 1,
+    D: 2,
+    A: 3,
+    E: 4,
+    B: 5,
+    'F#': 6,
+    'C#': 7,
+    F: -1,
+    Bb: -2,
+    Eb: -3,
+    Ab: -4,
+    Db: -5,
+    Gb: -6,
+    Cb: -7,
+  },
+  minor: {
+    A: 0,
+    E: 1,
+    B: 2,
+    'F#': 3,
+    'C#': 4,
+    'G#': 5,
+    'D#': 6,
+    'A#': 7,
+    D: -1,
+    G: -2,
+    C: -3,
+    F: -4,
+    Bb: -5,
+    Eb: -6,
+    Ab: -7,
+  },
+}
+
+const CIRCLE_KEYS: Array<[string, KeyMode, number]> = (['major', 'minor'] as const).flatMap(
+  (mode) =>
+    Object.entries(CIRCLE_ACCIDENTALS[mode]).map(([tonic, count]): [string, KeyMode, number] => [
+      tonic,
+      mode,
+      count,
+    ]),
+)
 
 describe('getKey invariants over every key on the circle', () => {
   it.each(CIRCLE_KEYS)('%s %s uses seven distinct letters', (tonic, mode) => {
@@ -177,14 +273,18 @@ describe('getKey invariants over every key on the circle', () => {
     expect(qualities.filter((q) => q === 'diminished')).toHaveLength(1)
   })
 
-  it.each(CIRCLE_KEYS)('%s %s only uses notes from its own scale', (tonic, mode) => {
-    const key = getKey(tonic, mode)
+  it.each(CIRCLE_KEYS)('%s %s has %i accidentals (negative = flats)', (tonic, mode, count) => {
+    const { signature } = getKey(tonic, mode)
+    const signed =
+      signature.accidental === 'flat' ? -signature.notes.length : signature.notes.length
 
-    expect(key.chords).toHaveLength(7)
-    for (const chord of key.chords) {
-      for (const note of chord.notes) {
-        expect(key.scale).toContain(note)
-      }
-    }
+    expect(signed).toBe(count)
+  })
+
+  it.each(CIRCLE_KEYS)('%s %s lists every altered scale note in its signature', (tonic, mode) => {
+    const key = getKey(tonic, mode)
+    const altered = key.scale.filter((note) => note.length > 1)
+
+    expect([...key.signature.notes].sort()).toEqual([...altered].sort())
   })
 })

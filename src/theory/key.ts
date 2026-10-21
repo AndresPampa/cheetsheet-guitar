@@ -33,8 +33,46 @@ export interface Key {
 const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'] as const
 const SHARP_ORDER = 'FCGDAEB'
 const FLAT_ORDER = 'BEADGCF'
-/** Natural or single accidental: covers every spelling on the circle (F#/Gb, C#/Db, B/Cb). */
-const VALID_TONIC = /^[A-G][#b]?$/
+/**
+ * The 15 spellings per mode on the circle of fifths (0–7 sharps or flats), including the
+ * enharmonic pairs. Theoretical keys such as Fb major or Db minor are rejected.
+ */
+const CIRCLE_TONICS: Record<KeyMode, ReadonlySet<string>> = {
+  major: new Set([
+    'C',
+    'G',
+    'D',
+    'A',
+    'E',
+    'B',
+    'F#',
+    'C#',
+    'F',
+    'Bb',
+    'Eb',
+    'Ab',
+    'Db',
+    'Gb',
+    'Cb',
+  ]),
+  minor: new Set([
+    'A',
+    'E',
+    'B',
+    'F#',
+    'C#',
+    'G#',
+    'D#',
+    'A#',
+    'D',
+    'G',
+    'C',
+    'F',
+    'Bb',
+    'Eb',
+    'Ab',
+  ]),
+}
 
 /** Triad quality from the intervals above the root (third, fifth). */
 const TRIAD_QUALITIES: Record<string, ChordQuality> = {
@@ -100,10 +138,13 @@ function signatureOf(scale: string[]): KeySignature {
 
 /**
  * The key built on `tonic`: its scale, key signature and seven diatonic triads.
- * `minor` is the natural minor (aeolian). Throws RangeError for an unknown tonic.
+ * `minor` is the natural minor (aeolian). Throws RangeError for an unknown mode or for a
+ * tonic that is not one of the circle's spellings for that mode.
  */
 export function getKey(tonic: string, mode: KeyMode): Key {
-  if (!VALID_TONIC.test(tonic)) throw new RangeError(`invalid tonic "${tonic}"`)
+  const tonics = CIRCLE_TONICS[mode]
+  if (tonics === undefined) throw new RangeError(`invalid mode "${mode}"`)
+  if (!tonics.has(tonic)) throw new RangeError(`"${tonic}" is not a ${mode} key on the circle`)
   const scale = scaleOf(tonic, mode)
   return { tonic, mode, scale, signature: signatureOf(scale), chords: diatonicTriads(scale) }
 }
