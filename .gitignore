@@ -51,3 +51,5 @@ skills/
 .pre-commit-config.template.yaml
 AGENTS.template.md
 opencode.template.json
+AGENTS.md
+CLAUDE.md
