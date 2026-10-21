@@ -5,6 +5,14 @@
   --text: #e8e9f0;
   --text-muted: #9a9db0;
   --accent: #f2b544;
+  --focus: #8ab4ff;
+  --surface-raised: #262938;
+  --surface-sunken: #1e2030;
+  --sector-hover: #33374a;
+  --major: #f2b544;
+  --minor: #7fb2ff;
+  --diminished: #ef8a97;
+  --on-highlight: #12131a;
 
   color-scheme: dark;
   font-family:
@@ -25,7 +33,11 @@
     --border: #dcdde5;
     --text: #1a1b24;
     --text-muted: #5c5f72;
-    --accent: #b8860b;
+    --accent: #8a5a00;
+    --focus: #1f5fd1;
+    --surface-raised: #e9eaf1;
+    --surface-sunken: #dcdee8;
+    --sector-hover: #cfd2df;
 
     color-scheme: light;
   }
