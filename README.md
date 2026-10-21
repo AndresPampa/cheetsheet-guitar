@@ -7,7 +7,7 @@ los diagramas en la guitarra y el sonido de cada acorde.
 
 ## Estado
 
-🚧 **En diseño.** La idea y las decisiones de la v1 están definidas, pero todavía no hay código.
+🚧 **En desarrollo.** El esqueleto de la app (Vite + React + TypeScript) está listo; las funcionalidades de la v1 se construyen por partes.
 
 | Versión | Alcance | Estado |
 |---|---|---|
@@ -30,6 +30,18 @@ los diagramas en la guitarra y el sonido de cada acorde.
 TypeScript · React · Vite · [tonal](https://github.com/tonaljs/tonal) (teoría) ·
 [Tone.js](https://tonejs.github.io/) (audio) · [svguitar](https://www.npmjs.com/package/svguitar)
 (diagramas) · Vitest · Testing Library · Playwright
+
+## Desarrollo
+
+Requiere Node.js ≥ 22.12.
+
+```bash
+npm install          # instalar dependencias
+npm run dev          # servidor local en http://localhost:5173
+npm test             # tests (Vitest)
+npm run lint         # oxlint + chequeo de tipos
+npm run build        # build de producción en dist/
+```
 
 ## Licencia
 
