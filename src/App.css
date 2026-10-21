@@ -1,0 +1,49 @@
+.app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.app-header h1 {
+  margin: 0 0 16px;
+  font-size: 1.5rem;
+}
+
+.app-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'circle modes'
+    'chord chord';
+  gap: 16px;
+}
+
+.panel {
+  min-height: 160px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.panel-circle {
+  grid-area: circle;
+  min-height: 420px;
+}
+
+.panel-modes {
+  grid-area: modes;
+}
+
+.panel-chord {
+  grid-area: chord;
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'circle'
+      'chord'
+      'modes';
+  }
+}

@@ -1,0 +1,17 @@
+dist/
+coverage/
+node_modules/
+package-lock.json
+# AI dev toolkit (local only)
+.agents/
+.claude/
+.codex/
+.opencode/
+docs/
+openspec/
+scripts/
+skills/
+*.template.*
+AGENTS.md
+CLAUDE.md
+README.md
