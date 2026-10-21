@@ -10,4 +10,13 @@ describe('App', () => {
       screen.getByRole('heading', { level: 1, name: 'Círculo de Quintas' }),
     ).toBeInTheDocument()
   })
+
+  it.each(['Círculo de quintas', 'Modos', 'Acorde seleccionado'])(
+    'shows the "%s" panel as a labelled region',
+    (name) => {
+      render(<App />)
+
+      expect(screen.getByRole('region', { name })).toBeInTheDocument()
+    },
+  )
 })

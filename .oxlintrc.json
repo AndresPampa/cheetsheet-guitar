@@ -11,6 +11,6 @@
     ],
     "vitest/no-focused-tests": "error",
     "vitest/no-disabled-tests": "error",
-    "jest/expect-expect": "error"
+    "vitest/expect-expect": "error"
   }
 }
