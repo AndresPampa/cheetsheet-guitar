@@ -188,6 +188,141 @@ describe('KeyExplorer', () => {
     })
   })
 
+  describe('parallel modes table', () => {
+    const modesTable = () => screen.getByRole('table', { name: /^Modos paralelos de/ })
+    const modeRow = (name: string) =>
+      within(modesTable()).getByRole('row', { name: new RegExp(`^${name}`) })
+    // What a screen reader announces per degree: roman, chord, ⭐ and the hidden flags.
+    const degreesOf = (name: string) =>
+      within(modeRow(name))
+        .getAllByRole('cell')
+        .slice(1)
+        .map((cell) => cell.textContent)
+    const characteristicOf = (name: string) => within(modeRow(name)).getAllByRole('cell')[0]
+
+    it('lists the seven parallel modes of the selected root in order', () => {
+      render(<KeyExplorer />)
+
+      expect(modesTable()).toHaveAccessibleName('Modos paralelos de C')
+      expect(
+        within(modesTable())
+          .getAllByRole('rowheader')
+          .map((header) => header.firstChild?.textContent),
+      ).toEqual(['Jónico', 'Dórico', 'Frigio', 'Lidio', 'Mixolidio', 'Eólico', 'Locrio'])
+    })
+
+    it('shows each mode with its scale and characteristic note', () => {
+      render(<KeyExplorer />)
+
+      expect(modeRow('Dórico')).toHaveTextContent('C D E♭ F G A B♭')
+      expect(characteristicOf('Dórico')).toHaveTextContent('6ª mayor (A)')
+      expect(characteristicOf('Frigio')).toHaveTextContent('♭2 (D♭)')
+      expect(characteristicOf('Lidio')).toHaveTextContent('♯4 (F♯)')
+      expect(characteristicOf('Jónico')).toHaveTextContent('—')
+    })
+
+    it('marks characteristic, borrowed and starred chords on each degree', () => {
+      render(<KeyExplorer />)
+
+      expect(degreesOf('Dórico')).toEqual([
+        'i Cm (prestado)',
+        'ii Dm (característica)',
+        '♭III E♭ (prestado)',
+        'IV F ⭐ (más representativo) (característica)',
+        'v Gm (prestado)',
+        'vi° A° (característica) (prestado)',
+        '♭VII B♭ (prestado)',
+      ])
+      expect(degreesOf('Jónico')).toEqual([
+        'I C',
+        'ii Dm',
+        'iii Em',
+        'IV F',
+        'V G',
+        'vi Am',
+        'vii° B°',
+      ])
+    })
+
+    it('writes raised degrees with a sharp sign (lydian)', () => {
+      render(<KeyExplorer />)
+
+      expect(degreesOf('Lidio')).toEqual([
+        'I C',
+        'II D ⭐ (más representativo) (característica) (prestado)',
+        'iii Em',
+        '♯iv° F♯° (característica) (prestado)',
+        'V G',
+        'vi Am',
+        'vii Bm (característica) (prestado)',
+      ])
+    })
+
+    // jsdom computes no styles: the classes are the visual cue sighted users get, and they
+    // must match the hidden flags (and follow the switch) instead of drifting from them.
+    it('draws the visual cues for characteristic and borrowed chords', async () => {
+      const user = userEvent.setup()
+      render(<KeyExplorer />)
+      const cells = () => within(modeRow('Dórico')).getAllByRole('cell')
+
+      expect(cells()[1]).toHaveClass('is-borrowed')
+      expect(cells()[1]).not.toHaveClass('has-characteristic')
+      expect(cells()[4]).toHaveClass('has-characteristic')
+      expect(cells()[4]).not.toHaveClass('is-borrowed')
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
+
+      // F is shared with ionian, but F7 is not Fmaj7.
+      expect(cells()[4]).toHaveClass('has-characteristic', 'is-borrowed')
+    })
+
+    it('follows the circle to the root of the selected minor key', async () => {
+      const user = userEvent.setup()
+      render(<KeyExplorer />)
+
+      await user.click(screen.getByRole('radio', { name: /^A menor/ }))
+
+      expect(modesTable()).toHaveAccessibleName('Modos paralelos de A')
+      expect(degreesOf('Eólico')).toEqual([
+        'i Am (prestado)',
+        'ii° B° (característica) (prestado)',
+        '♭III C (prestado)',
+        'iv Dm ⭐ (más representativo) (característica) (prestado)',
+        'v Em (prestado)',
+        '♭VI F ⭐ (más representativo) (característica) (prestado)',
+        '♭VII G (prestado)',
+      ])
+    })
+
+    it('follows the respelled root', async () => {
+      const user = userEvent.setup()
+      render(<KeyExplorer />)
+      await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como G♭ mayor' }))
+
+      expect(modesTable()).toHaveAccessibleName('Modos paralelos de G♭')
+      expect(modeRow('Locrio')).toHaveTextContent('G♭ A♭♭ B♭♭ C♭ D♭♭ E♭♭ F♭')
+    })
+
+    it('follows the triads / sevenths switch', async () => {
+      const user = userEvent.setup()
+      render(<KeyExplorer />)
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
+
+      expect(degreesOf('Mixolidio')).toEqual([
+        'I7 C7 (característica) (prestado)',
+        'ii7 Dm7',
+        'iiiø7 Em7b5 (característica) (prestado)',
+        'IVmaj7 Fmaj7',
+        'v7 Gm7 (característica) (prestado)',
+        'vi7 Am7',
+        '♭VIImaj7 B♭maj7 ⭐ (más representativo) (característica) (prestado)',
+      ])
+    })
+  })
+
   describe('enharmonic spelling', () => {
     it('uses the sharp spelling for F#/Gb and offers the flat one', async () => {
       const user = userEvent.setup()

@@ -1,0 +1,84 @@
+.modes-table {
+  padding: 16px;
+}
+
+/* Seven degree columns do not fit a phone: the table scrolls, the layout does not. */
+.modes-table-scroll {
+  overflow-x: auto;
+}
+
+.modes-table table {
+  border-collapse: separate;
+  border-spacing: 4px;
+  font-size: 0.875rem;
+}
+
+.modes-table caption {
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.modes-table thead th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.modes-table th[scope='row'] {
+  text-align: left;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+
+.mode-name {
+  display: block;
+  font-weight: 700;
+}
+
+.mode-scale {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.mode-characteristic {
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+/* Backgrounds come from the shared .chord--<quality> classes (CircleOfFifths.css). */
+.mode-chord {
+  padding: 6px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  text-align: center;
+  color: var(--on-highlight);
+}
+
+/* Not color-only: weight + underline for the characteristic note, dashed outline for borrowed. */
+.mode-chord.has-characteristic,
+.legend-characteristic {
+  font-weight: 800;
+  text-decoration: underline 2px;
+  text-underline-offset: 3px;
+}
+
+.mode-chord.is-borrowed {
+  outline: 2px dashed var(--on-highlight);
+  outline-offset: -4px;
+}
+
+.legend-borrowed {
+  outline: 2px dashed var(--text-muted);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+.modes-legend {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
