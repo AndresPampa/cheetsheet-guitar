@@ -10,11 +10,13 @@ import {
   type KeyMode,
   type ModeName,
 } from '../theory/index.ts'
+import { ChordDiagram, type VoicingsLoader } from './ChordDiagram.tsx'
 import { ChordPanel } from './ChordPanel.tsx'
 import { CircleOfFifths, type CircleSelection } from './CircleOfFifths.tsx'
 import { KeyPanel, type ChordKind } from './KeyPanel.tsx'
 import { ModesTable } from './ModesTable.tsx'
 import { displaySymbol, greekModeName, modeName } from './notation.ts'
+import type { DiagramDrawer } from './svguitarDiagram.ts'
 
 interface Selection {
   tonic: string
@@ -33,16 +35,18 @@ interface ChordRef {
 const DEFAULT_SELECTION: Selection = { tonic: 'C', mode: 'major' }
 const TONIC_CHORD: ChordRef = { source: 'key', degree: 1 }
 
+// Injected services: the app passes Tone.js, chords-db and svguitar; tests pass fakes.
 interface KeyExplorerProps {
-  /** Injected: the app passes Tone.js, tests pass a fake. */
   audio: AudioPort
+  voicings: VoicingsLoader
+  drawDiagram: DiagramDrawer
 }
 
 /**
  * The three panels (circle + key, parallel modes, chord). Owns the selection, the
  * triads/sevenths choice and the open chord until `state` (URL) lands.
  */
-export function KeyExplorer({ audio }: KeyExplorerProps) {
+export function KeyExplorer({ audio, voicings, drawDiagram }: KeyExplorerProps) {
   const [selection, setSelection] = useState<Selection>(DEFAULT_SELECTION)
   const [chordKind, setChordKind] = useState<ChordKind>('triads')
   const [chordRef, setChordRef] = useState<ChordRef>(TONIC_CHORD)
@@ -65,7 +69,8 @@ export function KeyExplorer({ audio }: KeyExplorerProps) {
     const chords =
       source === 'key' ? keyInfo.chords : modes.find((mode) => mode.name === source)!.chords
     const chord = chords[degree - 1]!
-    return chordKind === 'sevenths' ? chord.seventh : chord
+    // The root is the triad's: a seventh chord is built on the same one.
+    return { ...(chordKind === 'sevenths' ? chord.seventh : chord), root: chord.root }
   }
 
   const open = (ref: ChordRef) => {
@@ -115,6 +120,15 @@ export function KeyExplorer({ audio }: KeyExplorerProps) {
           notes={chord.notes}
           modes={getModesContaining(selection.tonic, chord.symbol)}
           onPlay={() => audio.playChord(chord.notes)}
+          diagram={
+            <ChordDiagram
+              name={displaySymbol(chord.symbol)}
+              root={chord.root}
+              quality={chord.quality}
+              voicings={voicings}
+              draw={drawDiagram}
+            />
+          }
         />
       </section>
     </main>
