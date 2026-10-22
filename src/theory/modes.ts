@@ -103,3 +103,29 @@ export function getParallelModes(root: string): Mode[] {
     return { name, scale, characteristic, chords }
   })
 }
+
+/** Where a chord appears among the parallel modes of a root. */
+export interface ModeMatch {
+  mode: ModeName
+  /** The chord's degree in that mode (triad or seventh roman, whichever matched). */
+  roman: string
+  star: boolean
+}
+
+/**
+ * The parallel modes of `root` that contain the chord `symbol` (`F`, `Bb`, `F7`, `B°`…).
+ * Triads and sevenths have distinct symbols, so one lookup serves both. Throws RangeError for a
+ * root that is not on the circle.
+ */
+export function getModesContaining(root: string, symbol: string): ModeMatch[] {
+  return getParallelModes(root).flatMap((mode) =>
+    mode.chords.flatMap((chord) => {
+      if (chord.symbol === symbol)
+        return [{ mode: mode.name, roman: chord.roman, star: chord.star }]
+      if (chord.seventh.symbol === symbol) {
+        return [{ mode: mode.name, roman: chord.seventh.roman, star: chord.star }]
+      }
+      return []
+    }),
+  )
+}

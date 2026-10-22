@@ -46,6 +46,32 @@
   fill: var(--minor);
 }
 
+/* The diminished ring is read-only: no pointer, no hover. */
+.sector--diminished {
+  cursor: default;
+}
+
+.sector--diminished path,
+.sector--diminished:hover path {
+  fill: var(--surface);
+}
+
+.sector.is-diatonic.sector--diminished path {
+  fill: var(--diminished);
+}
+
+.sector--diminished .sector-label {
+  font-size: 11px;
+}
+
+.sector--diminished .sector-label.is-double {
+  font-size: 9px;
+}
+
+.sector--diminished:not(.is-diatonic) .sector-label {
+  fill: var(--text-muted);
+}
+
 /* Selection and focus outlines: a dark halo plus a light line, so at least one of the two
    contrasts >= 3:1 with any sector fill in either theme (WCAG 1.4.11). */
 .outline {
@@ -219,4 +245,31 @@
   .sector path {
     transition: none;
   }
+}
+
+/* A chord is a button (it opens the chord panel) that keeps the look of its chip or cell. */
+.chord-button {
+  display: inherit;
+  flex-direction: inherit;
+  align-items: inherit;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  background: none;
+  border: 0;
+  border-radius: inherit;
+  cursor: pointer;
+}
+
+.chord-button:hover {
+  opacity: 0.85;
+}
+
+/* The ring sits on the chip, so it uses the chip's text color (dark in both themes, >= 3:1). */
+.chord-button:focus-visible {
+  outline: 2px solid var(--on-highlight);
+  outline-offset: 2px;
 }

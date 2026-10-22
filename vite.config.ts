@@ -12,7 +12,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/main.tsx', 'src/test/**', 'src/**/*.test.{ts,tsx}'],
+      // TESTING.md §17: the Tone.js adapter is verified by ear; consumers use a fake AudioPort.
+      exclude: ['src/main.tsx', 'src/test/**', 'src/**/*.test.{ts,tsx}', 'src/audio/tone.ts'],
       // theory/ is the core of the app: its coverage may only go up.
       thresholds: {
         'src/theory/**': { lines: 100, functions: 100, branches: 90 },

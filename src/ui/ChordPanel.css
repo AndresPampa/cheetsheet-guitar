@@ -1,0 +1,48 @@
+.chord-panel {
+  padding: 16px;
+}
+
+.chord-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.chord-panel h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.chord-panel p {
+  margin: 4px 0;
+}
+
+.play {
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 12px;
+  cursor: pointer;
+}
+
+.play:hover,
+.play:focus-visible {
+  border-color: var(--accent);
+}
+
+.chord-panel-modes-title {
+  color: var(--text-muted);
+}
+
+.chord-panel-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

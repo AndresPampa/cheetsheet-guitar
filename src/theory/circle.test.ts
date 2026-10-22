@@ -67,6 +67,24 @@ describe('CIRCLE_OF_FIFTHS', () => {
   it('numbers the positions 0 to 11', () => {
     expect(CIRCLE_OF_FIFTHS.map((p) => p.index)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
   })
+
+  // Hand-written: the vii° of each position's major key (its leading tone), under that key.
+  it('lists the diminished chord of each major key on the innermost ring', () => {
+    expect(CIRCLE_OF_FIFTHS.map((p) => [p.diminished.tonic, p.diminished.alternate])).toEqual([
+      ['B', undefined],
+      ['F#', undefined],
+      ['C#', undefined],
+      ['G#', undefined],
+      ['D#', undefined],
+      ['A#', 'Bb'],
+      ['E#', 'F'],
+      ['C', 'B#'],
+      ['G', undefined],
+      ['D', undefined],
+      ['A', undefined],
+      ['E', undefined],
+    ])
+  })
 })
 
 describe('circleIndexOf', () => {
@@ -113,7 +131,7 @@ describe('getCircleSpelling', () => {
 })
 
 describe('getCircleHighlights', () => {
-  it('places the six major/minor diatonic chords of C major on the circle', () => {
+  it('places the seven diatonic chords of C major, B° on the diminished ring', () => {
     expect(getCircleHighlights(getKey('C', 'major'))).toEqual([
       { index: 0, ring: 'major', roman: 'I', symbol: 'C' },
       { index: 11, ring: 'minor', roman: 'ii', symbol: 'Dm' },
@@ -121,12 +139,14 @@ describe('getCircleHighlights', () => {
       { index: 11, ring: 'major', roman: 'IV', symbol: 'F' },
       { index: 1, ring: 'major', roman: 'V', symbol: 'G' },
       { index: 0, ring: 'minor', roman: 'vi', symbol: 'Am' },
+      { index: 0, ring: 'diminished', roman: 'vii°', symbol: 'B°' },
     ])
   })
 
   it('uses the minor-key numerals for A minor', () => {
     expect(getCircleHighlights(getKey('A', 'minor'))).toEqual([
       { index: 0, ring: 'minor', roman: 'i', symbol: 'Am' },
+      { index: 0, ring: 'diminished', roman: 'ii°', symbol: 'B°' },
       { index: 0, ring: 'major', roman: 'III', symbol: 'C' },
       { index: 11, ring: 'minor', roman: 'iv', symbol: 'Dm' },
       { index: 1, ring: 'minor', roman: 'v', symbol: 'Em' },
@@ -143,6 +163,7 @@ describe('getCircleHighlights', () => {
       { index: 5, ring: 'major', roman: 'IV', symbol: 'Cb' },
       { index: 7, ring: 'major', roman: 'V', symbol: 'Db' },
       { index: 6, ring: 'minor', roman: 'vi', symbol: 'Ebm' },
+      { index: 6, ring: 'diminished', roman: 'vii°', symbol: 'F°' },
     ])
   })
 
@@ -154,6 +175,7 @@ describe('getCircleHighlights', () => {
       [6, 'major'],
       [8, 'major'],
       [7, 'minor'],
+      [7, 'diminished'],
     ])
   })
 
@@ -165,6 +187,7 @@ describe('getCircleHighlights', () => {
       { index: 6, ring: 'major', roman: 'IV', symbol: 'F#' },
       { index: 8, ring: 'major', roman: 'V', symbol: 'G#' },
       { index: 7, ring: 'minor', roman: 'vi', symbol: 'A#m' },
+      { index: 7, ring: 'diminished', roman: 'vii°', symbol: 'B#°' },
     ])
   })
 
@@ -176,6 +199,7 @@ describe('getCircleHighlights', () => {
       [10, 'major'],
       [0, 'major'],
       [11, 'minor'],
+      [11, 'diminished'],
     ])
   })
 })

@@ -1,5 +1,5 @@
 import { Note } from 'tonal'
-import { getKey, type Key, type KeyMode } from './key.ts'
+import { getKey, type ChordQuality, type Key, type KeyMode } from './key.ts'
 
 export interface CircleSpelling {
   /** Spelling used when the sector is selected (fewer accidentals; F#/D#m on the tie). */
@@ -8,51 +8,71 @@ export interface CircleSpelling {
   alternate?: string
 }
 
+/** Major keys outside, relative minors in the middle, each major key's vii° innermost. */
+export type CircleRing = ChordQuality
+
 export interface CirclePosition {
   /** 0 = C / Am at the top, increasing clockwise by fifths. */
   index: number
   major: CircleSpelling
   minor: CircleSpelling
+  /** The vii° of this position's major key (read-only: a chord, not a key). */
+  diminished: CircleSpelling
 }
 
 export interface CircleHighlight {
   index: number
-  ring: KeyMode
+  ring: CircleRing
   roman: string
   symbol: string
 }
 
-const POSITIONS: Array<[major: string, minor: string, majorAlt?: string, minorAlt?: string]> = [
-  ['C', 'A'],
-  ['G', 'E'],
-  ['D', 'B'],
-  ['A', 'F#'],
-  ['E', 'C#'],
-  ['B', 'G#', 'Cb', 'Ab'],
-  ['F#', 'D#', 'Gb', 'Eb'],
-  ['Db', 'Bb', 'C#', 'A#'],
-  ['Ab', 'F'],
-  ['Eb', 'C'],
-  ['Bb', 'G'],
-  ['F', 'D'],
+type Spellings = [primary: string, alternate?: string]
+
+const POSITIONS: Array<[major: Spellings, minor: Spellings, diminished: Spellings]> = [
+  [['C'], ['A'], ['B']],
+  [['G'], ['E'], ['F#']],
+  [['D'], ['B'], ['C#']],
+  [['A'], ['F#'], ['G#']],
+  [['E'], ['C#'], ['D#']],
+  [
+    ['B', 'Cb'],
+    ['G#', 'Ab'],
+    ['A#', 'Bb'],
+  ],
+  [
+    ['F#', 'Gb'],
+    ['D#', 'Eb'],
+    ['E#', 'F'],
+  ],
+  [
+    ['Db', 'C#'],
+    ['Bb', 'A#'],
+    ['C', 'B#'],
+  ],
+  [['Ab'], ['F'], ['G']],
+  [['Eb'], ['C'], ['D']],
+  [['Bb'], ['G'], ['A']],
+  [['F'], ['D'], ['E']],
 ]
 
+function spelling([tonic, alternate]: Spellings): Readonly<CircleSpelling> {
+  return Object.freeze(alternate === undefined ? { tonic } : { tonic, alternate })
+}
+
 export const CIRCLE_OF_FIFTHS: readonly Readonly<CirclePosition>[] = Object.freeze(
-  POSITIONS.map(([major, minor, majorAlt, minorAlt], index) =>
+  POSITIONS.map(([major, minor, diminished], index) =>
     Object.freeze({
       index,
-      major: Object.freeze(
-        majorAlt === undefined ? { tonic: major } : { tonic: major, alternate: majorAlt },
-      ),
-      minor: Object.freeze(
-        minorAlt === undefined ? { tonic: minor } : { tonic: minor, alternate: minorAlt },
-      ),
+      major: spelling(major),
+      minor: spelling(minor),
+      diminished: spelling(diminished),
     }),
   ),
 )
 
 /** Sector of a chord root on the given ring, matched by pitch class (so Cb lands on B/Cb). */
-function indexByPitch(root: string, ring: KeyMode): number {
+function indexByPitch(root: string, ring: CircleRing): number {
   const chroma = Note.chroma(root)
   return CIRCLE_OF_FIFTHS.findIndex((p) => Note.chroma(p[ring].tonic) === chroma)
 }
@@ -78,15 +98,14 @@ export function getCircleSpelling(
 }
 
 /**
- * Where the key's diatonic chords sit on the circle: major chords on the outer ring, minor
- * chords on the inner one. The diminished chord has no sector and is left out.
+ * Where the key's seven diatonic chords sit on the circle: major chords on the outer ring,
+ * minor chords in the middle and the diminished chord on the innermost ring.
  */
 export function getCircleHighlights(key: Key): CircleHighlight[] {
-  return key.chords.flatMap((chord) => {
-    if (chord.quality === 'diminished') return []
-    const ring: KeyMode = chord.quality
-    return [
-      { index: indexByPitch(chord.root, ring), ring, roman: chord.roman, symbol: chord.symbol },
-    ]
-  })
+  return key.chords.map((chord) => ({
+    index: indexByPitch(chord.root, chord.quality),
+    ring: chord.quality,
+    roman: chord.roman,
+    symbol: chord.symbol,
+  }))
 }

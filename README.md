@@ -8,17 +8,18 @@ los diagramas en la guitarra y el sonido de cada acorde.
 ## Estado
 
 🚧 **En desarrollo.** La v1 se construye por partes; ya funcionan el círculo, el interruptor
-Triadas / Séptimas y la tabla de modos paralelos.
+Triadas / Séptimas, la tabla de modos paralelos y el panel de acorde con sonido.
 
 | Versión | Alcance | Estado |
 |---|---|---|
-| v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi | 🚧 En curso (5 de 9 partes) |
+| v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi | 🚧 En curso (6 de 9 partes) |
 | v2 | Modos de menor armónica y melódica, extensiones (9/11/13, sus, add), armador de progresiones | 💡 Idea |
 | v3 | Despliegue y backend para guardar progresiones | 💡 Idea |
 
 ## Funcionalidades (v1)
 
-- ✅ **Círculo de quintas**: mayores afuera y menores relativas adentro. Al seleccionar una
+- ✅ **Círculo de quintas**: mayores afuera, menores relativas en el medio y el acorde
+  disminuido (vii°) en el anillo interior. Al seleccionar una
   tonalidad se resaltan sus 7 acordes diatónicos con número romano y calidad. Las tonalidades
   enarmónicas (F♯/G♭, C♯/D♭, B/C♭) muestran los dos nombres y se puede cambiar de grafía.
 - ✅ **Triadas / Séptimas**: el panel de la tonalidad y la tabla de modos muestran triadas o
@@ -26,7 +27,9 @@ Triadas / Séptimas y la tabla de modos paralelos.
 - ✅ **Tabla de modos paralelos** (jónico… locrio) de la raíz seleccionada: escala, nota
   característica y grados alterados (♭II, ♯iv°, ♭VII). Se marcan los acordes que contienen la nota
   característica, los prestados del jónico y ⭐ el más representativo.
-- ⏳ **Panel de acorde**: notas, ▶ para escucharlo, diagrama en la guitarra y en qué modos aparece.
+- ✅ **Panel de acorde**: al hacer click en un acorde (panel de tonalidad o tabla de modos) suena
+  como un rasgueo y muestra grado, notas, ▶ para repetirlo y en qué modos aparece.
+- ⏳ **Diagramas en la guitarra** del acorde, con posiciones alternativas.
 - ⏳ Interruptores **C D E / Do Re Mi** e idioma **ES / EN**.
 - ⏳ La selección queda en la URL, así que se puede guardar en favoritos o compartir.
 
@@ -43,36 +46,44 @@ flowchart LR
         COF["CircleOfFifths"]
         KP["KeyPanel<br/>+ Triadas / Séptimas"]
         MT["ModesTable"]
+        CP["ChordPanel<br/>▶ + modos donde aparece"]
         NOT["notation<br/>♯ ♭, nombres, textos"]
-        KE --> COF & KP & MT
-        KP & MT & COF -.-> NOT
+        KE --> COF & KP & MT & CP
+        KP & MT & COF & CP -.-> NOT
     end
 
     subgraph theory["src/theory — TS puro"]
         KEY["key.ts<br/>getKey"]
-        MOD["modes.ts<br/>getParallelModes"]
+        MOD["modes.ts<br/>getParallelModes<br/>getModesContaining"]
         CIR["circle.ts<br/>CIRCLE_OF_FIFTHS"]
         MOD --> KEY
         CIR --> KEY
     end
 
-    TONAL[("tonal")]
+    subgraph audio["src/audio"]
+        PORT["AudioPort<br/>playChord(notas)"]
+        TONEA["toneAudio<br/>rasgueo, carga diferida"]
+        PORT --- TONEA
+    end
 
-    KE --> KEY & CIR
-    MT --> MOD
+    TONAL[("tonal")]
+    TONEJS[("Tone.js")]
+
+    KE --> KEY & CIR & MOD
+    KE --> PORT
+    TONEA --> TONEJS
     KEY & MOD & CIR --> TONAL
 
     subgraph next["Próximas partes"]
-        AUD["audio<br/>Tone.js"]
         VOI["voicings<br/>chords-db + svguitar"]
         ST["state<br/>selección ↔ URL"]
         I18N["i18n<br/>ES / EN, Do Re Mi"]
     end
 
-    KE -.-> ST & AUD & VOI & I18N
+    KE -.-> ST & VOI & I18N
 
     classDef planned stroke-dasharray: 5 5
-    class AUD,VOI,ST,I18N planned
+    class VOI,ST,I18N planned
 ```
 
 Regla de dependencias: `ui` puede usar `state`, `theory`, `voicings`, `audio` e `i18n`; `theory`
@@ -88,6 +99,7 @@ sequenceDiagram
     participant T as theory
     participant P as KeyPanel
     participant M as ModesTable
+    participant CP as ChordPanel
 
     U->>C: click en "A menor"
     C->>E: onSelect(posición, anillo)
@@ -96,10 +108,11 @@ sequenceDiagram
     T-->>E: escala, armadura y 7 acordes
     E->>T: getCircleHighlights(tonalidad)
     E->>C: sectores resaltados con su grado
+    E->>T: getParallelModes("A")
+    T-->>E: 7 modos con sus acordes y marcas
     E->>P: acordes (triadas o séptimas)
-    E->>M: raíz "A" + triadas / séptimas
-    M->>T: getParallelModes("A")
-    T-->>M: 7 modos con sus acordes y marcas
+    E->>M: modos de A + triadas / séptimas
+    E->>CP: acorde i (Am), sin sonar
 ```
 
 La corrección musical se prueba contra un **oracle escrito a mano** (nunca contra `tonal`, que
