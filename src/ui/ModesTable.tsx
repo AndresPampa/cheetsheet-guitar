@@ -1,4 +1,4 @@
-import { getParallelModes } from '../theory/index.ts'
+import type { Mode, ModeName } from '../theory/index.ts'
 import type { ChordKind } from './KeyPanel.tsx'
 import { characteristicText, displayRoman, displaySymbol, greekModeName } from './notation.ts'
 import './ModesTable.css'
@@ -7,12 +7,14 @@ const DEGREES = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 
 interface ModesTableProps {
   root: string
+  modes: Mode[]
   chordKind: ChordKind
+  /** Opens (and plays) the chord on a degree of a mode. */
+  onChordClick: (mode: ModeName, degree: number) => void
 }
 
 /** The seven parallel modes of `root`, one row per mode and one column per degree. */
-export function ModesTable({ root, chordKind }: ModesTableProps) {
-  const modes = getParallelModes(root)
+export function ModesTable({ root, modes, chordKind, onChordClick }: ModesTableProps) {
   return (
     <div className="modes-table">
       <div className="modes-table-scroll">
@@ -56,17 +58,24 @@ export function ModesTable({ root, chordKind }: ModesTableProps) {
                   ]
                   return (
                     <td key={chord.degree} className={classes.filter(Boolean).join(' ')}>
-                      {displayRoman(shown.roman)} {displaySymbol(shown.symbol)}
-                      {chord.star && (
-                        <>
-                          <span aria-hidden="true"> ⭐</span>
-                          <span className="sr-only"> (más representativo)</span>
-                        </>
-                      )}
-                      {shown.hasCharacteristic && (
-                        <span className="sr-only"> (característica)</span>
-                      )}
-                      {shown.differsFromIonian && <span className="sr-only"> (prestado)</span>}
+                      <button
+                        type="button"
+                        className="chord-button"
+                        onClick={() => onChordClick(mode.name, chord.degree)}
+                      >
+                        <span className="chord-roman">{displayRoman(shown.roman)}</span>{' '}
+                        <span className="chord-symbol">{displaySymbol(shown.symbol)}</span>
+                        {chord.star && (
+                          <>
+                            <span aria-hidden="true"> ⭐</span>
+                            <span className="sr-only"> (más representativo)</span>
+                          </>
+                        )}
+                        {shown.hasCharacteristic && (
+                          <span className="sr-only"> (característica)</span>
+                        )}
+                        {shown.differsFromIonian && <span className="sr-only"> (prestado)</span>}
+                      </button>
                     </td>
                   )
                 })}

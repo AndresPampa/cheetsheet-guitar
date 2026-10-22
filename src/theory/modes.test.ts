@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getParallelModes, type ModeName } from './index.ts'
+import { getModesContaining, getParallelModes, type ModeName } from './index.ts'
 
 // ORACLE — every expected value below was written and verified by hand.
 // NEVER regenerate these by calling tonal: that would make the test circular.
@@ -344,5 +344,61 @@ describe('getParallelModes invariants over every root on the circle', () => {
     )
 
     expect(starred).toEqual([[], [4], [2], [2], [7], [4, 6], [5]])
+  })
+})
+
+// ORACLE — hand-written: which parallel modes of C contain a chord, by its symbol.
+const C_CONTAINING: Array<[string, Array<{ mode: ModeName; roman: string; star: boolean }>]> = [
+  [
+    'F',
+    [
+      { mode: 'ionian', roman: 'IV', star: false },
+      { mode: 'dorian', roman: 'IV', star: true },
+      { mode: 'mixolydian', roman: 'IV', star: false },
+    ],
+  ],
+  [
+    'Bb',
+    [
+      { mode: 'dorian', roman: 'bVII', star: false },
+      { mode: 'mixolydian', roman: 'bVII', star: true },
+      { mode: 'aeolian', roman: 'bVII', star: false },
+    ],
+  ],
+  [
+    'Fm',
+    [
+      { mode: 'phrygian', roman: 'iv', star: false },
+      { mode: 'aeolian', roman: 'iv', star: true },
+      { mode: 'locrian', roman: 'iv', star: false },
+    ],
+  ],
+  [
+    'Db',
+    [
+      { mode: 'phrygian', roman: 'bII', star: true },
+      { mode: 'locrian', roman: 'bII', star: false },
+    ],
+  ],
+  ['B°', [{ mode: 'ionian', roman: 'vii°', star: false }]],
+  // Sevenths are matched by their own symbol: F7 lives only in dorian, Fmaj7 elsewhere.
+  ['F7', [{ mode: 'dorian', roman: 'IV7', star: true }]],
+  [
+    'Cmaj7',
+    [
+      { mode: 'ionian', roman: 'Imaj7', star: false },
+      { mode: 'lydian', roman: 'Imaj7', star: false },
+    ],
+  ],
+  ['E', []],
+]
+
+describe('getModesContaining', () => {
+  it.each(C_CONTAINING)('finds %s in the parallel modes of C', (symbol, expected) => {
+    expect(getModesContaining('C', symbol)).toEqual(expected)
+  })
+
+  it('rejects a root that is not on the circle', () => {
+    expect(() => getModesContaining('H', 'C')).toThrow(RangeError)
   })
 })

@@ -7,23 +7,116 @@ los diagramas en la guitarra y el sonido de cada acorde.
 
 ## Estado
 
-🚧 **En desarrollo.** El esqueleto de la app (Vite + React + TypeScript) está listo; las funcionalidades de la v1 se construyen por partes.
+🚧 **En desarrollo.** La v1 se construye por partes; ya funcionan el círculo, el interruptor
+Triadas / Séptimas, la tabla de modos paralelos y el panel de acorde con sonido.
 
 | Versión | Alcance | Estado |
 |---|---|---|
-| v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi | ⏳ Pendiente |
+| v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi | 🚧 En curso (6 de 9 partes) |
 | v2 | Modos de menor armónica y melódica, extensiones (9/11/13, sus, add), armador de progresiones | 💡 Idea |
 | v3 | Despliegue y backend para guardar progresiones | 💡 Idea |
 
 ## Funcionalidades (v1)
 
-- **Círculo de quintas**: mayores afuera y menores relativas adentro. Al seleccionar una tonalidad
-  se resaltan sus 7 acordes diatónicos con número romano y calidad.
-- **Tabla de modos paralelos** (jónico… locrio) de la raíz seleccionada, con los grados de cada modo
-  y los acordes que contienen la nota característica resaltados (⭐ el más representativo).
-- **Panel de acorde**: notas, ▶ para escucharlo, diagrama en la guitarra y en qué modos aparece.
-- Interruptores **Triadas / Séptimas**, **C D E / Do Re Mi** e idioma **ES / EN**.
-- La selección queda en la URL, así que se puede guardar en favoritos o compartir.
+- ✅ **Círculo de quintas**: mayores afuera, menores relativas en el medio y el acorde
+  disminuido (vii°) en el anillo interior. Al seleccionar una
+  tonalidad se resaltan sus 7 acordes diatónicos con número romano y calidad. Las tonalidades
+  enarmónicas (F♯/G♭, C♯/D♭, B/C♭) muestran los dos nombres y se puede cambiar de grafía.
+- ✅ **Triadas / Séptimas**: el panel de la tonalidad y la tabla de modos muestran triadas o
+  acordes de séptima (maj7, m7, 7, m7♭5).
+- ✅ **Tabla de modos paralelos** (jónico… locrio) de la raíz seleccionada: escala, nota
+  característica y grados alterados (♭II, ♯iv°, ♭VII). Se marcan los acordes que contienen la nota
+  característica, los prestados del jónico y ⭐ el más representativo.
+- ✅ **Panel de acorde**: al hacer click en un acorde (panel de tonalidad o tabla de modos) suena
+  como un rasgueo y muestra grado, notas, ▶ para repetirlo y en qué modos aparece.
+- ⏳ **Diagramas en la guitarra** del acorde, con posiciones alternativas.
+- ⏳ Interruptores **C D E / Do Re Mi** e idioma **ES / EN**.
+- ⏳ La selección queda en la URL, así que se puede guardar en favoritos o compartir.
+
+## Arquitectura
+
+Sitio 100 % estático. El código se organiza en módulos con una interfaz chica y la lógica adentro.
+La teoría musical vive en `src/theory/`, TypeScript puro sin React, y es la única parte que habla
+con `tonal`. La UI no hace cuentas musicales: solo pide datos a `theory` y los presenta.
+
+```mermaid
+flowchart LR
+    subgraph ui["src/ui — React"]
+        KE["KeyExplorer<br/>layout + estado"]
+        COF["CircleOfFifths"]
+        KP["KeyPanel<br/>+ Triadas / Séptimas"]
+        MT["ModesTable"]
+        CP["ChordPanel<br/>▶ + modos donde aparece"]
+        NOT["notation<br/>♯ ♭, nombres, textos"]
+        KE --> COF & KP & MT & CP
+        KP & MT & COF & CP -.-> NOT
+    end
+
+    subgraph theory["src/theory — TS puro"]
+        KEY["key.ts<br/>getKey"]
+        MOD["modes.ts<br/>getParallelModes<br/>getModesContaining"]
+        CIR["circle.ts<br/>CIRCLE_OF_FIFTHS"]
+        MOD --> KEY
+        CIR --> KEY
+    end
+
+    subgraph audio["src/audio"]
+        PORT["AudioPort<br/>playChord(notas)"]
+        TONEA["toneAudio<br/>rasgueo, carga diferida"]
+        PORT --- TONEA
+    end
+
+    TONAL[("tonal")]
+    TONEJS[("Tone.js")]
+
+    KE --> KEY & CIR & MOD
+    KE --> PORT
+    TONEA --> TONEJS
+    KEY & MOD & CIR --> TONAL
+
+    subgraph next["Próximas partes"]
+        VOI["voicings<br/>chords-db + svguitar"]
+        ST["state<br/>selección ↔ URL"]
+        I18N["i18n<br/>ES / EN, Do Re Mi"]
+    end
+
+    KE -.-> ST & VOI & I18N
+
+    classDef planned stroke-dasharray: 5 5
+    class VOI,ST,I18N planned
+```
+
+Regla de dependencias: `ui` puede usar `state`, `theory`, `voicings`, `audio` e `i18n`; `theory`
+no importa nada del proyecto, solo `tonal`.
+
+Qué pasa al hacer click en una tonalidad del círculo:
+
+```mermaid
+sequenceDiagram
+    actor U as Guitarrista
+    participant C as CircleOfFifths
+    participant E as KeyExplorer
+    participant T as theory
+    participant P as KeyPanel
+    participant M as ModesTable
+    participant CP as ChordPanel
+
+    U->>C: click en "A menor"
+    C->>E: onSelect(posición, anillo)
+    E->>E: selección = A menor
+    E->>T: getKey("A", "minor")
+    T-->>E: escala, armadura y 7 acordes
+    E->>T: getCircleHighlights(tonalidad)
+    E->>C: sectores resaltados con su grado
+    E->>T: getParallelModes("A")
+    T-->>E: 7 modos con sus acordes y marcas
+    E->>P: acordes (triadas o séptimas)
+    E->>M: modos de A + triadas / séptimas
+    E->>CP: acorde i (Am), sin sonar
+```
+
+La corrección musical se prueba contra un **oracle escrito a mano** (nunca contra `tonal`, que
+sería circular) más invariantes sobre todas las tonalidades del círculo.
 
 ## Stack
 

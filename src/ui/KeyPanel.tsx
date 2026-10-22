@@ -16,6 +16,8 @@ interface KeyPanelProps {
   onRespell: (tonic: string) => void
   chordKind: ChordKind
   onChordKindChange: (kind: ChordKind) => void
+  /** Opens (and plays) the chord on a degree of the key. */
+  onChordClick: (degree: number) => void
 }
 
 export function KeyPanel({
@@ -24,6 +26,7 @@ export function KeyPanel({
   onRespell,
   chordKind,
   onChordKindChange,
+  onChordClick,
 }: KeyPanelProps) {
   const mode = modeName(keyInfo.mode)
   return (
@@ -57,8 +60,14 @@ export function KeyPanel({
           const { roman, symbol } = chordKind === 'sevenths' ? chord.seventh : chord
           return (
             <li key={chord.degree} className={`chord chord--${chord.quality}`}>
-              <span className="chord-roman">{roman}</span>{' '}
-              <span className="chord-symbol">{displaySymbol(symbol)}</span>
+              <button
+                type="button"
+                className="chord-button"
+                onClick={() => onChordClick(chord.degree)}
+              >
+                <span className="chord-roman">{roman}</span>{' '}
+                <span className="chord-symbol">{displaySymbol(symbol)}</span>
+              </button>
             </li>
           )
         })}
