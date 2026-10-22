@@ -7,7 +7,7 @@ import {
   type KeyMode,
 } from '../theory/index.ts'
 import { CircleOfFifths, type CircleSelection } from './CircleOfFifths.tsx'
-import { KeyPanel } from './KeyPanel.tsx'
+import { KeyPanel, type ChordKind } from './KeyPanel.tsx'
 
 interface Selection {
   tonic: string
@@ -19,6 +19,7 @@ const DEFAULT_SELECTION: Selection = { tonic: 'C', mode: 'major' }
 /** The circle plus the selected key's summary. Owns the selection until `state` (URL) lands. */
 export function KeyExplorer() {
   const [selection, setSelection] = useState<Selection>(DEFAULT_SELECTION)
+  const [chordKind, setChordKind] = useState<ChordKind>('triads')
   const keyInfo = getKey(selection.tonic, selection.mode)
   const { index, alternate } = getCircleSpelling(selection.tonic, selection.mode)
 
@@ -35,7 +36,13 @@ export function KeyExplorer() {
         highlights={getCircleHighlights(keyInfo)}
         onSelect={select}
       />
-      <KeyPanel keyInfo={keyInfo} alternate={alternate} onRespell={respell} />
+      <KeyPanel
+        keyInfo={keyInfo}
+        alternate={alternate}
+        onRespell={respell}
+        chordKind={chordKind}
+        onChordKindChange={setChordKind}
+      />
     </div>
   )
 }

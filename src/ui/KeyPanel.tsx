@@ -1,14 +1,30 @@
 import type { Key } from '../theory/index.ts'
 import { displaySymbol, modeName, signatureText } from './notation.ts'
 
+/** Which chord on each degree the panel lists. The circle always shows triads. */
+export type ChordKind = 'triads' | 'sevenths'
+
+const CHORD_KINDS: Array<{ kind: ChordKind; label: string }> = [
+  { kind: 'triads', label: 'Triadas' },
+  { kind: 'sevenths', label: 'Séptimas' },
+]
+
 interface KeyPanelProps {
   keyInfo: Key
   /** Enharmonic spelling of the same key, when the sector has one. */
   alternate: string | undefined
   onRespell: (tonic: string) => void
+  chordKind: ChordKind
+  onChordKindChange: (kind: ChordKind) => void
 }
 
-export function KeyPanel({ keyInfo, alternate, onRespell }: KeyPanelProps) {
+export function KeyPanel({
+  keyInfo,
+  alternate,
+  onRespell,
+  chordKind,
+  onChordKindChange,
+}: KeyPanelProps) {
   const mode = modeName(keyInfo.mode)
   return (
     <section className="key-panel" aria-label="Tonalidad seleccionada">
@@ -23,13 +39,29 @@ export function KeyPanel({ keyInfo, alternate, onRespell }: KeyPanelProps) {
         )}
       </div>
       <p className="key-signature">{signatureText(keyInfo.signature)}</p>
-      <ol className="chord-list" aria-label="Acordes diatónicos">
-        {keyInfo.chords.map((chord) => (
-          <li key={chord.degree} className={`chord chord--${chord.quality}`}>
-            <span className="chord-roman">{chord.roman}</span>{' '}
-            <span className="chord-symbol">{displaySymbol(chord.symbol)}</span>
-          </li>
+      <div className="chord-kind" role="group" aria-label="Tipo de acorde">
+        {CHORD_KINDS.map(({ kind, label }) => (
+          <button
+            key={kind}
+            type="button"
+            aria-pressed={chordKind === kind}
+            onClick={() => onChordKindChange(kind)}
+          >
+            {label}
+          </button>
         ))}
+      </div>
+      <ol className="chord-list" aria-label="Acordes diatónicos">
+        {keyInfo.chords.map((chord) => {
+          // Color stays the triad family (m7b5 reads as diminished, V7 as major).
+          const { roman, symbol } = chordKind === 'sevenths' ? chord.seventh : chord
+          return (
+            <li key={chord.degree} className={`chord chord--${chord.quality}`}>
+              <span className="chord-roman">{roman}</span>{' '}
+              <span className="chord-symbol">{displaySymbol(symbol)}</span>
+            </li>
+          )
+        })}
       </ol>
     </section>
   )
