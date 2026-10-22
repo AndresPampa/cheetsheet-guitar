@@ -1,0 +1,187 @@
+.key-explorer {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.circle {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  display: block;
+  user-select: none;
+}
+
+.sector {
+  cursor: pointer;
+  outline: none;
+}
+
+.sector path {
+  fill: var(--sector-bg);
+  stroke: var(--bg);
+  stroke-width: 2;
+  transition:
+    fill 180ms ease,
+    opacity 180ms ease;
+}
+
+.sector--major path {
+  --sector-bg: var(--surface-raised);
+}
+
+.sector--minor path {
+  --sector-bg: var(--surface-sunken);
+}
+
+.sector:hover path {
+  fill: var(--sector-hover);
+}
+
+.sector.is-diatonic.sector--major path {
+  fill: var(--major);
+}
+
+.sector.is-diatonic.sector--minor path {
+  fill: var(--minor);
+}
+
+/* Selection and focus outlines: a dark halo plus a light line, so at least one of the two
+   contrasts >= 3:1 with any sector fill in either theme (WCAG 1.4.11). */
+.outline {
+  pointer-events: none;
+}
+
+.outline path {
+  fill: none;
+  stroke-linejoin: round;
+}
+
+.outline-halo {
+  stroke: var(--bg);
+  stroke-width: 8;
+}
+
+.outline-line {
+  stroke: var(--text);
+  stroke-width: 3;
+}
+
+.outline--focus .outline-line {
+  stroke-dasharray: 7 4;
+}
+
+.sector-label,
+.sector-roman {
+  fill: var(--text);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.sector-label {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.sector--minor .sector-label {
+  font-size: 13px;
+}
+
+.sector-label.is-double {
+  font-size: 13px;
+}
+
+.sector--minor .sector-label.is-double {
+  font-size: 10.5px;
+}
+
+.sector.is-diatonic .sector-label,
+.sector.is-diatonic .sector-roman {
+  fill: var(--on-highlight);
+}
+
+.sector-roman {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.key-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.key-panel h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.respell {
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 12px;
+  cursor: pointer;
+}
+
+.respell:hover,
+.respell:focus-visible {
+  border-color: var(--accent);
+}
+
+.key-signature {
+  margin: 4px 0 12px;
+  color: var(--text-muted);
+}
+
+.chord-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chord {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 56px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: var(--on-highlight);
+}
+
+.chord--major {
+  background: var(--major);
+}
+
+.chord--minor {
+  background: var(--minor);
+}
+
+.chord--diminished {
+  background: var(--diminished);
+}
+
+.chord-roman {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.chord-symbol {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sector path {
+    transition: none;
+  }
+}
