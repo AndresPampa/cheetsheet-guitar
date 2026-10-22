@@ -50,7 +50,7 @@ const FLAT_ORDER = 'BEADGCF'
  * The 15 spellings per mode on the circle of fifths (0–7 sharps or flats), including the
  * enharmonic pairs. Theoretical keys such as Fb major or Db minor are rejected.
  */
-const CIRCLE_TONICS: Record<KeyMode, ReadonlySet<string>> = {
+export const CIRCLE_TONICS: Record<KeyMode, ReadonlySet<string>> = {
   major: new Set([
     'C',
     'G',
@@ -153,7 +153,7 @@ function seventhChord(degree: number, notes: [string, string, string, string]): 
   return { quality, roman, symbol: root + quality, notes }
 }
 
-function diatonicChords(scale: string[]): DiatonicChord[] {
+export function diatonicChords(scale: string[]): DiatonicChord[] {
   return scale.map((root, i) => {
     // Stacked thirds wrap around the 7-note scale, so the index is always in range.
     const third = scale[(i + 2) % 7]!
