@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getKey, type KeyMode } from './index.ts'
+import { getKey, type KeyMode, type SeventhQuality } from './index.ts'
 
 // ORACLE — every expected value below was written and verified by hand.
 // NEVER regenerate these by calling tonal: that would make the test circular.
@@ -139,6 +139,80 @@ const ORACLE: OracleCase[] = [
   },
 ]
 
+// ORACLE of diatonic seventh chords — hand-written and hand-verified, same rules as above.
+interface SeventhOracleCase {
+  tonic: string
+  mode: KeyMode
+  symbols: string[]
+  romans: string[]
+  qualities: SeventhQuality[]
+}
+
+const SEVENTH_ORACLE: SeventhOracleCase[] = [
+  {
+    tonic: 'C',
+    mode: 'major',
+    symbols: ['Cmaj7', 'Dm7', 'Em7', 'Fmaj7', 'G7', 'Am7', 'Bm7b5'],
+    romans: ['Imaj7', 'ii7', 'iii7', 'IVmaj7', 'V7', 'vi7', 'viiø7'],
+    qualities: ['maj7', 'm7', 'm7', 'maj7', '7', 'm7', 'm7b5'],
+  },
+  {
+    tonic: 'A',
+    mode: 'minor',
+    symbols: ['Am7', 'Bm7b5', 'Cmaj7', 'Dm7', 'Em7', 'Fmaj7', 'G7'],
+    romans: ['i7', 'iiø7', 'IIImaj7', 'iv7', 'v7', 'VImaj7', 'VII7'],
+    qualities: ['m7', 'm7b5', 'maj7', 'm7', 'm7', 'maj7', '7'],
+  },
+  // Seven sharps: every chord carries an accidental, the seventh of G#7 is F#, B#m7b5 has A#.
+  {
+    tonic: 'C#',
+    mode: 'major',
+    symbols: ['C#maj7', 'D#m7', 'E#m7', 'F#maj7', 'G#7', 'A#m7', 'B#m7b5'],
+    romans: ['Imaj7', 'ii7', 'iii7', 'IVmaj7', 'V7', 'vi7', 'viiø7'],
+    qualities: ['maj7', 'm7', 'm7', 'maj7', '7', 'm7', 'm7b5'],
+  },
+  // Six flats in minor: Cb as a chord root.
+  {
+    tonic: 'Eb',
+    mode: 'minor',
+    symbols: ['Ebm7', 'Fm7b5', 'Gbmaj7', 'Abm7', 'Bbm7', 'Cbmaj7', 'Db7'],
+    romans: ['i7', 'iiø7', 'IIImaj7', 'iv7', 'v7', 'VImaj7', 'VII7'],
+    qualities: ['m7', 'm7b5', 'maj7', 'm7', 'm7', 'maj7', '7'],
+  },
+]
+
+describe('getKey seventh chords', () => {
+  describe.each(SEVENTH_ORACLE)('$tonic $mode', (c) => {
+    it('builds the seven diatonic seventh chords', () => {
+      expect(getKey(c.tonic, c.mode).chords.map((chord) => chord.seventh.symbol)).toEqual(c.symbols)
+    })
+
+    it('labels each seventh chord with its roman-numeral degree', () => {
+      expect(getKey(c.tonic, c.mode).chords.map((chord) => chord.seventh.roman)).toEqual(c.romans)
+    })
+
+    it('classifies each seventh chord by its intervals', () => {
+      expect(getKey(c.tonic, c.mode).chords.map((chord) => chord.seventh.quality)).toEqual(
+        c.qualities,
+      )
+    })
+  })
+
+  it('spells the sevenths of a seven-sharp key with the key signature', () => {
+    const key = getKey('C#', 'major')
+
+    expect(key.chords[4]?.seventh.notes).toEqual(['G#', 'B#', 'D#', 'F#'])
+    expect(key.chords[6]?.seventh.notes).toEqual(['B#', 'D#', 'F#', 'A#'])
+  })
+
+  it('spells the sevenths of a six-flat key with Cb, never B', () => {
+    const key = getKey('Eb', 'minor')
+
+    expect(key.chords[1]?.seventh.notes).toEqual(['F', 'Ab', 'Cb', 'Eb'])
+    expect(key.chords[6]?.seventh.notes).toEqual(['Db', 'F', 'Ab', 'Cb'])
+  })
+})
+
 describe('getKey', () => {
   describe.each(ORACLE)('$tonic $mode', (c) => {
     it('spells the scale with one letter per degree', () => {
@@ -168,6 +242,7 @@ describe('getKey', () => {
       quality: 'major',
       symbol: 'G',
       notes: ['G', 'B', 'D'],
+      seventh: { quality: '7', roman: 'V7', symbol: 'G7', notes: ['G', 'B', 'D', 'F'] },
     })
     expect(key.chords[6]).toEqual({
       degree: 7,
@@ -176,6 +251,7 @@ describe('getKey', () => {
       quality: 'diminished',
       symbol: 'B°',
       notes: ['B', 'D', 'F'],
+      seventh: { quality: 'm7b5', roman: 'viiø7', symbol: 'Bm7b5', notes: ['B', 'D', 'F', 'A'] },
     })
   })
 
@@ -279,6 +355,22 @@ describe('getKey invariants over every key on the circle', () => {
       signature.accidental === 'flat' ? -signature.notes.length : signature.notes.length
 
     expect(signed).toBe(count)
+  })
+
+  it.each(CIRCLE_KEYS)('%s %s contains each triad inside its seventh chord', (tonic, mode) => {
+    for (const chord of getKey(tonic, mode).chords) {
+      expect(chord.seventh.notes).toHaveLength(4)
+      expect(chord.seventh.notes.slice(0, 3)).toEqual(chord.notes)
+    }
+  })
+
+  it.each(CIRCLE_KEYS)('%s %s has 2 maj7, 3 m7, 1 dominant 7 and 1 m7b5', (tonic, mode) => {
+    const qualities = getKey(tonic, mode).chords.map((chord) => chord.seventh.quality)
+
+    expect(qualities.filter((q) => q === 'maj7')).toHaveLength(2)
+    expect(qualities.filter((q) => q === 'm7')).toHaveLength(3)
+    expect(qualities.filter((q) => q === '7')).toHaveLength(1)
+    expect(qualities.filter((q) => q === 'm7b5')).toHaveLength(1)
   })
 
   it.each(CIRCLE_KEYS)('%s %s lists every altered scale note in its signature', (tonic, mode) => {
