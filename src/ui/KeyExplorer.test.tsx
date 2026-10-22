@@ -100,6 +100,94 @@ describe('KeyExplorer', () => {
     expect(within(keyPanel()).getByText('Armadura: 3 bemoles (B♭ E♭ A♭)')).toBeInTheDocument()
   })
 
+  describe('triads / sevenths switch', () => {
+    const triadsButton = () => within(keyPanel()).getByRole('button', { name: 'Triadas' })
+    const seventhsButton = () => within(keyPanel()).getByRole('button', { name: 'Séptimas' })
+
+    it('starts on triads', () => {
+      render(<KeyExplorer />)
+
+      expect(triadsButton()).toHaveAttribute('aria-pressed', 'true')
+      expect(seventhsButton()).toHaveAttribute('aria-pressed', 'false')
+    })
+
+    it('shows the diatonic seventh chords when switched to sevenths', async () => {
+      const user = userEvent.setup()
+      render(<KeyExplorer />)
+
+      await user.click(seventhsButton())
+
+      expect(seventhsButton()).toHaveAttribute('aria-pressed', 'true')
+      expect(triadsButton()).toHaveAttribute('aria-pressed', 'false')
+      expect(chordList()).toEqual([
+        'Imaj7 Cmaj7',
+        'ii7 Dm7',
+        'iii7 Em7',
+        'IVmaj7 Fmaj7',
+        'V7 G7',
+        'vi7 Am7',
+        'viiø7 Bm7b5',
+      ])
+    })
+
+    it('keeps sevenths when another key is selected', async () => {
+      const user = userEvent.setup()
+      render(<KeyExplorer />)
+      await user.click(seventhsButton())
+
+      await user.click(screen.getByRole('radio', { name: /^E menor/ }))
+
+      expect(chordList()).toEqual([
+        'i7 Em7',
+        'iiø7 F♯m7b5',
+        'IIImaj7 Gmaj7',
+        'iv7 Am7',
+        'v7 Bm7',
+        'VImaj7 Cmaj7',
+        'VII7 D7',
+      ])
+    })
+
+    it('keeps sevenths when the key is respelled', async () => {
+      const user = userEvent.setup()
+      render(<KeyExplorer />)
+      await user.click(seventhsButton())
+      await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como G♭ mayor' }))
+
+      expect(chordList()).toEqual([
+        'Imaj7 G♭maj7',
+        'ii7 A♭m7',
+        'iii7 B♭m7',
+        'IVmaj7 C♭maj7',
+        'V7 D♭7',
+        'vi7 E♭m7',
+        'viiø7 Fm7b5',
+      ])
+    })
+
+    it('goes back to triads', async () => {
+      const user = userEvent.setup()
+      render(<KeyExplorer />)
+      await user.click(seventhsButton())
+
+      await user.click(triadsButton())
+
+      expect(chordList()).toEqual(['I C', 'ii Dm', 'iii Em', 'IV F', 'V G', 'vi Am', 'vii° B°'])
+    })
+
+    it('leaves the circle labelled with triads', async () => {
+      const user = userEvent.setup()
+      render(<KeyExplorer />)
+
+      await user.click(seventhsButton())
+
+      expect(screen.getByRole('radio', { name: 'G mayor, grado V' })).toBeInTheDocument()
+      expect(screen.getByRole('radio', { name: 'D menor, grado ii' })).toBeInTheDocument()
+    })
+  })
+
   describe('enharmonic spelling', () => {
     it('uses the sharp spelling for F#/Gb and offers the flat one', async () => {
       const user = userEvent.setup()
