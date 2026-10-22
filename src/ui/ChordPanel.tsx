@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { ModeMatch } from '../theory/index.ts'
 import { displayRoman, displaySymbol, greekModeName } from './notation.ts'
 import './ChordPanel.css'
@@ -11,9 +12,19 @@ interface ChordPanelProps {
   /** Parallel modes of the root that contain this chord. */
   modes: ModeMatch[]
   onPlay: () => void
+  /** The chord on the fretboard. */
+  diagram: ReactNode
 }
 
-export function ChordPanel({ symbol, roman, context, notes, modes, onPlay }: ChordPanelProps) {
+export function ChordPanel({
+  symbol,
+  roman,
+  context,
+  notes,
+  modes,
+  onPlay,
+  diagram,
+}: ChordPanelProps) {
   const shownSymbol = displaySymbol(symbol)
   return (
     <div className="chord-panel">
@@ -33,6 +44,7 @@ export function ChordPanel({ symbol, roman, context, notes, modes, onPlay }: Cho
         Grado {displayRoman(roman)} · {context}
       </p>
       <p>Notas: {notes.map(displaySymbol).join(' ')}</p>
+      {diagram}
       <p className="chord-panel-modes-title">Aparece en:</p>
       <ul className="chord-panel-modes" aria-label="Modos donde aparece">
         {modes.map((match) => (

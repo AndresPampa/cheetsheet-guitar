@@ -1,10 +1,20 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ComponentProps } from 'react'
 import { describe, expect, it } from 'vitest'
+import { loadVoicings, type Voicing } from '../voicings/index.ts'
 import { KeyExplorer } from './KeyExplorer.tsx'
 
-// Tests that do not listen to the audio still get a fake: real Tone.js never runs in jsdom.
-const silentAudio = { playChord: () => {} }
+// Fakes at the three boundaries. Real Tone.js and svguitar never run in jsdom (no audio, no
+// getBBox). Voicings stay pending unless a test asks for the real data.
+type Services = ComponentProps<typeof KeyExplorer>
+const services: Services = {
+  audio: { playChord: () => {} },
+  voicings: () => new Promise<never>(() => {}),
+  drawDiagram: () => {},
+}
+const renderExplorer = (overrides: Partial<Services> = {}) =>
+  render(<KeyExplorer {...services} {...overrides} />)
 const keyPanel = () => screen.getByRole('region', { name: 'Tonalidad seleccionada' })
 const chordList = () =>
   within(keyPanel())
@@ -13,7 +23,7 @@ const chordList = () =>
 
 describe('KeyExplorer', () => {
   it('draws 12 major and 12 minor sectors', () => {
-    render(<KeyExplorer audio={silentAudio} />)
+    renderExplorer()
 
     expect(screen.getAllByRole('radio', { name: /mayor/ })).toHaveLength(12)
     expect(screen.getAllByRole('radio', { name: /menor/ })).toHaveLength(12)
@@ -22,7 +32,7 @@ describe('KeyExplorer', () => {
   })
 
   it('names the enharmonic sectors with both spellings', () => {
-    render(<KeyExplorer audio={silentAudio} />)
+    renderExplorer()
 
     expect(screen.getByRole('radio', { name: /^B o C bemol mayor/ })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ })).toBeInTheDocument()
@@ -31,7 +41,7 @@ describe('KeyExplorer', () => {
   })
 
   it('starts on C major with its diatonic triads', () => {
-    render(<KeyExplorer audio={silentAudio} />)
+    renderExplorer()
 
     expect(screen.getByRole('radio', { name: /^C mayor/ })).toBeChecked()
     expect(within(keyPanel()).getByRole('heading', { name: 'C mayor' })).toBeInTheDocument()
@@ -41,7 +51,7 @@ describe('KeyExplorer', () => {
 
   it('selects a major key on click and shows its chords and signature', async () => {
     const user = userEvent.setup()
-    render(<KeyExplorer audio={silentAudio} />)
+    renderExplorer()
 
     await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
 
@@ -54,7 +64,7 @@ describe('KeyExplorer', () => {
 
   it('marks the diatonic sectors of the selected key with their degree', async () => {
     const user = userEvent.setup()
-    render(<KeyExplorer audio={silentAudio} />)
+    renderExplorer()
 
     await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
 
@@ -69,7 +79,7 @@ describe('KeyExplorer', () => {
 
   it('marks the diminished chord on the innermost ring, not on a minor key', async () => {
     const user = userEvent.setup()
-    render(<KeyExplorer audio={silentAudio} />)
+    renderExplorer()
 
     await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
 
@@ -85,7 +95,7 @@ describe('KeyExplorer', () => {
 
   it('selects a minor key from the inner ring with minor-key numerals', async () => {
     const user = userEvent.setup()
-    render(<KeyExplorer audio={silentAudio} />)
+    renderExplorer()
 
     await user.click(screen.getByRole('radio', { name: /^E menor/ }))
 
@@ -95,7 +105,7 @@ describe('KeyExplorer', () => {
 
   it('uses the singular for a one-flat signature', async () => {
     const user = userEvent.setup()
-    render(<KeyExplorer audio={silentAudio} />)
+    renderExplorer()
 
     await user.click(screen.getByRole('radio', { name: /^F mayor/ }))
 
@@ -104,7 +114,7 @@ describe('KeyExplorer', () => {
 
   it('lists flats in canonical order in the signature', async () => {
     const user = userEvent.setup()
-    render(<KeyExplorer audio={silentAudio} />)
+    renderExplorer()
 
     await user.click(screen.getByRole('radio', { name: /^E bemol mayor/ }))
 
@@ -116,7 +126,7 @@ describe('KeyExplorer', () => {
     const seventhsButton = () => within(keyPanel()).getByRole('button', { name: 'Séptimas' })
 
     it('starts on triads', () => {
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       expect(triadsButton()).toHaveAttribute('aria-pressed', 'true')
       expect(seventhsButton()).toHaveAttribute('aria-pressed', 'false')
@@ -124,7 +134,7 @@ describe('KeyExplorer', () => {
 
     it('shows the diatonic seventh chords when switched to sevenths', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       await user.click(seventhsButton())
 
@@ -143,7 +153,7 @@ describe('KeyExplorer', () => {
 
     it('keeps sevenths when another key is selected', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       await user.click(seventhsButton())
 
       await user.click(screen.getByRole('radio', { name: /^E menor/ }))
@@ -161,7 +171,7 @@ describe('KeyExplorer', () => {
 
     it('keeps sevenths when the key is respelled', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       await user.click(seventhsButton())
       await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
 
@@ -180,7 +190,7 @@ describe('KeyExplorer', () => {
 
     it('goes back to triads', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       await user.click(seventhsButton())
 
       await user.click(triadsButton())
@@ -190,7 +200,7 @@ describe('KeyExplorer', () => {
 
     it('leaves the circle labelled with triads', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       await user.click(seventhsButton())
 
@@ -212,7 +222,7 @@ describe('KeyExplorer', () => {
     const characteristicOf = (name: string) => within(modeRow(name)).getAllByRole('cell')[0]
 
     it('lists the seven parallel modes of the selected root in order', () => {
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       expect(modesTable()).toHaveAccessibleName('Modos paralelos de C')
       expect(
@@ -223,7 +233,7 @@ describe('KeyExplorer', () => {
     })
 
     it('shows each mode with its scale and characteristic note', () => {
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       expect(modeRow('Dórico')).toHaveTextContent('C D E♭ F G A B♭')
       expect(characteristicOf('Dórico')).toHaveTextContent('6ª mayor (A)')
@@ -233,7 +243,7 @@ describe('KeyExplorer', () => {
     })
 
     it('marks characteristic, borrowed and starred chords on each degree', () => {
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       expect(degreesOf('Dórico')).toEqual([
         'i Cm (prestado)',
@@ -256,7 +266,7 @@ describe('KeyExplorer', () => {
     })
 
     it('shows each degree and its chord as separate lines, like the key panel chips', () => {
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       const cell = within(modeRow('Dórico')).getAllByRole('cell')[7]!
 
       expect(within(cell).getByText('♭VII')).toHaveClass('chord-roman')
@@ -264,7 +274,7 @@ describe('KeyExplorer', () => {
     })
 
     it('writes raised degrees with a sharp sign (lydian)', () => {
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       expect(degreesOf('Lidio')).toEqual([
         'I C',
@@ -281,7 +291,7 @@ describe('KeyExplorer', () => {
     // must match the hidden flags (and follow the switch) instead of drifting from them.
     it('draws the visual cues for characteristic and borrowed chords', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       const cells = () => within(modeRow('Dórico')).getAllByRole('cell')
 
       expect(cells()[1]).toHaveClass('is-borrowed')
@@ -297,7 +307,7 @@ describe('KeyExplorer', () => {
 
     it('follows the circle to the root of the selected minor key', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       await user.click(screen.getByRole('radio', { name: /^A menor/ }))
 
@@ -315,7 +325,7 @@ describe('KeyExplorer', () => {
 
     it('follows the respelled root', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como G♭ mayor' }))
@@ -326,7 +336,7 @@ describe('KeyExplorer', () => {
 
     it('follows the triads / sevenths switch', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
 
@@ -356,7 +366,7 @@ describe('KeyExplorer', () => {
 
     it('starts on the tonic chord of C major, silently', () => {
       const { played, audio } = fakeAudio()
-      render(<KeyExplorer audio={audio} />)
+      renderExplorer({ audio })
 
       expect(within(chordPanel()).getByRole('heading', { name: 'C' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado I · C mayor')).toBeInTheDocument()
@@ -368,7 +378,7 @@ describe('KeyExplorer', () => {
     it('loads the tonic of a key picked on the circle without playing it', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      render(<KeyExplorer audio={audio} />)
+      renderExplorer({ audio })
       await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
 
       await user.click(screen.getByRole('radio', { name: /^A menor/ }))
@@ -382,7 +392,7 @@ describe('KeyExplorer', () => {
     it('loads the tonic of the respelled key without playing it', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      render(<KeyExplorer audio={audio} />)
+      renderExplorer({ audio })
       await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
       await user.click(within(keyPanel()).getByRole('button', { name: 'V C♯' }))
 
@@ -396,7 +406,7 @@ describe('KeyExplorer', () => {
     it('opens a modes-table chord as a seventh when sevenths are on', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      render(<KeyExplorer audio={audio} />)
+      renderExplorer({ audio })
       await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
       const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
       const dorian = within(table).getByRole('row', { name: /^Dórico/ })
@@ -414,7 +424,7 @@ describe('KeyExplorer', () => {
     it('opens a chord of a minor key with both numberings', async () => {
       const user = userEvent.setup()
       const { audio } = fakeAudio()
-      render(<KeyExplorer audio={audio} />)
+      renderExplorer({ audio })
       await user.click(screen.getByRole('radio', { name: /^A menor/ }))
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'III C' }))
@@ -426,7 +436,7 @@ describe('KeyExplorer', () => {
     it('opens and plays a chord clicked in the key panel', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      render(<KeyExplorer audio={audio} />)
+      renderExplorer({ audio })
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
 
@@ -451,7 +461,7 @@ describe('KeyExplorer', () => {
     it('opens and plays a chord clicked in the modes table', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      render(<KeyExplorer audio={audio} />)
+      renderExplorer({ audio })
       const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
       const dorian = within(table).getByRole('row', { name: /^Dórico/ })
 
@@ -471,7 +481,7 @@ describe('KeyExplorer', () => {
     it('replays the chord with the play button', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      render(<KeyExplorer audio={audio} />)
+      renderExplorer({ audio })
 
       await user.click(within(chordPanel()).getByRole('button', { name: 'Escuchar C' }))
 
@@ -481,7 +491,7 @@ describe('KeyExplorer', () => {
     it('follows the triads / sevenths switch for the open chord', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      render(<KeyExplorer audio={audio} />)
+      renderExplorer({ audio })
       await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
@@ -498,10 +508,201 @@ describe('KeyExplorer', () => {
     })
   })
 
+  describe('chord diagram', () => {
+    const C_SHAPE: Voicing = {
+      frets: [-1, 3, 2, 0, 1, 0],
+      fingers: [0, 3, 2, 0, 1, 0],
+      baseFret: 1,
+      barres: [],
+    }
+    const F_SHAPE: Voicing = {
+      frets: [1, 3, 3, 2, 1, 1],
+      fingers: [1, 3, 4, 2, 1, 1],
+      baseFret: 1,
+      barres: [1],
+    }
+    const chordPanel = () => screen.getByRole('region', { name: 'Acorde seleccionado' })
+    // Real voicing data; the drawing itself is faked (svguitar needs a real SVG layout).
+    const withDiagrams = () => {
+      const drawn: number[][] = []
+      return {
+        drawn,
+        voicings: loadVoicings,
+        drawDiagram: (_container: HTMLElement, voicing: { frets: number[] }) =>
+          void drawn.push(voicing.frets),
+      }
+    }
+
+    it('shows the most common position of the open chord', async () => {
+      const { drawn, ...diagrams } = withDiagrams()
+      renderExplorer(diagrams)
+
+      expect(
+        await within(chordPanel()).findByRole('img', {
+          name: 'Diagrama de C: cuerdas de 6ª a 1ª x 3 2 0 1 0',
+        }),
+      ).toBeInTheDocument()
+      expect(within(chordPanel()).getByText('Posición 1 de 4')).toBeInTheDocument()
+      expect(drawn.at(-1)).toEqual([-1, 3, 2, 0, 1, 0])
+    })
+
+    it('steps through the other positions and back', async () => {
+      const user = userEvent.setup()
+      const { drawn, ...diagrams } = withDiagrams()
+      renderExplorer(diagrams)
+      const previous = await within(chordPanel()).findByRole('button', {
+        name: 'Posición anterior',
+      })
+      // Unavailable but still focusable (aria-disabled), so keyboard focus is never lost.
+      expect(previous).toHaveAttribute('aria-disabled', 'true')
+      await user.click(previous)
+      expect(within(chordPanel()).getByText('Posición 1 de 4')).toHaveAttribute(
+        'aria-live',
+        'polite',
+      )
+
+      await user.click(within(chordPanel()).getByRole('button', { name: 'Posición siguiente' }))
+
+      expect(within(chordPanel()).getByText('Posición 2 de 4')).toBeInTheDocument()
+      expect(
+        within(chordPanel()).getByRole('img', {
+          name: 'Diagrama de C: cuerdas de 6ª a 1ª 3 3 5 5 5 3, desde el traste 3',
+        }),
+      ).toBeInTheDocument()
+      expect(drawn.at(-1)).toEqual([3, 3, 5, 5, 5, 3])
+
+      await user.click(within(chordPanel()).getByRole('button', { name: 'Posición anterior' }))
+
+      expect(within(chordPanel()).getByText('Posición 1 de 4')).toBeInTheDocument()
+    })
+
+    it('stops at the last position', async () => {
+      const user = userEvent.setup()
+      renderExplorer(withDiagrams())
+      const next = await within(chordPanel()).findByRole('button', { name: 'Posición siguiente' })
+
+      await user.click(next)
+      await user.click(next)
+      await user.click(next)
+      await user.click(next)
+
+      expect(within(chordPanel()).getByText('Posición 4 de 4')).toBeInTheDocument()
+      expect(next).toHaveAttribute('aria-disabled', 'true')
+      expect(next).toHaveFocus()
+    })
+
+    it('starts again at the first position for a newly opened chord', async () => {
+      const user = userEvent.setup()
+      renderExplorer(withDiagrams())
+      await user.click(
+        await within(chordPanel()).findByRole('button', { name: 'Posición siguiente' }),
+      )
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
+
+      expect(
+        await within(chordPanel()).findByRole('img', {
+          name: 'Diagrama de F: cuerdas de 6ª a 1ª 1 3 3 2 1 1',
+        }),
+      ).toBeInTheDocument()
+      expect(within(chordPanel()).getByText('Posición 1 de 4')).toBeInTheDocument()
+    })
+
+    it('draws the seventh chord when sevenths are on', async () => {
+      const user = userEvent.setup()
+      renderExplorer(withDiagrams())
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
+
+      expect(
+        await within(chordPanel()).findByRole('img', {
+          name: 'Diagrama de Cmaj7: cuerdas de 6ª a 1ª 3 3 2 0 0 0',
+        }),
+      ).toBeInTheDocument()
+    })
+
+    it('says so when there is no diagram for the chord', async () => {
+      renderExplorer({ voicings: () => Promise.resolve([]) })
+
+      expect(
+        await within(chordPanel()).findByText('No hay diagrama para este acorde'),
+      ).toBeInTheDocument()
+      expect(within(chordPanel()).queryByRole('img')).toBeNull()
+    })
+
+    it('says so when the diagram data cannot be loaded', async () => {
+      renderExplorer({ voicings: () => Promise.reject(new Error('offline')) })
+
+      expect(
+        await within(chordPanel()).findByText('No se pudo cargar el diagrama'),
+      ).toBeInTheDocument()
+    })
+
+    it('ignores a late answer for a chord that is no longer open', async () => {
+      const user = userEvent.setup()
+      const pending = new Map<string, (list: Voicing[]) => void>()
+      renderExplorer({
+        voicings: (root, quality) =>
+          new Promise((resolve) => void pending.set(`${root} ${quality}`, resolve)),
+      })
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
+      pending.get('F major')!([F_SHAPE])
+      pending.get('C major')!([C_SHAPE])
+
+      expect(
+        await within(chordPanel()).findByRole('img', { name: /^Diagrama de F:/ }),
+      ).toBeInTheDocument()
+    })
+
+    it('ignores a late failure for a chord that is no longer open', async () => {
+      const user = userEvent.setup()
+      const pending = new Map<string, { resolve: (list: Voicing[]) => void; reject: () => void }>()
+      renderExplorer({
+        voicings: (root, quality) =>
+          new Promise((resolve, reject) => {
+            pending.set(`${root} ${quality}`, { resolve, reject: () => reject(new Error('late')) })
+          }),
+      })
+      await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
+      pending.get('F major')!.resolve([F_SHAPE])
+      await within(chordPanel()).findByRole('img', { name: /^Diagrama de F:/ })
+
+      await act(async () => pending.get('C major')!.reject())
+
+      expect(within(chordPanel()).getByRole('img', { name: /^Diagrama de F:/ })).toBeInTheDocument()
+    })
+
+    it('draws the matching shape for minor and diminished triads', async () => {
+      const user = userEvent.setup()
+      renderExplorer(withDiagrams())
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'ii Dm' }))
+      expect(
+        await within(chordPanel()).findByRole('img', {
+          name: 'Diagrama de Dm: cuerdas de 6ª a 1ª x x 0 2 3 1',
+        }),
+      ).toBeInTheDocument()
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'vii° B°' }))
+      expect(
+        await within(chordPanel()).findByRole('img', {
+          name: 'Diagrama de B°: cuerdas de 6ª a 1ª x 2 0 x 0 1',
+        }),
+      ).toBeInTheDocument()
+    })
+
+    it('says the diagram is loading until the data arrives', () => {
+      renderExplorer()
+
+      expect(within(chordPanel()).getByText('Cargando diagrama…')).toBeInTheDocument()
+    })
+  })
+
   describe('enharmonic spelling', () => {
     it('uses the sharp spelling for F#/Gb and offers the flat one', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
 
@@ -511,7 +712,7 @@ describe('KeyExplorer', () => {
 
     it('respells the whole key when switching to the alternate spelling', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       await user.click(screen.getByRole('radio', { name: /^D bemol o C sostenido mayor/ }))
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como C♯ mayor' }))
@@ -535,7 +736,7 @@ describe('KeyExplorer', () => {
 
     it('names the highlighted sectors with the spelling of the respelled key', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       await user.click(screen.getByRole('radio', { name: /^D bemol o C sostenido mayor/ }))
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como C♯ mayor' }))
@@ -552,7 +753,7 @@ describe('KeyExplorer', () => {
 
     it('shows a single spelling on an ambiguous sector that belongs to the key', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       await user.click(screen.getByRole('radio', { name: /^E mayor/ }))
 
@@ -563,7 +764,7 @@ describe('KeyExplorer', () => {
     })
 
     it('offers no alternate spelling for an unambiguous key', () => {
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       expect(within(keyPanel()).queryByRole('button', { name: /^Ver como/ })).toBeNull()
     })
@@ -572,7 +773,7 @@ describe('KeyExplorer', () => {
   describe('keyboard', () => {
     it('selects the focused sector with Enter', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       screen.getByRole('radio', { name: /^A mayor/ }).focus()
 
       await user.keyboard('{Enter}')
@@ -582,7 +783,7 @@ describe('KeyExplorer', () => {
 
     it('selects the focused sector with Space', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       screen.getByRole('radio', { name: /^B menor/ }).focus()
 
       await user.keyboard(' ')
@@ -592,7 +793,7 @@ describe('KeyExplorer', () => {
 
     it('puts only the selected sector in the tab order', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
 
       await user.tab()
       expect(screen.getByRole('radio', { name: /^C mayor/ })).toHaveFocus()
@@ -605,7 +806,7 @@ describe('KeyExplorer', () => {
 
     it('moves focus clockwise and counter-clockwise with the arrow keys', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       screen.getByRole('radio', { name: /^C mayor/ }).focus()
 
       await user.keyboard('{ArrowRight}')
@@ -617,7 +818,7 @@ describe('KeyExplorer', () => {
 
     it('switches between the outer and inner ring with up and down', async () => {
       const user = userEvent.setup()
-      render(<KeyExplorer audio={silentAudio} />)
+      renderExplorer()
       screen.getByRole('radio', { name: /^G mayor/ }).focus()
 
       await user.keyboard('{ArrowDown}')

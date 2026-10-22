@@ -12,8 +12,15 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
-      // TESTING.md §17: the Tone.js adapter is verified by ear; consumers use a fake AudioPort.
-      exclude: ['src/main.tsx', 'src/test/**', 'src/**/*.test.{ts,tsx}', 'src/audio/tone.ts'],
+      // TESTING.md §17: the Tone.js and svguitar adapters are verified by ear / by eye;
+      // consumers get fakes injected.
+      exclude: [
+        'src/main.tsx',
+        'src/test/**',
+        'src/**/*.test.{ts,tsx}',
+        'src/audio/tone.ts',
+        'src/ui/svguitarDiagram.ts',
+      ],
       // theory/ is the core of the app: its coverage may only go up.
       thresholds: {
         'src/theory/**': { lines: 100, functions: 100, branches: 90 },

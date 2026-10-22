@@ -20,8 +20,10 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@tombatossals/chords-db": "0.5.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "svguitar": "2.9.0",
     "tonal": "6.5.1",
     "tone": "15.1.22"
   },

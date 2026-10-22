@@ -46,3 +46,58 @@
   padding: 0;
   list-style: none;
 }
+
+.chord-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.chord-diagram-figure {
+  margin: 0;
+  color: var(--text);
+}
+
+.chord-diagram-svg {
+  width: 180px;
+  max-width: 100%;
+}
+
+.chord-diagram-figure figcaption {
+  color: var(--text-muted);
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+
+.chord-diagram-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chord-diagram-nav button {
+  font: inherit;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.chord-diagram-nav button[aria-disabled='true'] {
+  color: var(--text-muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.chord-diagram-nav button:not([aria-disabled='true']):hover,
+.chord-diagram-nav button:focus-visible {
+  border-color: var(--accent);
+}
+
+.chord-diagram-status {
+  color: var(--text-muted);
+}

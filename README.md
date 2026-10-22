@@ -8,11 +8,11 @@ los diagramas en la guitarra y el sonido de cada acorde.
 ## Estado
 
 🚧 **En desarrollo.** La v1 se construye por partes; ya funcionan el círculo, el interruptor
-Triadas / Séptimas, la tabla de modos paralelos y el panel de acorde con sonido.
+Triadas / Séptimas, la tabla de modos paralelos y el panel de acorde con sonido y diagrama en la guitarra.
 
 | Versión | Alcance | Estado |
 |---|---|---|
-| v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi | 🚧 En curso (6 de 9 partes) |
+| v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi | 🚧 En curso (7 de 9 partes) |
 | v2 | Modos de menor armónica y melódica, extensiones (9/11/13, sus, add), armador de progresiones | 💡 Idea |
 | v3 | Despliegue y backend para guardar progresiones | 💡 Idea |
 
@@ -29,7 +29,8 @@ Triadas / Séptimas, la tabla de modos paralelos y el panel de acorde con sonido
   característica, los prestados del jónico y ⭐ el más representativo.
 - ✅ **Panel de acorde**: al hacer click en un acorde (panel de tonalidad o tabla de modos) suena
   como un rasgueo y muestra grado, notas, ▶ para repetirlo y en qué modos aparece.
-- ⏳ **Diagramas en la guitarra** del acorde, con posiciones alternativas.
+- ✅ **Diagramas en la guitarra** del acorde (trastes, dedos, cejilla, cuerdas al aire y
+  silenciadas), con 4 posiciones por acorde para recorrer con ◀ ▶.
 - ⏳ Interruptores **C D E / Do Re Mi** e idioma **ES / EN**.
 - ⏳ La selección queda en la URL, así que se puede guardar en favoritos o compartir.
 
@@ -74,16 +75,27 @@ flowchart LR
     TONEA --> TONEJS
     KEY & MOD & CIR --> TONAL
 
+    subgraph voicings["src/voicings"]
+        LV["loadVoicings<br/>chords-db + erratas"]
+    end
+
+    DRAW["svguitarDiagram<br/>dibujo del mástil"]
+    CHORDSDB[("chords-db")]
+    SVGUITAR[("svguitar")]
+
+    KE --> LV & DRAW
+    LV --> CHORDSDB
+    DRAW --> SVGUITAR
+
     subgraph next["Próximas partes"]
-        VOI["voicings<br/>chords-db + svguitar"]
         ST["state<br/>selección ↔ URL"]
         I18N["i18n<br/>ES / EN, Do Re Mi"]
     end
 
-    KE -.-> ST & VOI & I18N
+    KE -.-> ST & I18N
 
     classDef planned stroke-dasharray: 5 5
-    class VOI,ST,I18N planned
+    class ST,I18N planned
 ```
 
 Regla de dependencias: `ui` puede usar `state`, `theory`, `voicings`, `audio` e `i18n`; `theory`
