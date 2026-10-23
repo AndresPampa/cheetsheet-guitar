@@ -21,6 +21,8 @@ export function en(notation: Notation): Messages {
     symbol,
     appTitle: 'Circle of Fifths',
     noteNamesGroup: 'Note names',
+    themeGroup: 'Theme',
+    themes: { dark: 'Dark', light: 'Light' },
     languageGroup: 'Language',
 
     circleRegion: 'Circle of fifths',

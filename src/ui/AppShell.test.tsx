@@ -1,7 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ComponentProps } from 'react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { loadVoicings, type Voicing } from '../voicings/index.ts'
 import { AppShell } from './AppShell.tsx'
 
@@ -1224,6 +1224,157 @@ describe('AppShell', () => {
       await user.click(within(keyPanel()).getByRole('button', { name: 'V Sol' }))
 
       expect(played).toEqual([['G', 'B', 'D']])
+    })
+  })
+
+  describe('theme', () => {
+    // Fake at the browser boundary: jsdom has no matchMedia. `light` is the system preference.
+    const fakeSystemTheme = (light: boolean) => {
+      const listeners = new Set<(event: { matches: boolean }) => void>()
+      const query = {
+        matches: light,
+        addEventListener: (_: 'change', listener: (event: { matches: boolean }) => void) =>
+          void listeners.add(listener),
+        removeEventListener: (_: 'change', listener: (event: { matches: boolean }) => void) =>
+          void listeners.delete(listener),
+      }
+      vi.stubGlobal('matchMedia', (media: string) =>
+        media === '(prefers-color-scheme: light)' ? query : { ...query, matches: false },
+      )
+      return {
+        change: (next: boolean) =>
+          act(() => {
+            query.matches = next
+            listeners.forEach((listener) => listener({ matches: next }))
+          }),
+      }
+    }
+    const themeSwitch = () => screen.getByRole('group', { name: /^(Tema|Theme)$/ })
+    const themeButton = (name: string) => within(themeSwitch()).getByRole('button', { name })
+    const html = document.documentElement
+
+    beforeEach(() => localStorage.clear())
+    afterEach(() => {
+      vi.unstubAllGlobals()
+      vi.restoreAllMocks()
+      localStorage.clear()
+      html.removeAttribute('data-theme')
+    })
+
+    it('follows a dark system theme when nothing was chosen', () => {
+      fakeSystemTheme(false)
+
+      renderShell()
+
+      expect(themeButton('Oscuro')).toHaveAttribute('aria-pressed', 'true')
+      expect(themeButton('Claro')).toHaveAttribute('aria-pressed', 'false')
+      expect(html).not.toHaveAttribute('data-theme')
+    })
+
+    it('follows a light system theme when nothing was chosen', () => {
+      fakeSystemTheme(true)
+
+      renderShell()
+
+      expect(themeButton('Claro')).toHaveAttribute('aria-pressed', 'true')
+      expect(html).not.toHaveAttribute('data-theme')
+    })
+
+    it('is dark when the browser cannot tell the system theme', () => {
+      renderShell()
+
+      expect(themeButton('Oscuro')).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it('applies and remembers the chosen theme, outside the URL', async () => {
+      const user = userEvent.setup()
+      fakeSystemTheme(false)
+      renderShell()
+
+      await user.click(themeButton('Claro'))
+
+      expect(themeButton('Claro')).toHaveAttribute('aria-pressed', 'true')
+      expect(html).toHaveAttribute('data-theme', 'light')
+      expect(localStorage.getItem('cheetsheet-guitar:theme')).toBe('light')
+      expect(window.location.search).toBe('')
+    })
+
+    it('starts on the remembered theme over the system one', () => {
+      fakeSystemTheme(true)
+      localStorage.setItem('cheetsheet-guitar:theme', 'dark')
+
+      renderShell()
+
+      expect(themeButton('Oscuro')).toHaveAttribute('aria-pressed', 'true')
+      expect(html).toHaveAttribute('data-theme', 'dark')
+    })
+
+    it('ignores a remembered value that is not a theme', () => {
+      fakeSystemTheme(true)
+      localStorage.setItem('cheetsheet-guitar:theme', 'sepia')
+
+      renderShell()
+
+      expect(themeButton('Claro')).toHaveAttribute('aria-pressed', 'true')
+      expect(html).not.toHaveAttribute('data-theme')
+    })
+
+    it('follows the system when it changes, until a theme is chosen', async () => {
+      const user = userEvent.setup()
+      const system = fakeSystemTheme(false)
+      renderShell()
+
+      system.change(true)
+      expect(themeButton('Claro')).toHaveAttribute('aria-pressed', 'true')
+
+      await user.click(themeButton('Oscuro'))
+      system.change(false)
+      system.change(true)
+      expect(themeButton('Oscuro')).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it('still works when the browser blocks storage', async () => {
+      const user = userEvent.setup()
+      fakeSystemTheme(false)
+      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError')
+      })
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError')
+      })
+      renderShell()
+
+      await user.click(themeButton('Claro'))
+
+      expect(themeButton('Claro')).toHaveAttribute('aria-pressed', 'true')
+      expect(html).toHaveAttribute('data-theme', 'light')
+    })
+
+    it('names the switch in English', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(screen.getByRole('button', { name: 'EN' }))
+
+      expect(themeButton('Dark')).toHaveAttribute('aria-pressed', 'true')
+      expect(themeButton('Light')).toBeInTheDocument()
+    })
+
+    it('redraws the diagram with the new colors when the theme changes', async () => {
+      const user = userEvent.setup()
+      fakeSystemTheme(false)
+      const drawn: number[][] = []
+      renderShell({
+        voicings: loadVoicings,
+        drawDiagram: (_container, voicing) => void drawn.push(voicing.frets),
+      })
+      await screen.findByRole('img', { name: /^Diagrama de C/ })
+      const before = drawn.length
+
+      await user.click(themeButton('Claro'))
+
+      expect(drawn).toHaveLength(before + 1)
+      expect(drawn.at(-1)).toEqual([-1, 3, 2, 0, 1, 0])
     })
   })
 

@@ -12,6 +12,8 @@ export interface Messages {
   appTitle: string
   languageGroup: string
   noteNamesGroup: string
+  themeGroup: string
+  themes: { dark: string; light: string }
 
   // Panels (landmark regions)
   circleRegion: string

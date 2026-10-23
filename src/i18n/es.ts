@@ -19,6 +19,8 @@ export function es(notation: Notation): Messages {
     symbol,
     appTitle: 'Círculo de Quintas',
     noteNamesGroup: 'Nombres de notas',
+    themeGroup: 'Tema',
+    themes: { dark: 'Oscuro', light: 'Claro' },
     languageGroup: 'Idioma',
 
     circleRegion: 'Círculo de quintas',

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMessages, type Messages } from '../i18n/index.ts'
+import type { Theme } from '../state/index.ts'
 import type { Voicing, VoicingQuality } from '../voicings/index.ts'
 import type { DiagramDrawer } from './svguitarDiagram.ts'
 
@@ -12,6 +13,8 @@ interface ChordDiagramProps {
   quality: VoicingQuality
   voicings: VoicingsLoader
   draw: DiagramDrawer
+  /** svguitar bakes the colors in when it draws: a new theme needs a new drawing. */
+  theme: Theme
 }
 
 /** `x 3 2 0 1 0`, from the 6th string to the 1st, plus the starting fret when not at the nut. */
@@ -21,7 +24,7 @@ function tablature({ frets, baseFret }: Voicing, t: Messages): string {
 }
 
 /** The open chord on the fretboard, with every position the data has for it. */
-export function ChordDiagram({ name, root, quality, voicings, draw }: ChordDiagramProps) {
+export function ChordDiagram({ name, root, quality, voicings, draw, theme }: ChordDiagramProps) {
   const t = useMessages()
   const chord = `${root} ${quality}`
   // `list: null` records a failed load, so the panel says so instead of loading forever.
@@ -53,7 +56,7 @@ export function ChordDiagram({ name, root, quality, voicings, draw }: ChordDiagr
 
   useEffect(() => {
     if (voicing !== undefined && container.current !== null) draw(container.current, voicing)
-  }, [draw, voicing])
+  }, [draw, voicing, theme])
 
   if (state === undefined) return <p className="chord-diagram-status">{t.loadingDiagram}</p>
   if (state.list === null) {

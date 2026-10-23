@@ -1,7 +1,8 @@
 interface SegmentedSwitchProps<T extends string> {
   /** Accessible name of the group: `Idioma`. */
   label: string
-  options: Array<{ value: T; label: string; lang?: string }>
+  /** `name` replaces a symbol-only `label` (☾) as the button's accessible name. */
+  options: Array<{ value: T; label: string; name?: string; lang?: string }>
   value: T
   onChange: (value: T) => void
 }
@@ -20,6 +21,7 @@ export function SegmentedSwitch<T extends string>({
           key={option.value}
           type="button"
           lang={option.lang}
+          aria-label={option.name}
           aria-pressed={value === option.value}
           onClick={() => onChange(option.value)}
         >

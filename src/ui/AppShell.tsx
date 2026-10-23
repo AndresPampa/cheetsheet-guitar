@@ -9,7 +9,7 @@ import {
   getModesContaining,
   getParallelModes,
 } from '../theory/index.ts'
-import { useUrlState, type ChordRef } from '../state/index.ts'
+import { useTheme, useUrlState, type ChordRef } from '../state/index.ts'
 import { ChordDiagram, type VoicingsLoader } from './ChordDiagram.tsx'
 import { ChordPanel } from './ChordPanel.tsx'
 import { CircleOfFifths, type CircleSelection } from './CircleOfFifths.tsx'
@@ -45,6 +45,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const [state, update] = useUrlState()
   const { tonic, mode, chordKind, chord: chordRef, language, notation } = state
   const t = getMessages(language, notation)
+  const [theme, setTheme] = useTheme()
   const keyInfo = getKey(tonic, mode)
   const modes = getParallelModes(tonic)
   const { index, alternate } = getCircleSpelling(tonic, mode)
@@ -97,6 +98,15 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               value={notation}
               onChange={(value) => update({ notation: value })}
             />
+            <SegmentedSwitch
+              label={t.themeGroup}
+              options={[
+                { value: 'dark', label: '☾', name: t.themes.dark },
+                { value: 'light', label: '☀', name: t.themes.light },
+              ]}
+              value={theme}
+              onChange={setTheme}
+            />
           </div>
         </header>
         <main className="app-layout">
@@ -132,6 +142,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
                   quality={chord.quality}
                   voicings={voicings}
                   draw={drawDiagram}
+                  theme={theme}
                 />
               }
             />
