@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22.12"
+    "node": "^22.22.2"
   },
   "scripts": {
     "dev": "vite",
@@ -47,6 +47,6 @@
     "vitest": "^5.0.5"
   },
   "overrides": {
-    "playwright-core": "1.64.0"
+    "playwright-core": "$@playwright/test"
   }
 }

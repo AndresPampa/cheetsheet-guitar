@@ -15,8 +15,9 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
 | Versión | Alcance | Estado |
 |---|---|---|
 | v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi, accesibilidad y celular | ✅ Completa |
+| v1.5 | Publicación en Vercel con CI como portero y headers de seguridad | 🚧 En curso |
 | v2 | Modos de menor armónica y melódica, extensiones (9/11/13, sus, add), armador de progresiones | 💡 Idea |
-| v3 | Despliegue y backend para guardar progresiones | 💡 Idea |
+| v3 | Backend para guardar progresiones | 💡 Idea |
 
 ## Funcionalidades (v1)
 
@@ -154,7 +155,7 @@ TypeScript · React · Vite · [tonal](https://github.com/tonaljs/tonal) (teorí
 
 ## Desarrollo
 
-Requiere Node.js ≥ 22.12.
+Requiere Node.js 22 (≥ 22.22.2; ver `.nvmrc`).
 
 ```bash
 npm install          # instalar dependencias
@@ -165,6 +166,22 @@ npm run test:e2e     # tests de punta a punta (Playwright: escritorio y celular)
 npm run lint         # oxlint + chequeo de tipos
 npm run build        # build de producción en dist/
 ```
+
+## Despliegue y seguridad
+
+El sitio es estático y se publica en Vercel desde `main`. `main` solo recibe pull requests con el
+CI de GitHub Actions en verde (`.github/workflows/ci.yml`: formato, lint, tests, `npm audit` y
+E2E), así que a producción solo llega código verificado. No hay backend, cuentas ni secretos.
+
+- **Headers de seguridad** en `vercel.json`: CSP estricta (sin `unsafe-inline` ni `unsafe-eval`;
+  el único script inline va por hash), `nosniff`, `frame-ancestors 'none'`, `Referrer-Policy`,
+  `Permissions-Policy`, HSTS. `vite preview` sirve los mismos, y los E2E verifican que la carga,
+  el audio y los diagramas funcionan bajo esa política sin violaciones.
+- **Entradas validadas**: la URL y el tema guardado en el navegador son las únicas entradas, y
+  cada valor se valida contra una lista cerrada; cualquier otra cosa vuelve a su valor por defecto.
+- **Dependencias** fijadas por el lockfile (`npm ci`), auditadas todas en el CI y actualizadas por
+  Dependabot (solo versiones con más de dos semanas, salvo parches de seguridad). Las actions de
+  GitHub están fijadas por commit.
 
 ## Licencia
 
