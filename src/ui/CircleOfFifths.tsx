@@ -6,7 +6,7 @@ import {
   type CircleSpelling,
   type KeyMode,
 } from '../theory/index.ts'
-import { displaySymbol, useMessages, type Messages } from '../i18n/index.ts'
+import { useMessages, type Messages } from '../i18n/index.ts'
 import './CircleOfFifths.css'
 
 export interface CircleSelection {
@@ -53,14 +53,15 @@ function labelPosition(radius: number, index: number): { x: number; y: number } 
 
 /** A highlighted sector shows the chord as spelled in the key; otherwise every spelling. */
 function sectorSymbols(
+  t: Messages,
   spelling: CircleSpelling,
   ring: CircleRing,
   highlight: CircleHighlight | undefined,
 ): string[] {
-  if (highlight !== undefined) return [displaySymbol(highlight.symbol)]
+  if (highlight !== undefined) return [t.symbol(highlight.symbol)]
   const names =
     spelling.alternate === undefined ? [spelling.tonic] : [spelling.tonic, spelling.alternate]
-  return names.map((name) => displaySymbol(name + SUFFIX[ring]))
+  return names.map((name) => t.symbol(name + SUFFIX[ring]))
 }
 
 /** Chord name (one or two spellings) plus, when the chord is in the key, its degree. */
@@ -180,7 +181,7 @@ export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifth
           const spelling = position[ring]
           const highlight = highlights.find((h) => h.index === index && h.ring === ring)
           const isSelected = selected.index === index && selected.ring === ring
-          const symbols = sectorSymbols(spelling, ring, highlight)
+          const symbols = sectorSymbols(t, spelling, ring, highlight)
           const className = [
             'sector',
             `sector--${ring}`,
@@ -230,7 +231,7 @@ export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifth
               <SectorText
                 index={index}
                 ring="diminished"
-                symbols={sectorSymbols(diminished, 'diminished', highlight)}
+                symbols={sectorSymbols(t, diminished, 'diminished', highlight)}
                 roman={highlight?.roman}
               />
             </g>

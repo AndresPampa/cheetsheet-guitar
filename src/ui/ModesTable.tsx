@@ -1,4 +1,4 @@
-import { displayRoman, displaySymbol, useMessages } from '../i18n/index.ts'
+import { displayRoman, useMessages } from '../i18n/index.ts'
 import type { ChordKind } from '../state/index.ts'
 import type { Mode, ModeName } from '../theory/index.ts'
 import './ModesTable.css'
@@ -20,7 +20,7 @@ export function ModesTable({ root, modes, chordKind, onChordClick }: ModesTableP
     <div className="modes-table">
       <div className="modes-table-scroll">
         <table>
-          <caption>{t.modesCaption(displaySymbol(root))}</caption>
+          <caption>{t.modesCaption(t.symbol(root))}</caption>
           <thead>
             <tr>
               <th scope="col">{t.modeColumn}</th>
@@ -37,7 +37,7 @@ export function ModesTable({ root, modes, chordKind, onChordClick }: ModesTableP
               <tr key={mode.name}>
                 <th scope="row">
                   <span className="mode-name">{t.modeName[mode.name]}</span>{' '}
-                  <span className="mode-scale">{mode.scale.map(displaySymbol).join(' ')}</span>
+                  <span className="mode-scale">{mode.scale.map(t.symbol).join(' ')}</span>
                 </th>
                 <td className="mode-characteristic">
                   {mode.characteristic === null ? (
@@ -65,7 +65,7 @@ export function ModesTable({ root, modes, chordKind, onChordClick }: ModesTableP
                         onClick={() => onChordClick(mode.name, chord.degree)}
                       >
                         <span className="chord-roman">{displayRoman(shown.roman)}</span>{' '}
-                        <span className="chord-symbol">{displaySymbol(shown.symbol)}</span>
+                        <span className="chord-symbol">{t.symbol(shown.symbol)}</span>
                         {chord.star && (
                           <>
                             <span aria-hidden="true"> ⭐</span>

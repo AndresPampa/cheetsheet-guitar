@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { displayRoman, displaySymbol, useMessages } from '../i18n/index.ts'
+import { displayRoman, useMessages } from '../i18n/index.ts'
 import type { ModeMatch } from '../theory/index.ts'
 import './ChordPanel.css'
 
@@ -26,7 +26,7 @@ export function ChordPanel({
   diagram,
 }: ChordPanelProps) {
   const t = useMessages()
-  const shownSymbol = displaySymbol(symbol)
+  const shownSymbol = t.symbol(symbol)
   return (
     <div className="chord-panel">
       {/* Announces the newly opened chord to screen readers. */}
@@ -42,7 +42,7 @@ export function ChordPanel({
         </button>
       </div>
       <p>{t.degreeIn(displayRoman(roman), context)}</p>
-      <p>{t.notes(notes.map(displaySymbol).join(' '))}</p>
+      <p>{t.notes(notes.map(t.symbol).join(' '))}</p>
       {diagram}
       <p className="chord-panel-modes-title">{t.appearsIn}</p>
       <ul className="chord-panel-modes" aria-label={t.modesContaining}>

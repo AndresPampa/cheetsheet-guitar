@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { displayRoman, displaySymbol, getMessages } from './index.ts'
+import { displayRoman, getMessages } from './index.ts'
 
 const es = getMessages('es')
 const en = getMessages('en')
 
-describe('displaySymbol', () => {
+describe('symbol, with letter names', () => {
   const cases: Array<[string, string]> = [
     ['C', 'C'],
     ['F#m7', 'F♯m7'],
@@ -15,7 +15,7 @@ describe('displaySymbol', () => {
   ]
 
   it.each(cases)('shows %s as %s', (symbol, shown) => {
-    expect(displaySymbol(symbol)).toBe(shown)
+    expect(getMessages('es').symbol(symbol)).toBe(shown)
   })
 })
 
@@ -113,5 +113,55 @@ describe('getMessages', () => {
     expect(en.position(1, 4)).toBe('Position 1 of 4')
     expect(es.fromFret(3)).toBe('desde el traste 3')
     expect(en.fromFret(3)).toBe('from fret 3')
+  })
+})
+
+describe('solfège naming (Do Re Mi), independent of the language', () => {
+  const esDo = getMessages('es', 'solfege')
+  const enDo = getMessages('en', 'solfege')
+
+  const symbols: Array<[string, string]> = [
+    ['C', 'Do'],
+    ['D', 'Re'],
+    ['E', 'Mi'],
+    ['F#', 'Fa♯'],
+    ['G', 'Sol'],
+    ['Ab', 'La♭'],
+    ['Bb', 'Si♭'],
+    ['F#m7', 'Fa♯m7'],
+    ['Bbmaj7', 'Si♭maj7'],
+    ['Bm7b5', 'Sim7b5'],
+    ['G°', 'Sol°'],
+    ['Bbb', 'Si♭♭'],
+    ['N.C.', 'N.C.'],
+  ]
+
+  it.each(symbols)('shows %s as %s, keeping the chord suffix', (symbol, shown) => {
+    expect(esDo.symbol(symbol)).toBe(shown)
+    expect(enDo.symbol(symbol)).toBe(shown)
+  })
+
+  it('keeps letter names by default', () => {
+    expect(getMessages('es').symbol('F#m7')).toBe('F♯m7')
+    expect(getMessages('en', 'letters').symbol('Bb')).toBe('B♭')
+  })
+
+  it('reads the solfège name for screen readers, with the words of the language', () => {
+    expect(esDo.spokenNote('F#')).toBe('Fa sostenido')
+    expect(enDo.spokenNote('Bb')).toBe('Si flat')
+    expect(esDo.spokenNote('E#m')).toBe('Mi sostenido')
+    expect(enDo.spokenNote('C')).toBe('Do')
+    expect(esDo.spokenNote('Gbb')).toBe('Sol doble bemol')
+  })
+
+  it('names the notes of the key signature and the characteristic note in solfège', () => {
+    expect(esDo.signature({ accidental: 'sharp', notes: ['F#', 'C#'] })).toBe(
+      'Armadura: 2 sostenidos (Fa♯ Do♯)',
+    )
+    expect(enDo.signature({ accidental: 'flat', notes: ['Bb'] })).toBe(
+      'Key signature: 1 flat (Si♭)',
+    )
+    expect(esDo.characteristic('6M', 'A')).toBe('6ª mayor (La)')
+    expect(enDo.characteristic('4A', 'F#')).toBe('♯4 (Fa♯)')
   })
 })

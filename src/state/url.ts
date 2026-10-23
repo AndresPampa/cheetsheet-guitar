@@ -1,10 +1,9 @@
 import { getKey, getParallelModes, type KeyMode, type ModeName } from '../theory/index.ts'
-import type { Language } from '../i18n/index.ts'
+import type { Language, Notation } from '../i18n/index.ts'
 
 /** Which chord on each degree the panels list. The circle always shows triads. */
 export type ChordKind = 'triads' | 'sevenths'
-export type Notation = 'letters' | 'solfege'
-export type { Language }
+export type { Language, Notation }
 
 /**
  * The chord open in the panel, by origin and degree rather than by value: it follows the

@@ -1,4 +1,4 @@
-import { displaySymbol, useMessages } from '../i18n/index.ts'
+import { useMessages } from '../i18n/index.ts'
 import type { ChordKind } from '../state/index.ts'
 import type { Key } from '../theory/index.ts'
 
@@ -29,11 +29,11 @@ export function KeyPanel({
     <section className="key-panel" aria-label={t.keyRegion}>
       <div className="key-panel-header">
         <h2>
-          {displaySymbol(keyInfo.tonic)} {mode}
+          {t.symbol(keyInfo.tonic)} {mode}
         </h2>
         {alternate !== undefined && (
           <button type="button" className="respell" onClick={() => onRespell(alternate)}>
-            {t.respell(`${displaySymbol(alternate)} ${mode}`)}
+            {t.respell(`${t.symbol(alternate)} ${mode}`)}
           </button>
         )}
       </div>
@@ -62,7 +62,7 @@ export function KeyPanel({
                 onClick={() => onChordClick(chord.degree)}
               >
                 <span className="chord-roman">{roman}</span>{' '}
-                <span className="chord-symbol">{displaySymbol(symbol)}</span>
+                <span className="chord-symbol">{t.symbol(symbol)}</span>
               </button>
             </li>
           )

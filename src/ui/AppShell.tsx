@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { AudioPort } from '../audio/index.ts'
-import { displaySymbol, getMessages, MessagesContext, type Language } from '../i18n/index.ts'
+import { getMessages, MessagesContext, type Language, type Notation } from '../i18n/index.ts'
 import {
   CIRCLE_OF_FIFTHS,
   getCircleHighlights,
@@ -23,6 +23,11 @@ const LANGUAGES: Array<{ value: Language; label: string; lang: string }> = [
   { value: 'es', label: 'ES', lang: 'es' },
   { value: 'en', label: 'EN', lang: 'en' },
 ]
+// Note names, not words: the same labels in every language.
+const NOTATIONS: Array<{ value: Notation; label: string }> = [
+  { value: 'letters', label: 'C D E' },
+  { value: 'solfege', label: 'Do Re Mi' },
+]
 
 // Injected services: the app passes Tone.js, chords-db and svguitar; tests pass fakes.
 interface AppShellProps {
@@ -38,8 +43,8 @@ interface AppShellProps {
  */
 export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const [state, update] = useUrlState()
-  const { tonic, mode, chordKind, chord: chordRef, language } = state
-  const t = getMessages(language)
+  const { tonic, mode, chordKind, chord: chordRef, language, notation } = state
+  const t = getMessages(language, notation)
   const keyInfo = getKey(tonic, mode)
   const modes = getParallelModes(tonic)
   const { index, alternate } = getCircleSpelling(tonic, mode)
@@ -64,7 +69,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   }
 
   const chord = resolve(chordRef)
-  const root = displaySymbol(tonic)
+  const root = t.symbol(tonic)
   const context =
     chordRef.source === 'key' ? `${root} ${t.keyMode[mode]}` : t.modeContext(root, chordRef.source)
 
@@ -85,6 +90,12 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               options={LANGUAGES}
               value={language}
               onChange={(value) => update({ language: value })}
+            />
+            <SegmentedSwitch
+              label={t.noteNamesGroup}
+              options={NOTATIONS}
+              value={notation}
+              onChange={(value) => update({ notation: value })}
             />
           </div>
         </header>
@@ -116,7 +127,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               onPlay={() => audio.playChord(chord.notes)}
               diagram={
                 <ChordDiagram
-                  name={displaySymbol(chord.symbol)}
+                  name={t.symbol(chord.symbol)}
                   root={chord.root}
                   quality={chord.quality}
                   voicings={voicings}

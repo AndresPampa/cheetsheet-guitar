@@ -7,8 +7,11 @@ export type Language = 'es' | 'en'
  * translation is a type error. Functions take theory spellings (`F#`) unless they say otherwise.
  */
 export interface Messages {
+  /** A note or chord in the current note naming: `F#m7` → `F♯m7` or `Fa♯m7`. */
+  symbol: (symbol: string) => string
   appTitle: string
   languageGroup: string
+  noteNamesGroup: string
 
   // Panels (landmark regions)
   circleRegion: string

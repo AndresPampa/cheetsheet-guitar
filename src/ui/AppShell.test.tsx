@@ -1061,6 +1061,172 @@ describe('AppShell', () => {
     })
   })
 
+  describe('note names (C D E / Do Re Mi)', () => {
+    const namesSwitch = () => screen.getByRole('group', { name: /^(Nombres de notas|Note names)$/ })
+    const namesButton = (name: string) => within(namesSwitch()).getByRole('button', { name })
+    const chordPanel = () => screen.getByRole('region', { name: 'Acorde seleccionado' })
+    const modesTable = () => screen.getByRole('table', { name: /^Modos paralelos de/ })
+    const dorianRow = () => within(modesTable()).getByRole('row', { name: /^Dórico/ })
+
+    it('starts on letter names with the switch on C D E', () => {
+      renderShell()
+
+      expect(namesButton('C D E')).toHaveAttribute('aria-pressed', 'true')
+      expect(namesButton('Do Re Mi')).toHaveAttribute('aria-pressed', 'false')
+    })
+
+    it('names the circle and the key panel in solfège', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(namesButton('Do Re Mi'))
+
+      expect(namesButton('Do Re Mi')).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.getByRole('radio', { name: 'Do mayor, grado I' })).toBeChecked()
+      expect(screen.getByRole('radio', { name: 'Sol mayor, grado V' })).toHaveTextContent('Sol')
+      expect(
+        screen.getByRole('radio', { name: 'Fa sostenido o Sol bemol mayor' }),
+      ).toHaveTextContent('Fa♯Sol♭')
+      expect(within(keyPanel()).getByRole('heading', { name: 'Do mayor' })).toBeInTheDocument()
+      expect(chordList()).toEqual([
+        'I Do',
+        'ii Rem',
+        'iii Mim',
+        'IV Fa',
+        'V Sol',
+        'vi Lam',
+        'vii° Si°',
+      ])
+    })
+
+    it('names the key signature and the respelling in solfège', async () => {
+      const user = userEvent.setup()
+      renderShell()
+      await user.click(namesButton('Do Re Mi'))
+
+      await user.click(screen.getByRole('radio', { name: 'Fa sostenido o Sol bemol mayor' }))
+
+      expect(
+        within(keyPanel()).getByText('Armadura: 6 sostenidos (Fa♯ Do♯ Sol♯ Re♯ La♯ Mi♯)'),
+      ).toBeInTheDocument()
+      expect(
+        within(keyPanel()).getByRole('button', { name: 'Ver como Sol♭ mayor' }),
+      ).toBeInTheDocument()
+    })
+
+    it('keeps the chord suffixes when sevenths are on', async () => {
+      const user = userEvent.setup()
+      renderShell()
+      await user.click(namesButton('Do Re Mi'))
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
+
+      expect(chordList()).toEqual([
+        'Imaj7 Domaj7',
+        'ii7 Rem7',
+        'iii7 Mim7',
+        'IVmaj7 Famaj7',
+        'V7 Sol7',
+        'vi7 Lam7',
+        'viiø7 Sim7b5',
+      ])
+    })
+
+    it('names the chord panel in solfège', async () => {
+      const user = userEvent.setup()
+      renderShell()
+      await user.click(namesButton('Do Re Mi'))
+
+      await user.click(within(dorianRow()).getByRole('button', { name: /^♭III Mi♭/ }))
+
+      expect(within(chordPanel()).getByRole('heading', { name: 'Mi♭' })).toBeInTheDocument()
+      expect(within(chordPanel()).getByRole('button', { name: 'Escuchar Mi♭' })).toBeInTheDocument()
+      expect(within(chordPanel()).getByText('Grado ♭III · Do dórico')).toBeInTheDocument()
+      expect(within(chordPanel()).getByText('Notas: Mi♭ Sol Si♭')).toBeInTheDocument()
+    })
+
+    it('names the modes table in solfège', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(namesButton('Do Re Mi'))
+
+      expect(modesTable()).toHaveAccessibleName('Modos paralelos de Do')
+      expect(dorianRow()).toHaveTextContent('Do Re Mi♭ Fa Sol La Si♭')
+      expect(within(dorianRow()).getByText('6ª mayor (La)')).toBeInTheDocument()
+      expect(
+        within(dorianRow())
+          .getAllByRole('button')
+          .map((cell) => cell.textContent),
+      ).toEqual([
+        'i Dom (prestado)',
+        'ii Rem (característica)',
+        '♭III Mi♭ (prestado)',
+        'IV Fa ⭐ (más representativo) (característica)',
+        'v Solm (prestado)',
+        'vi° La° (característica) (prestado)',
+        '♭VII Si♭ (prestado)',
+      ])
+    })
+
+    it('names the chord diagram in solfège', async () => {
+      const user = userEvent.setup()
+      renderShell({ voicings: loadVoicings })
+
+      await user.click(namesButton('Do Re Mi'))
+
+      expect(
+        await within(chordPanel()).findByRole('img', {
+          name: 'Diagrama de Do: cuerdas de 6ª a 1ª x 3 2 0 1 0',
+        }),
+      ).toBeInTheDocument()
+    })
+
+    it('combines with English: solfège names, English words', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(screen.getByRole('button', { name: 'EN' }))
+      await user.click(namesButton('Do Re Mi'))
+
+      expect(screen.getByRole('group', { name: 'Note names' })).toBeInTheDocument()
+      expect(screen.getByRole('radio', { name: 'Do major, degree I' })).toBeChecked()
+      expect(screen.getByRole('radio', { name: 'Fa sharp or Sol flat major' })).toBeInTheDocument()
+      expect(screen.getByRole('table', { name: 'Parallel modes of Do' })).toBeInTheDocument()
+    })
+
+    it('writes the naming to the URL and restores it', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(namesButton('Do Re Mi'))
+      expect(window.location.search).toBe('?names=solfege')
+
+      await user.click(namesButton('C D E'))
+      expect(window.location.search).toBe('')
+    })
+
+    it('starts in solfège from the URL', () => {
+      window.history.replaceState(null, '', '/?names=solfege&key=G')
+
+      renderShell()
+
+      expect(namesButton('Do Re Mi')).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.getByRole('radio', { name: 'Sol mayor, grado I' })).toBeChecked()
+    })
+
+    it('still plays the chord with its real spelling', async () => {
+      const user = userEvent.setup()
+      const played: string[][] = []
+      renderShell({ audio: { playChord: (notes) => void played.push(notes) } })
+      await user.click(namesButton('Do Re Mi'))
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'V Sol' }))
+
+      expect(played).toEqual([['G', 'B', 'D']])
+    })
+  })
+
   describe('keyboard', () => {
     it('selects the focused sector with Enter', async () => {
       const user = userEvent.setup()
