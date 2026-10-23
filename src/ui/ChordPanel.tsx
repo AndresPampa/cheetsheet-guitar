@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react'
+import { displayRoman, useMessages } from '../i18n/index.ts'
 import type { ModeMatch } from '../theory/index.ts'
-import { displayRoman, displaySymbol, greekModeName } from './notation.ts'
 import './ChordPanel.css'
 
 interface ChordPanelProps {
   symbol: string
   roman: string
-  /** Where the chord was taken from: `C mayor`, `C dórico`. */
+  /** Where the chord was taken from, already translated: `C mayor`, `C Dorian`. */
   context: string
   notes: string[]
   /** Parallel modes of the root that contain this chord. */
@@ -25,7 +25,8 @@ export function ChordPanel({
   onPlay,
   diagram,
 }: ChordPanelProps) {
-  const shownSymbol = displaySymbol(symbol)
+  const t = useMessages()
+  const shownSymbol = t.symbol(symbol)
   return (
     <div className="chord-panel">
       {/* Announces the newly opened chord to screen readers. */}
@@ -34,26 +35,24 @@ export function ChordPanel({
         <button
           type="button"
           className="play"
-          aria-label={`Escuchar ${shownSymbol}`}
+          aria-label={t.listenTo(shownSymbol)}
           onClick={onPlay}
         >
-          ▶ Escuchar
+          ▶ {t.listen}
         </button>
       </div>
-      <p>
-        Grado {displayRoman(roman)} · {context}
-      </p>
-      <p>Notas: {notes.map(displaySymbol).join(' ')}</p>
+      <p>{t.degreeIn(displayRoman(roman), context)}</p>
+      <p>{t.notes(notes.map(t.symbol).join(' '))}</p>
       {diagram}
-      <p className="chord-panel-modes-title">Aparece en:</p>
-      <ul className="chord-panel-modes" aria-label="Modos donde aparece">
+      <p className="chord-panel-modes-title">{t.appearsIn}</p>
+      <ul className="chord-panel-modes" aria-label={t.modesContaining}>
         {modes.map((match) => (
           <li key={match.mode}>
-            {greekModeName(match.mode)} {displayRoman(match.roman)}
+            {t.modeName[match.mode]} {displayRoman(match.roman)}
             {match.star && (
               <>
                 <span aria-hidden="true"> ⭐</span>
-                <span className="sr-only"> (más representativo)</span>
+                <span className="sr-only"> {t.mostRepresentative}</span>
               </>
             )}
           </li>

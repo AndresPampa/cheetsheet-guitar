@@ -9,6 +9,21 @@
       content="Círculo de quintas interactivo para componer en guitarra: acordes diatónicos, modos e intercambio modal."
     />
     <title>Círculo de Quintas</title>
+    <script>
+      // Theme before the first paint, so a remembered light theme never flashes dark. Same key
+      // and rule as src/state/theme.ts (useTheme), which keeps it up to date afterwards.
+      ;(function () {
+        var theme = null
+        try {
+          theme = localStorage.getItem('cheetsheet-guitar:theme')
+        } catch (error) {}
+        if (theme !== 'dark' && theme !== 'light') {
+          var light = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches
+          theme = light ? 'light' : 'dark'
+        }
+        document.documentElement.dataset.theme = theme
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

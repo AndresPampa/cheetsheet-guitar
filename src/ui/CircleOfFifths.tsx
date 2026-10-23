@@ -6,7 +6,7 @@ import {
   type CircleSpelling,
   type KeyMode,
 } from '../theory/index.ts'
-import { displaySymbol, modeName, spokenNote } from './notation.ts'
+import { useMessages, type Messages } from '../i18n/index.ts'
 import './CircleOfFifths.css'
 
 export interface CircleSelection {
@@ -53,14 +53,15 @@ function labelPosition(radius: number, index: number): { x: number; y: number } 
 
 /** A highlighted sector shows the chord as spelled in the key; otherwise every spelling. */
 function sectorSymbols(
+  t: Messages,
   spelling: CircleSpelling,
   ring: CircleRing,
   highlight: CircleHighlight | undefined,
 ): string[] {
-  if (highlight !== undefined) return [displaySymbol(highlight.symbol)]
+  if (highlight !== undefined) return [t.symbol(highlight.symbol)]
   const names =
     spelling.alternate === undefined ? [spelling.tonic] : [spelling.tonic, spelling.alternate]
-  return names.map((name) => displaySymbol(name + SUFFIX[ring]))
+  return names.map((name) => t.symbol(name + SUFFIX[ring]))
 }
 
 /** Chord name (one or two spellings) plus, when the chord is in the key, its degree. */
@@ -102,17 +103,18 @@ function SectorText({
 }
 
 function sectorName(
+  t: Messages,
   spelling: CircleSpelling,
   ring: KeyMode,
   highlight: CircleHighlight | undefined,
 ): string {
   if (highlight !== undefined) {
-    return `${spokenNote(highlight.symbol)} ${modeName(ring)}, grado ${highlight.roman}`
+    return `${t.spokenNote(highlight.symbol)} ${t.keyMode[ring]}, ${t.sectorDegree(highlight.roman)}`
   }
   const names = [spelling.tonic, spelling.alternate].flatMap((n) =>
-    n === undefined ? [] : [spokenNote(n)],
+    n === undefined ? [] : [t.spokenNote(n)],
   )
-  return `${names.join(' o ')} ${modeName(ring)}`
+  return `${t.sectorSpellings(names)} ${t.keyMode[ring]}`
 }
 
 function isFocusVisible(element: Element): boolean {
@@ -137,6 +139,7 @@ function Outline({ at, variant }: { at: CircleSelection; variant: 'selected' | '
 const sectorKey = (index: number, ring: CircleRing) => `${ring}-${index}`
 
 export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifthsProps) {
+  const t = useMessages()
   const sectors = useRef(new Map<string, SVGGElement>())
   const [focused, setFocused] = useState<CircleSelection | null>(null)
 
@@ -171,14 +174,14 @@ export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifth
   }
 
   return (
-    <svg className="circle" viewBox="-215 -215 430 430" role="radiogroup" aria-label="Tonalidades">
+    <svg className="circle" viewBox="-215 -215 430 430" role="radiogroup" aria-label={t.keysGroup}>
       {(['major', 'minor'] as const).flatMap((ring) =>
         CIRCLE_OF_FIFTHS.map((position) => {
           const { index } = position
           const spelling = position[ring]
           const highlight = highlights.find((h) => h.index === index && h.ring === ring)
           const isSelected = selected.index === index && selected.ring === ring
-          const symbols = sectorSymbols(spelling, ring, highlight)
+          const symbols = sectorSymbols(t, spelling, ring, highlight)
           const className = [
             'sector',
             `sector--${ring}`,
@@ -198,7 +201,7 @@ export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifth
               role="radio"
               tabIndex={isSelected ? 0 : -1}
               aria-checked={isSelected}
-              aria-label={sectorName(spelling, ring, highlight)}
+              aria-label={sectorName(t, spelling, ring, highlight)}
               onClick={() => onSelect({ index, ring })}
               onKeyDown={(event) => handleKeyDown(event, index, ring)}
               onFocus={(event) => handleFocus(event, index, ring)}
@@ -228,7 +231,7 @@ export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifth
               <SectorText
                 index={index}
                 ring="diminished"
-                symbols={sectorSymbols(diminished, 'diminished', highlight)}
+                symbols={sectorSymbols(t, diminished, 'diminished', highlight)}
                 roman={highlight?.roman}
               />
             </g>

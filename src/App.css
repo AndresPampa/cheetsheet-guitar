@@ -4,17 +4,35 @@
   padding: 16px;
 }
 
+/* Title on the left, global switches on the right; the switches wrap below on a phone. */
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+}
+
 .app-header h1 {
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 1.5rem;
 }
 
+.app-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* The modes table gets the full width: seven chord columns do not fit half of it. DOM order
+   (circle, chord, modes) matches the visual order here and on the phone stack. */
 .app-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
-    'circle modes'
-    'chord chord';
+    'circle chord'
+    'modes modes';
   gap: 16px;
 }
 
