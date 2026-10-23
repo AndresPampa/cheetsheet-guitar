@@ -1,11 +1,8 @@
-import type { Key } from '../theory/index.ts'
+import { displaySymbol, useMessages } from '../i18n/index.ts'
 import type { ChordKind } from '../state/index.ts'
-import { displaySymbol, modeName, signatureText } from './notation.ts'
+import type { Key } from '../theory/index.ts'
 
-const CHORD_KINDS: Array<{ kind: ChordKind; label: string }> = [
-  { kind: 'triads', label: 'Triadas' },
-  { kind: 'sevenths', label: 'Séptimas' },
-]
+const CHORD_KINDS: ChordKind[] = ['triads', 'sevenths']
 
 interface KeyPanelProps {
   keyInfo: Key
@@ -26,33 +23,34 @@ export function KeyPanel({
   onChordKindChange,
   onChordClick,
 }: KeyPanelProps) {
-  const mode = modeName(keyInfo.mode)
+  const t = useMessages()
+  const mode = t.keyMode[keyInfo.mode]
   return (
-    <section className="key-panel" aria-label="Tonalidad seleccionada">
+    <section className="key-panel" aria-label={t.keyRegion}>
       <div className="key-panel-header">
         <h2>
           {displaySymbol(keyInfo.tonic)} {mode}
         </h2>
         {alternate !== undefined && (
           <button type="button" className="respell" onClick={() => onRespell(alternate)}>
-            Ver como {displaySymbol(alternate)} {mode}
+            {t.respell(`${displaySymbol(alternate)} ${mode}`)}
           </button>
         )}
       </div>
-      <p className="key-signature">{signatureText(keyInfo.signature)}</p>
-      <div className="chord-kind" role="group" aria-label="Tipo de acorde">
-        {CHORD_KINDS.map(({ kind, label }) => (
+      <p className="key-signature">{t.signature(keyInfo.signature)}</p>
+      <div className="chord-kind" role="group" aria-label={t.chordKindGroup}>
+        {CHORD_KINDS.map((kind) => (
           <button
             key={kind}
             type="button"
             aria-pressed={chordKind === kind}
             onClick={() => onChordKindChange(kind)}
           >
-            {label}
+            {t[kind]}
           </button>
         ))}
       </div>
-      <ol className="chord-list" aria-label="Acordes diatónicos">
+      <ol className="chord-list" aria-label={t.diatonicChords}>
         {keyInfo.chords.map((chord) => {
           // Color stays the triad family (m7b5 reads as diminished, V7 as major).
           const { roman, symbol } = chordKind === 'sevenths' ? chord.seventh : chord

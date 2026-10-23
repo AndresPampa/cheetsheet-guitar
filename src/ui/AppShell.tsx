@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import type { AudioPort } from '../audio/index.ts'
+import { displaySymbol, getMessages, MessagesContext, type Language } from '../i18n/index.ts'
 import {
   CIRCLE_OF_FIFTHS,
   getCircleHighlights,
@@ -13,10 +15,14 @@ import { ChordPanel } from './ChordPanel.tsx'
 import { CircleOfFifths, type CircleSelection } from './CircleOfFifths.tsx'
 import { KeyPanel } from './KeyPanel.tsx'
 import { ModesTable } from './ModesTable.tsx'
-import { displaySymbol, greekModeName, modeName } from './notation.ts'
+import { SegmentedSwitch } from './SegmentedSwitch.tsx'
 import type { DiagramDrawer } from './svguitarDiagram.ts'
 
 const TONIC_CHORD: ChordRef = { source: 'key', degree: 1 }
+const LANGUAGES: Array<{ value: Language; label: string; lang: string }> = [
+  { value: 'es', label: 'ES', lang: 'es' },
+  { value: 'en', label: 'EN', lang: 'en' },
+]
 
 // Injected services: the app passes Tone.js, chords-db and svguitar; tests pass fakes.
 interface AppShellProps {
@@ -32,7 +38,8 @@ interface AppShellProps {
  */
 export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const [state, update] = useUrlState()
-  const { tonic, mode, chordKind, chord: chordRef } = state
+  const { tonic, mode, chordKind, chord: chordRef, language } = state
+  const t = getMessages(language)
   const keyInfo = getKey(tonic, mode)
   const modes = getParallelModes(tonic)
   const { index, alternate } = getCircleSpelling(tonic, mode)
@@ -59,61 +66,75 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const chord = resolve(chordRef)
   const root = displaySymbol(tonic)
   const context =
-    chordRef.source === 'key'
-      ? `${root} ${modeName(mode)}`
-      : `${root} ${greekModeName(chordRef.source).toLowerCase()}`
+    chordRef.source === 'key' ? `${root} ${t.keyMode[mode]}` : t.modeContext(root, chordRef.source)
+
+  // The page itself follows the language: screen readers pick the voice from `lang`.
+  useEffect(() => {
+    document.documentElement.lang = language
+    document.title = t.appTitle
+  }, [language, t])
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Círculo de Quintas</h1>
-      </header>
-      <main className="app-layout">
-        <section className="panel panel-circle" aria-label="Círculo de quintas">
-          <div className="key-explorer">
-            <CircleOfFifths
-              selected={{ index, ring: mode }}
-              highlights={getCircleHighlights(keyInfo)}
-              onSelect={select}
-            />
-            <KeyPanel
-              keyInfo={keyInfo}
-              alternate={alternate}
-              onRespell={respell}
-              chordKind={chordKind}
-              onChordKindChange={(kind) => update({ chordKind: kind })}
-              onChordClick={(degree) => open({ source: 'key', degree })}
+    <MessagesContext value={t}>
+      <div className="app">
+        <header className="app-header">
+          <h1>{t.appTitle}</h1>
+          <div className="app-settings">
+            <SegmentedSwitch
+              label={t.languageGroup}
+              options={LANGUAGES}
+              value={language}
+              onChange={(value) => update({ language: value })}
             />
           </div>
-        </section>
-        <section className="panel panel-chord" aria-label="Acorde seleccionado">
-          <ChordPanel
-            symbol={chord.symbol}
-            roman={chord.roman}
-            context={context}
-            notes={chord.notes}
-            modes={getModesContaining(tonic, chord.symbol)}
-            onPlay={() => audio.playChord(chord.notes)}
-            diagram={
-              <ChordDiagram
-                name={displaySymbol(chord.symbol)}
-                root={chord.root}
-                quality={chord.quality}
-                voicings={voicings}
-                draw={drawDiagram}
+        </header>
+        <main className="app-layout">
+          <section className="panel panel-circle" aria-label={t.circleRegion}>
+            <div className="key-explorer">
+              <CircleOfFifths
+                selected={{ index, ring: mode }}
+                highlights={getCircleHighlights(keyInfo)}
+                onSelect={select}
               />
-            }
-          />
-        </section>
-        <section className="panel panel-modes" aria-label="Modos">
-          <ModesTable
-            root={tonic}
-            modes={modes}
-            chordKind={chordKind}
-            onChordClick={(source, degree) => open({ source, degree })}
-          />
-        </section>
-      </main>
-    </div>
+              <KeyPanel
+                keyInfo={keyInfo}
+                alternate={alternate}
+                onRespell={respell}
+                chordKind={chordKind}
+                onChordKindChange={(kind) => update({ chordKind: kind })}
+                onChordClick={(degree) => open({ source: 'key', degree })}
+              />
+            </div>
+          </section>
+          <section className="panel panel-chord" aria-label={t.chordRegion}>
+            <ChordPanel
+              symbol={chord.symbol}
+              roman={chord.roman}
+              context={context}
+              notes={chord.notes}
+              modes={getModesContaining(tonic, chord.symbol)}
+              onPlay={() => audio.playChord(chord.notes)}
+              diagram={
+                <ChordDiagram
+                  name={displaySymbol(chord.symbol)}
+                  root={chord.root}
+                  quality={chord.quality}
+                  voicings={voicings}
+                  draw={drawDiagram}
+                />
+              }
+            />
+          </section>
+          <section className="panel panel-modes" aria-label={t.modesRegion}>
+            <ModesTable
+              root={tonic}
+              modes={modes}
+              chordKind={chordKind}
+              onChordClick={(source, degree) => open({ source, degree })}
+            />
+          </section>
+        </main>
+      </div>
+    </MessagesContext>
   )
 }

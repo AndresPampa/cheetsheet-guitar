@@ -887,6 +887,180 @@ describe('AppShell', () => {
     })
   })
 
+  describe('language', () => {
+    const languageSwitch = () => screen.getByRole('group', { name: /^(Idioma|Language)$/ })
+    const languageButton = (name: string) => within(languageSwitch()).getByRole('button', { name })
+
+    it('starts in Spanish with the switch on ES', () => {
+      renderShell()
+
+      expect(languageButton('ES')).toHaveAttribute('aria-pressed', 'true')
+      expect(languageButton('EN')).toHaveAttribute('aria-pressed', 'false')
+      expect(document.documentElement.lang).toBe('es')
+      expect(document.title).toBe('Círculo de Quintas')
+    })
+
+    it('switches the header, the key panel and the circle to English', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(languageButton('EN'))
+
+      expect(languageButton('EN')).toHaveAttribute('aria-pressed', 'true')
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'Circle of Fifths' }),
+      ).toBeInTheDocument()
+      expect(screen.getByRole('region', { name: 'Circle of fifths' })).toBeInTheDocument()
+      expect(screen.getByRole('radiogroup', { name: 'Keys' })).toBeInTheDocument()
+      expect(screen.getByRole('radio', { name: 'C major, degree I' })).toBeChecked()
+      expect(screen.getByRole('radio', { name: 'F sharp or G flat major' })).toBeInTheDocument()
+      const key = screen.getByRole('region', { name: 'Selected key' })
+      expect(within(key).getByRole('heading', { name: 'C major' })).toBeInTheDocument()
+      expect(within(key).getByText('Key signature: no accidentals')).toBeInTheDocument()
+      expect(within(key).getByRole('group', { name: 'Chord type' })).toBeInTheDocument()
+      expect(within(key).getByRole('button', { name: 'Triads' })).toBeInTheDocument()
+      expect(within(key).getByRole('button', { name: 'Sevenths' })).toBeInTheDocument()
+      expect(within(key).getByRole('list', { name: 'Diatonic chords' })).toBeInTheDocument()
+    })
+
+    it('switches the chord panel and the modes table to English', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(languageButton('EN'))
+
+      const chord = screen.getByRole('region', { name: 'Selected chord' })
+      expect(within(chord).getByRole('button', { name: 'Listen to C' })).toHaveTextContent(
+        '▶ Listen',
+      )
+      expect(within(chord).getByText('Degree I · C major')).toBeInTheDocument()
+      expect(within(chord).getByText('Notes: C E G')).toBeInTheDocument()
+      expect(within(chord).getByText('Appears in:')).toBeInTheDocument()
+      expect(
+        within(within(chord).getByRole('list', { name: 'Modes containing it' }))
+          .getAllByRole('listitem')
+          .map((item) => item.textContent),
+      ).toEqual(['Ionian I', 'Lydian I', 'Mixolydian I'])
+      expect(within(chord).getByText('Loading diagram…')).toBeInTheDocument()
+
+      const modes = screen.getByRole('region', { name: 'Modes' })
+      const table = within(modes).getByRole('table', { name: 'Parallel modes of C' })
+      expect(within(table).getByRole('columnheader', { name: 'Mode' })).toBeInTheDocument()
+      expect(
+        within(table).getByRole('columnheader', { name: 'Characteristic note' }),
+      ).toBeInTheDocument()
+      const ionian = within(table).getByRole('row', { name: /^Ionian/ })
+      expect(within(ionian).getByText('none (reference)')).toBeInTheDocument()
+      const dorian = within(table).getByRole('row', { name: /^Dorian/ })
+      expect(within(dorian).getByText('major 6th (A)')).toBeInTheDocument()
+      // Same row as the Spanish oracle above ('marks characteristic, borrowed and starred…').
+      expect(
+        within(dorian)
+          .getAllByRole('button')
+          .map((cell) => cell.textContent),
+      ).toEqual([
+        'i Cm (borrowed)',
+        'ii Dm (characteristic)',
+        '♭III E♭ (borrowed)',
+        'IV F ⭐ (most representative) (characteristic)',
+        'v Gm (borrowed)',
+        'vi° A° (characteristic) (borrowed)',
+        '♭VII B♭ (borrowed)',
+      ])
+      expect(within(modes).getByText(/^⭐ most representative/)).toHaveTextContent(
+        '⭐ most representative · underlined: contains the characteristic note · ' +
+          'dashed border: borrowed (differs from Ionian)',
+      )
+    })
+
+    it('names a modal chord in English in the chord panel', async () => {
+      const user = userEvent.setup()
+      renderShell()
+      await user.click(languageButton('EN'))
+      const table = screen.getByRole('table', { name: 'Parallel modes of C' })
+      const dorian = within(table).getByRole('row', { name: /^Dorian/ })
+
+      await user.click(within(dorian).getByRole('button', { name: /^IV F/ }))
+
+      const chord = screen.getByRole('region', { name: 'Selected chord' })
+      expect(within(chord).getByText('Degree IV · C Dorian')).toBeInTheDocument()
+    })
+
+    it('names the respelling and the signature of an enharmonic key in English', async () => {
+      const user = userEvent.setup()
+      renderShell()
+      await user.click(languageButton('EN'))
+
+      await user.click(screen.getByRole('radio', { name: 'F sharp or G flat major' }))
+
+      const key = screen.getByRole('region', { name: 'Selected key' })
+      expect(
+        within(key).getByText('Key signature: 6 sharps (F♯ C♯ G♯ D♯ A♯ E♯)'),
+      ).toBeInTheDocument()
+      expect(within(key).getByRole('button', { name: 'See as G♭ major' })).toBeInTheDocument()
+      expect(screen.getByRole('radio', { name: 'F sharp major, degree I' })).toBeChecked()
+    })
+
+    it('describes the chord diagram in English', async () => {
+      const user = userEvent.setup()
+      renderShell({ voicings: loadVoicings })
+      await user.click(languageButton('EN'))
+      const chord = screen.getByRole('region', { name: 'Selected chord' })
+
+      expect(
+        await within(chord).findByRole('img', {
+          name: 'Diagram of C: strings 6th to 1st x 3 2 0 1 0',
+        }),
+      ).toBeInTheDocument()
+      expect(within(chord).getByText('Position 1 of 4')).toBeInTheDocument()
+      expect(within(chord).getByRole('button', { name: 'Previous position' })).toBeInTheDocument()
+
+      await user.click(within(chord).getByRole('button', { name: 'Next position' }))
+
+      expect(
+        within(chord).getByRole('img', {
+          name: 'Diagram of C: strings 6th to 1st 3 3 5 5 5 3, from fret 3',
+        }),
+      ).toBeInTheDocument()
+    })
+
+    it('marks the page as English and writes the language to the URL', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(languageButton('EN'))
+
+      expect(document.documentElement.lang).toBe('en')
+      expect(document.title).toBe('Circle of Fifths')
+      expect(window.location.search).toBe('?lang=en')
+    })
+
+    it('starts in English from the URL', () => {
+      window.history.replaceState(null, '', '/?lang=en&key=G')
+
+      renderShell()
+
+      expect(languageButton('EN')).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.getByRole('radio', { name: 'G major, degree I' })).toBeChecked()
+      expect(document.documentElement.lang).toBe('en')
+    })
+
+    it('goes back to Spanish and drops the language from the URL', async () => {
+      const user = userEvent.setup()
+      window.history.replaceState(null, '', '/?lang=en')
+      renderShell()
+
+      await user.click(languageButton('ES'))
+
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'Círculo de Quintas' }),
+      ).toBeInTheDocument()
+      expect(screen.getByRole('radio', { name: 'C mayor, grado I' })).toBeChecked()
+      expect(document.documentElement.lang).toBe('es')
+      expect(window.location.search).toBe('')
+    })
+  })
+
   describe('keyboard', () => {
     it('selects the focused sector with Enter', async () => {
       const user = userEvent.setup()
@@ -911,6 +1085,8 @@ describe('AppShell', () => {
     it('puts only the selected sector in the tab order', async () => {
       const user = userEvent.setup()
       renderShell()
+      // The header switches come first; start from the last of them.
+      within(screen.getByRole('banner')).getAllByRole('button').at(-1)!.focus()
 
       await user.tab()
       expect(screen.getByRole('radio', { name: /^C mayor/ })).toHaveFocus()
