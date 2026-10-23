@@ -115,6 +115,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
             <div className="key-explorer">
               <CircleOfFifths
                 selected={{ index, ring: mode }}
+                selectedSignature={keyInfo.signature}
                 highlights={getCircleHighlights(keyInfo)}
                 onSelect={select}
               />

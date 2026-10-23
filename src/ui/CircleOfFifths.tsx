@@ -1,10 +1,12 @@
 import { useRef, useState, type FocusEvent, type KeyboardEvent } from 'react'
 import {
   CIRCLE_OF_FIFTHS,
+  getKey,
   type CircleHighlight,
   type CircleRing,
   type CircleSpelling,
   type KeyMode,
+  type KeySignature,
 } from '../theory/index.ts'
 import { useMessages, type Messages } from '../i18n/index.ts'
 import './CircleOfFifths.css'
@@ -16,9 +18,14 @@ export interface CircleSelection {
 
 interface CircleOfFifthsProps {
   selected: CircleSelection
+  /** Signature of the selected key, in the spelling it was chosen with (C# vs Db). */
+  selectedSignature: KeySignature
   highlights: CircleHighlight[]
   onSelect: (selection: CircleSelection) => void
 }
+
+const spellingsOf = ({ tonic, alternate }: CircleSpelling) =>
+  alternate === undefined ? [tonic] : [tonic, alternate]
 
 const RINGS: Record<CircleRing, { inner: number; outer: number; label: number; roman: number }> = {
   major: { inner: 150, outer: 210, label: 178, roman: 201 },
@@ -59,8 +66,7 @@ function sectorSymbols(
   highlight: CircleHighlight | undefined,
 ): string[] {
   if (highlight !== undefined) return [t.symbol(highlight.symbol)]
-  const names =
-    spelling.alternate === undefined ? [spelling.tonic] : [spelling.tonic, spelling.alternate]
+  const names = spellingsOf(spelling)
   return names.map((name) => t.symbol(name + SUFFIX[ring]))
 }
 
@@ -102,19 +108,27 @@ function SectorText({
   )
 }
 
+/**
+ * A free sector is a key: its spellings and their signatures. A diatonic sector is a chord of
+ * the selected key, spelled as that key spells it, so only the tonic (the selected sector) adds
+ * a signature — another sector's own signature could contradict the chord's spelling.
+ */
 function sectorName(
   t: Messages,
   spelling: CircleSpelling,
   ring: KeyMode,
   highlight: CircleHighlight | undefined,
+  selectedSignature: KeySignature | undefined,
 ): string {
   if (highlight !== undefined) {
-    return `${t.spokenNote(highlight.symbol)} ${t.keyMode[ring]}, ${t.sectorDegree(highlight.roman)}`
+    const chord = `${t.spokenNote(highlight.symbol)} ${t.keyMode[ring]}, ${t.sectorDegree(highlight.roman)}`
+    return selectedSignature === undefined
+      ? chord
+      : `${chord}, ${t.sectorSignature([selectedSignature])}`
   }
-  const names = [spelling.tonic, spelling.alternate].flatMap((n) =>
-    n === undefined ? [] : [t.spokenNote(n)],
-  )
-  return `${t.sectorSpellings(names)} ${t.keyMode[ring]}`
+  const spellings = spellingsOf(spelling)
+  const signatures = spellings.map((tonic) => getKey(tonic, ring).signature)
+  return `${t.sectorSpellings(spellings.map((note) => t.spokenNote(note)))} ${t.keyMode[ring]}, ${t.sectorSignature(signatures)}`
 }
 
 function isFocusVisible(element: Element): boolean {
@@ -138,7 +152,12 @@ function Outline({ at, variant }: { at: CircleSelection; variant: 'selected' | '
 
 const sectorKey = (index: number, ring: CircleRing) => `${ring}-${index}`
 
-export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifthsProps) {
+export function CircleOfFifths({
+  selected,
+  selectedSignature,
+  highlights,
+  onSelect,
+}: CircleOfFifthsProps) {
   const t = useMessages()
   const sectors = useRef(new Map<string, SVGGElement>())
   const [focused, setFocused] = useState<CircleSelection | null>(null)
@@ -201,7 +220,13 @@ export function CircleOfFifths({ selected, highlights, onSelect }: CircleOfFifth
               role="radio"
               tabIndex={isSelected ? 0 : -1}
               aria-checked={isSelected}
-              aria-label={sectorName(t, spelling, ring, highlight)}
+              aria-label={sectorName(
+                t,
+                spelling,
+                ring,
+                highlight,
+                isSelected ? selectedSignature : undefined,
+              )}
               onClick={() => onSelect({ index, ring })}
               onKeyDown={(event) => handleKeyDown(event, index, ring)}
               onFocus={(event) => handleFocus(event, index, ring)}

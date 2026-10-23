@@ -32,6 +32,8 @@ export interface Messages {
   /** `C sostenido o D bemol`: the spoken spellings of one sector. */
   sectorSpellings: (spoken: string[]) => string
   sectorDegree: (roman: string) => string
+  /** `6 sostenidos o 6 bemoles`: the signature count of each spelling of one sector. */
+  sectorSignature: (signatures: KeySignature[]) => string
 
   // Key panel
   keyRegion: string

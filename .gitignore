@@ -29,6 +29,9 @@ build/
 node_modules/
 coverage/
 *.local
+test-results/
+playwright-report/
+blob-report/
 
 # Agent tooling (local state)
 .claude/settings.local.json
