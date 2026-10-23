@@ -894,19 +894,29 @@ describe('AppShell', () => {
     it('starts in Spanish with the switch on ES', () => {
       renderShell()
 
-      expect(languageButton('ES')).toHaveAttribute('aria-pressed', 'true')
-      expect(languageButton('EN')).toHaveAttribute('aria-pressed', 'false')
+      expect(languageButton('Español')).toHaveAttribute('aria-pressed', 'true')
+      expect(languageButton('English')).toHaveAttribute('aria-pressed', 'false')
       expect(document.documentElement.lang).toBe('es')
       expect(document.title).toBe('Círculo de Quintas')
+    })
+
+    it('shows the language codes and names each language in itself', () => {
+      renderShell()
+
+      // Read as words, not spelled out: "Español", "English", each in its own voice (lang).
+      expect(languageButton('Español')).toHaveTextContent(/^ES$/)
+      expect(languageButton('Español')).toHaveAttribute('lang', 'es')
+      expect(languageButton('English')).toHaveTextContent(/^EN$/)
+      expect(languageButton('English')).toHaveAttribute('lang', 'en')
     })
 
     it('switches the header, the key panel and the circle to English', async () => {
       const user = userEvent.setup()
       renderShell()
 
-      await user.click(languageButton('EN'))
+      await user.click(languageButton('English'))
 
-      expect(languageButton('EN')).toHaveAttribute('aria-pressed', 'true')
+      expect(languageButton('English')).toHaveAttribute('aria-pressed', 'true')
       expect(
         screen.getByRole('heading', { level: 1, name: 'Circle of Fifths' }),
       ).toBeInTheDocument()
@@ -927,7 +937,7 @@ describe('AppShell', () => {
       const user = userEvent.setup()
       renderShell()
 
-      await user.click(languageButton('EN'))
+      await user.click(languageButton('English'))
 
       const chord = screen.getByRole('region', { name: 'Selected chord' })
       expect(within(chord).getByRole('button', { name: 'Listen to C' })).toHaveTextContent(
@@ -976,7 +986,7 @@ describe('AppShell', () => {
     it('names a modal chord in English in the chord panel', async () => {
       const user = userEvent.setup()
       renderShell()
-      await user.click(languageButton('EN'))
+      await user.click(languageButton('English'))
       const table = screen.getByRole('table', { name: 'Parallel modes of C' })
       const dorian = within(table).getByRole('row', { name: /^Dorian/ })
 
@@ -989,7 +999,7 @@ describe('AppShell', () => {
     it('names the respelling and the signature of an enharmonic key in English', async () => {
       const user = userEvent.setup()
       renderShell()
-      await user.click(languageButton('EN'))
+      await user.click(languageButton('English'))
 
       await user.click(screen.getByRole('radio', { name: 'F sharp or G flat major' }))
 
@@ -1004,7 +1014,7 @@ describe('AppShell', () => {
     it('describes the chord diagram in English', async () => {
       const user = userEvent.setup()
       renderShell({ voicings: loadVoicings })
-      await user.click(languageButton('EN'))
+      await user.click(languageButton('English'))
       const chord = screen.getByRole('region', { name: 'Selected chord' })
 
       expect(
@@ -1028,7 +1038,7 @@ describe('AppShell', () => {
       const user = userEvent.setup()
       renderShell()
 
-      await user.click(languageButton('EN'))
+      await user.click(languageButton('English'))
 
       expect(document.documentElement.lang).toBe('en')
       expect(document.title).toBe('Circle of Fifths')
@@ -1040,7 +1050,7 @@ describe('AppShell', () => {
 
       renderShell()
 
-      expect(languageButton('EN')).toHaveAttribute('aria-pressed', 'true')
+      expect(languageButton('English')).toHaveAttribute('aria-pressed', 'true')
       expect(screen.getByRole('radio', { name: 'G major, degree I' })).toBeChecked()
       expect(document.documentElement.lang).toBe('en')
     })
@@ -1050,7 +1060,7 @@ describe('AppShell', () => {
       window.history.replaceState(null, '', '/?lang=en')
       renderShell()
 
-      await user.click(languageButton('ES'))
+      await user.click(languageButton('Español'))
 
       expect(
         screen.getByRole('heading', { level: 1, name: 'Círculo de Quintas' }),
@@ -1186,7 +1196,7 @@ describe('AppShell', () => {
       const user = userEvent.setup()
       renderShell()
 
-      await user.click(screen.getByRole('button', { name: 'EN' }))
+      await user.click(screen.getByRole('button', { name: 'English' }))
       await user.click(namesButton('Do Re Mi'))
 
       expect(screen.getByRole('group', { name: 'Note names' })).toBeInTheDocument()
@@ -1268,7 +1278,7 @@ describe('AppShell', () => {
 
       expect(themeButton('Oscuro')).toHaveAttribute('aria-pressed', 'true')
       expect(themeButton('Claro')).toHaveAttribute('aria-pressed', 'false')
-      expect(html).not.toHaveAttribute('data-theme')
+      expect(html).toHaveAttribute('data-theme', 'dark')
     })
 
     it('follows a light system theme when nothing was chosen', () => {
@@ -1277,13 +1287,14 @@ describe('AppShell', () => {
       renderShell()
 
       expect(themeButton('Claro')).toHaveAttribute('aria-pressed', 'true')
-      expect(html).not.toHaveAttribute('data-theme')
+      expect(html).toHaveAttribute('data-theme', 'light')
     })
 
     it('is dark when the browser cannot tell the system theme', () => {
       renderShell()
 
       expect(themeButton('Oscuro')).toHaveAttribute('aria-pressed', 'true')
+      expect(html).toHaveAttribute('data-theme', 'dark')
     })
 
     it('applies and remembers the chosen theme, outside the URL', async () => {
@@ -1316,7 +1327,7 @@ describe('AppShell', () => {
       renderShell()
 
       expect(themeButton('Claro')).toHaveAttribute('aria-pressed', 'true')
-      expect(html).not.toHaveAttribute('data-theme')
+      expect(html).toHaveAttribute('data-theme', 'light')
     })
 
     it('follows the system when it changes, until a theme is chosen', async () => {
@@ -1326,11 +1337,13 @@ describe('AppShell', () => {
 
       system.change(true)
       expect(themeButton('Claro')).toHaveAttribute('aria-pressed', 'true')
+      expect(html).toHaveAttribute('data-theme', 'light')
 
       await user.click(themeButton('Oscuro'))
       system.change(false)
       system.change(true)
       expect(themeButton('Oscuro')).toHaveAttribute('aria-pressed', 'true')
+      expect(html).toHaveAttribute('data-theme', 'dark')
     })
 
     it('still works when the browser blocks storage', async () => {
@@ -1354,7 +1367,7 @@ describe('AppShell', () => {
       const user = userEvent.setup()
       renderShell()
 
-      await user.click(screen.getByRole('button', { name: 'EN' }))
+      await user.click(screen.getByRole('button', { name: 'English' }))
 
       expect(themeButton('Dark')).toHaveAttribute('aria-pressed', 'true')
       expect(themeButton('Light')).toBeInTheDocument()
@@ -1376,9 +1389,46 @@ describe('AppShell', () => {
       expect(drawn).toHaveLength(before + 1)
       expect(drawn.at(-1)).toEqual([-1, 3, 2, 0, 1, 0])
     })
+    it('applies the new theme before the diagram redraws, so it reads the new colors', async () => {
+      const user = userEvent.setup()
+      fakeSystemTheme(false)
+      const themesAtDraw: Array<string | undefined> = []
+      renderShell({
+        voicings: loadVoicings,
+        drawDiagram: () => void themesAtDraw.push(document.documentElement.dataset.theme),
+      })
+      await screen.findByRole('img', { name: /^Diagrama de C/ })
+
+      await user.click(themeButton('Claro'))
+
+      expect(themesAtDraw.at(-1)).toBe('light')
+    })
   })
 
   describe('keyboard', () => {
+    it('tabs through the page in visual order: header switches, circle, then the panels', async () => {
+      const user = userEvent.setup()
+      renderShell()
+      const stops: string[] = []
+
+      for (const _ of Array.from({ length: 8 })) {
+        await user.tab()
+        const focused = document.activeElement
+        stops.push(focused?.getAttribute('aria-label') ?? focused?.textContent ?? '')
+      }
+
+      expect(stops).toEqual([
+        'Español',
+        'English',
+        'C D E',
+        'Do Re Mi',
+        'Oscuro',
+        'Claro',
+        'C mayor, grado I',
+        'Triadas',
+      ])
+    })
+
     it('selects the focused sector with Enter', async () => {
       const user = userEvent.setup()
       renderShell()

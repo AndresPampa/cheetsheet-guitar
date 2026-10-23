@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 
 export type Theme = 'dark' | 'light'
 
 // A device preference, not part of a shared link: it lives in localStorage, not in the URL.
+// The inline script in index.html repeats this key and rule to set the theme before first paint.
 const STORAGE_KEY = 'cheetsheet-guitar:theme'
 const LIGHT_QUERY = '(prefers-color-scheme: light)'
 
@@ -31,8 +32,7 @@ const systemTheme = (): Theme => (systemQuery()?.matches === true ? 'light' : 'd
 
 /**
  * The theme in use: the remembered choice, or else the system's, followed live while nothing
- * was chosen. A choice is written as `data-theme` on `<html>`; without one the CSS follows
- * `prefers-color-scheme` by itself.
+ * was chosen. Always written as `data-theme` on `<html>`, which is all the CSS reads.
  */
 export function useTheme(): [Theme, (theme: Theme) => void] {
   const [choice, setChoice] = useState(readChoice)
@@ -46,14 +46,16 @@ export function useTheme(): [Theme, (theme: Theme) => void] {
     return () => query.removeEventListener('change', follow)
   }, [])
 
-  useEffect(() => {
-    if (choice === null) document.documentElement.removeAttribute('data-theme')
-    else document.documentElement.dataset.theme = choice
-  }, [choice])
+  // A layout effect runs before every passive one, children's included: the diagram, which
+  // reads the colors when it draws, already sees the new theme.
+  const theme = choice ?? system
+  useLayoutEffect(() => {
+    document.documentElement.dataset.theme = theme
+  }, [theme])
 
-  const choose = (theme: Theme) => {
-    saveChoice(theme)
-    setChoice(theme)
+  const choose = (next: Theme) => {
+    saveChoice(next)
+    setChoice(next)
   }
-  return [choice ?? system, choose]
+  return [theme, choose]
 }

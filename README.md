@@ -8,11 +8,13 @@ los diagramas en la guitarra y el sonido de cada acorde.
 ## Estado
 
 🚧 **En desarrollo.** La v1 se construye por partes; ya funcionan el círculo, el interruptor
-Triadas / Séptimas, la tabla de modos paralelos y el panel de acorde con sonido y diagrama en la guitarra.
+Triadas / Séptimas, la tabla de modos paralelos, el panel de acorde con sonido y diagrama en la
+guitarra, la interfaz en español e inglés, los nombres Do Re Mi, el tema claro / oscuro y la
+selección guardada en la URL. Falta la última parte: accesibilidad, celular y tests de punta a punta.
 
 | Versión | Alcance | Estado |
 |---|---|---|
-| v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi | 🚧 En curso (7 de 9 partes) |
+| v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi | 🚧 En curso (8 de 9 partes) |
 | v2 | Modos de menor armónica y melódica, extensiones (9/11/13, sus, add), armador de progresiones | 💡 Idea |
 | v3 | Despliegue y backend para guardar progresiones | 💡 Idea |
 
@@ -31,8 +33,14 @@ Triadas / Séptimas, la tabla de modos paralelos y el panel de acorde con sonido
   como un rasgueo y muestra grado, notas, ▶ para repetirlo y en qué modos aparece.
 - ✅ **Diagramas en la guitarra** del acorde (trastes, dedos, cejilla, cuerdas al aire y
   silenciadas), con 4 posiciones por acorde para recorrer con ◀ ▶.
-- ⏳ Interruptores **C D E / Do Re Mi** e idioma **ES / EN**.
-- ⏳ La selección queda en la URL, así que se puede guardar en favoritos o compartir.
+- ✅ **Idioma ES / EN** (español por defecto): se traduce todo, incluidos los modos, las calidades
+  y lo que anuncia el lector de pantalla.
+- ✅ **C D E / Do Re Mi** (C D E por defecto), independiente del idioma: cambia los nombres de las
+  notas en toda la app y deja los sufijos de acorde como están (`Fa♯m7`).
+- ✅ **Tema claro / oscuro**: sigue al del sistema hasta que elijas uno, y lo recuerda.
+- ✅ **La selección queda en la URL** (tonalidad, Triadas / Séptimas, acorde abierto, idioma y
+  nombres de notas), así que se puede guardar en favoritos o compartir. Por ejemplo,
+  `?key=G&mode=minor&chords=7th&chord=dorian.4` abre G menor con séptimas y el IV7 de G dórico.
 
 ## Arquitectura
 
@@ -43,15 +51,27 @@ con `tonal`. La UI no hace cuentas musicales: solo pide datos a `theory` y los p
 ```mermaid
 flowchart LR
     subgraph ui["src/ui — React"]
-        KE["KeyExplorer<br/>layout + estado"]
+        KE["AppShell<br/>encabezado + interruptores<br/>+ 3 paneles"]
         COF["CircleOfFifths"]
         KP["KeyPanel<br/>+ Triadas / Séptimas"]
         MT["ModesTable"]
         CP["ChordPanel<br/>▶ + modos donde aparece"]
-        NOT["notation<br/>♯ ♭, nombres, textos"]
         KE --> COF & KP & MT & CP
-        KP & MT & COF & CP -.-> NOT
     end
+
+    subgraph state["src/state"]
+        URL["useUrlState<br/>selección ↔ URL"]
+        THEME["useTheme<br/>localStorage o sistema"]
+    end
+
+    subgraph i18n["src/i18n"]
+        MSG["getMessages(idioma, nombres)<br/>diccionarios ES / EN"]
+        NOT["notation<br/>♯ ♭, Do Re Mi, lectura hablada"]
+        MSG --> NOT
+    end
+
+    KE --> URL & THEME & MSG
+    COF & KP & MT & CP -.->|useMessages| MSG
 
     subgraph theory["src/theory — TS puro"]
         KEY["key.ts<br/>getKey"]
@@ -86,16 +106,6 @@ flowchart LR
     KE --> LV & DRAW
     LV --> CHORDSDB
     DRAW --> SVGUITAR
-
-    subgraph next["Próximas partes"]
-        ST["state<br/>selección ↔ URL"]
-        I18N["i18n<br/>ES / EN, Do Re Mi"]
-    end
-
-    KE -.-> ST & I18N
-
-    classDef planned stroke-dasharray: 5 5
-    class ST,I18N planned
 ```
 
 Regla de dependencias: `ui` puede usar `state`, `theory`, `voicings`, `audio` e `i18n`; `theory`
@@ -107,7 +117,7 @@ Qué pasa al hacer click en una tonalidad del círculo:
 sequenceDiagram
     actor U as Guitarrista
     participant C as CircleOfFifths
-    participant E as KeyExplorer
+    participant E as AppShell
     participant T as theory
     participant P as KeyPanel
     participant M as ModesTable
@@ -115,7 +125,8 @@ sequenceDiagram
 
     U->>C: click en "A menor"
     C->>E: onSelect(posición, anillo)
-    E->>E: selección = A menor
+    E->>E: estado = A menor, acorde = i
+    E->>E: URL = ?key=A&mode=minor (replaceState)
     E->>T: getKey("A", "minor")
     T-->>E: escala, armadura y 7 acordes
     E->>T: getCircleHighlights(tonalidad)

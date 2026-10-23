@@ -25,27 +25,8 @@
   background: var(--bg);
 }
 
-/* Light palette, twice: CSS cannot share one block between a media query and a selector.
-   Without a choice it follows the system; data-theme (set by useTheme) forces either one.
-   Keep both copies equal. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) {
-    --bg: #f6f6f9;
-    --surface: #ffffff;
-    --border: #dcdde5;
-    --text: #1a1b24;
-    --text-muted: #5c5f72;
-    --accent: #8a5a00;
-    --major: #c98a12;
-    --minor: #4f86d9;
-    --surface-raised: #e9eaf1;
-    --surface-sunken: #dcdee8;
-    --sector-hover: #cfd2df;
-
-    color-scheme: light;
-  }
-}
-
+/* Light palette. data-theme is set before the first paint by the inline script in index.html
+   (the remembered choice, or else the system's) and kept up to date by useTheme. */
 :root[data-theme='light'] {
   --bg: #f6f6f9;
   --surface: #ffffff;

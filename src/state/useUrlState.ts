@@ -8,7 +8,8 @@ import { parseState, serializeState, type AppState } from './url.ts'
 export function useUrlState(): [AppState, (patch: Partial<AppState>) => void] {
   const [state, setState] = useState(() => parseState(window.location.search))
 
-  // Also runs on the first render, so parameters that fell back to a default are cleaned.
+  // Also runs on the first render, so parameters that fell back to a default are cleaned. The
+  // query is rewritten whole: parameters the app does not know (`utm_*`, `fbclid`) are dropped.
   useEffect(() => {
     const { pathname, hash } = window.location
     window.history.replaceState(window.history.state, '', pathname + serializeState(state) + hash)

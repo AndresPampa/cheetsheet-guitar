@@ -19,9 +19,10 @@ import { SegmentedSwitch } from './SegmentedSwitch.tsx'
 import type { DiagramDrawer } from './svguitarDiagram.ts'
 
 const TONIC_CHORD: ChordRef = { source: 'key', degree: 1 }
-const LANGUAGES: Array<{ value: Language; label: string; lang: string }> = [
-  { value: 'es', label: 'ES', lang: 'es' },
-  { value: 'en', label: 'EN', lang: 'en' },
+// Each language named in itself and read in its own voice, so it is not spelled out ("E S").
+const LANGUAGES: Array<{ value: Language; label: string; name: string; lang: string }> = [
+  { value: 'es', label: 'ES', name: 'Español', lang: 'es' },
+  { value: 'en', label: 'EN', name: 'English', lang: 'en' },
 ]
 // Note names, not words: the same labels in every language.
 const NOTATIONS: Array<{ value: Notation; label: string }> = [
@@ -37,9 +38,9 @@ interface AppShellProps {
 }
 
 /**
- * The whole app: header and the three panels (circle + key, chord, parallel modes). The
- * selected key, the triads/sevenths choice and the open chord live in the URL (`state`),
- * validated there.
+ * The whole app: header with the global switches and the three panels (circle + key, chord,
+ * parallel modes). The selected key, triads/sevenths, the open chord, the language and the note
+ * naming live in the URL (`state`), validated there; the theme is a device preference.
  */
 export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const [state, update] = useUrlState()
