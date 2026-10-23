@@ -3,30 +3,30 @@ import userEvent from '@testing-library/user-event'
 import type { ComponentProps } from 'react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { loadVoicings, type Voicing } from '../voicings/index.ts'
-import { KeyExplorer } from './KeyExplorer.tsx'
+import { AppShell } from './AppShell.tsx'
 
 // Fakes at the three boundaries. Real Tone.js and svguitar never run in jsdom (no audio, no
 // getBBox). Voicings stay pending unless a test asks for the real data.
-type Services = ComponentProps<typeof KeyExplorer>
+type Services = ComponentProps<typeof AppShell>
 const services: Services = {
   audio: { playChord: () => {} },
   voicings: () => new Promise<never>(() => {}),
   drawDiagram: () => {},
 }
-const renderExplorer = (overrides: Partial<Services> = {}) =>
-  render(<KeyExplorer {...services} {...overrides} />)
+const renderShell = (overrides: Partial<Services> = {}) =>
+  render(<AppShell {...services} {...overrides} />)
 const keyPanel = () => screen.getByRole('region', { name: 'Tonalidad seleccionada' })
 const chordList = () =>
   within(keyPanel())
     .getAllByRole('listitem')
     .map((item) => item.textContent)
 
-describe('KeyExplorer', () => {
+describe('AppShell', () => {
   // The explorer reads and rewrites the URL: every test starts from a clean one.
   beforeEach(() => window.history.replaceState(null, '', '/'))
 
   it('draws 12 major and 12 minor sectors', () => {
-    renderExplorer()
+    renderShell()
 
     expect(screen.getAllByRole('radio', { name: /mayor/ })).toHaveLength(12)
     expect(screen.getAllByRole('radio', { name: /menor/ })).toHaveLength(12)
@@ -35,7 +35,7 @@ describe('KeyExplorer', () => {
   })
 
   it('orders the panels as they are laid out: circle, chord, then the full-width modes table', () => {
-    renderExplorer()
+    renderShell()
 
     const panelNames = screen
       .getAllByRole('region')
@@ -45,7 +45,7 @@ describe('KeyExplorer', () => {
   })
 
   it('names the enharmonic sectors with both spellings', () => {
-    renderExplorer()
+    renderShell()
 
     expect(screen.getByRole('radio', { name: /^B o C bemol mayor/ })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ })).toBeInTheDocument()
@@ -54,7 +54,7 @@ describe('KeyExplorer', () => {
   })
 
   it('starts on C major with its diatonic triads', () => {
-    renderExplorer()
+    renderShell()
 
     expect(screen.getByRole('radio', { name: /^C mayor/ })).toBeChecked()
     expect(within(keyPanel()).getByRole('heading', { name: 'C mayor' })).toBeInTheDocument()
@@ -64,7 +64,7 @@ describe('KeyExplorer', () => {
 
   it('selects a major key on click and shows its chords and signature', async () => {
     const user = userEvent.setup()
-    renderExplorer()
+    renderShell()
 
     await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
 
@@ -77,7 +77,7 @@ describe('KeyExplorer', () => {
 
   it('marks the diatonic sectors of the selected key with their degree', async () => {
     const user = userEvent.setup()
-    renderExplorer()
+    renderShell()
 
     await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
 
@@ -92,7 +92,7 @@ describe('KeyExplorer', () => {
 
   it('marks the diminished chord on the innermost ring, not on a minor key', async () => {
     const user = userEvent.setup()
-    renderExplorer()
+    renderShell()
 
     await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
 
@@ -108,7 +108,7 @@ describe('KeyExplorer', () => {
 
   it('selects a minor key from the inner ring with minor-key numerals', async () => {
     const user = userEvent.setup()
-    renderExplorer()
+    renderShell()
 
     await user.click(screen.getByRole('radio', { name: /^E menor/ }))
 
@@ -118,7 +118,7 @@ describe('KeyExplorer', () => {
 
   it('uses the singular for a one-flat signature', async () => {
     const user = userEvent.setup()
-    renderExplorer()
+    renderShell()
 
     await user.click(screen.getByRole('radio', { name: /^F mayor/ }))
 
@@ -127,7 +127,7 @@ describe('KeyExplorer', () => {
 
   it('lists flats in canonical order in the signature', async () => {
     const user = userEvent.setup()
-    renderExplorer()
+    renderShell()
 
     await user.click(screen.getByRole('radio', { name: /^E bemol mayor/ }))
 
@@ -139,7 +139,7 @@ describe('KeyExplorer', () => {
     const seventhsButton = () => within(keyPanel()).getByRole('button', { name: 'Séptimas' })
 
     it('starts on triads', () => {
-      renderExplorer()
+      renderShell()
 
       expect(triadsButton()).toHaveAttribute('aria-pressed', 'true')
       expect(seventhsButton()).toHaveAttribute('aria-pressed', 'false')
@@ -147,7 +147,7 @@ describe('KeyExplorer', () => {
 
     it('shows the diatonic seventh chords when switched to sevenths', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
 
       await user.click(seventhsButton())
 
@@ -166,7 +166,7 @@ describe('KeyExplorer', () => {
 
     it('keeps sevenths when another key is selected', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       await user.click(seventhsButton())
 
       await user.click(screen.getByRole('radio', { name: /^E menor/ }))
@@ -184,7 +184,7 @@ describe('KeyExplorer', () => {
 
     it('keeps sevenths when the key is respelled', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       await user.click(seventhsButton())
       await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
 
@@ -203,7 +203,7 @@ describe('KeyExplorer', () => {
 
     it('goes back to triads', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       await user.click(seventhsButton())
 
       await user.click(triadsButton())
@@ -213,7 +213,7 @@ describe('KeyExplorer', () => {
 
     it('leaves the circle labelled with triads', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
 
       await user.click(seventhsButton())
 
@@ -235,7 +235,7 @@ describe('KeyExplorer', () => {
     const characteristicOf = (name: string) => within(modeRow(name)).getAllByRole('cell')[0]
 
     it('lists the seven parallel modes of the selected root in order', () => {
-      renderExplorer()
+      renderShell()
 
       expect(modesTable()).toHaveAccessibleName('Modos paralelos de C')
       expect(
@@ -246,7 +246,7 @@ describe('KeyExplorer', () => {
     })
 
     it('shows each mode with its scale and characteristic note', () => {
-      renderExplorer()
+      renderShell()
 
       expect(modeRow('Dórico')).toHaveTextContent('C D E♭ F G A B♭')
       expect(characteristicOf('Dórico')).toHaveTextContent('6ª mayor (A)')
@@ -256,7 +256,7 @@ describe('KeyExplorer', () => {
     })
 
     it('marks characteristic, borrowed and starred chords on each degree', () => {
-      renderExplorer()
+      renderShell()
 
       expect(degreesOf('Dórico')).toEqual([
         'i Cm (prestado)',
@@ -279,7 +279,7 @@ describe('KeyExplorer', () => {
     })
 
     it('shows each degree and its chord as separate lines, like the key panel chips', () => {
-      renderExplorer()
+      renderShell()
       const cell = within(modeRow('Dórico')).getAllByRole('cell')[7]!
 
       expect(within(cell).getByText('♭VII')).toHaveClass('chord-roman')
@@ -287,7 +287,7 @@ describe('KeyExplorer', () => {
     })
 
     it('writes raised degrees with a sharp sign (lydian)', () => {
-      renderExplorer()
+      renderShell()
 
       expect(degreesOf('Lidio')).toEqual([
         'I C',
@@ -304,7 +304,7 @@ describe('KeyExplorer', () => {
     // must match the hidden flags (and follow the switch) instead of drifting from them.
     it('draws the visual cues for characteristic and borrowed chords', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       const cells = () => within(modeRow('Dórico')).getAllByRole('cell')
 
       expect(cells()[1]).toHaveClass('is-borrowed')
@@ -320,7 +320,7 @@ describe('KeyExplorer', () => {
 
     it('follows the circle to the root of the selected minor key', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
 
       await user.click(screen.getByRole('radio', { name: /^A menor/ }))
 
@@ -338,7 +338,7 @@ describe('KeyExplorer', () => {
 
     it('follows the respelled root', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como G♭ mayor' }))
@@ -349,7 +349,7 @@ describe('KeyExplorer', () => {
 
     it('follows the triads / sevenths switch', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
 
@@ -379,7 +379,7 @@ describe('KeyExplorer', () => {
 
     it('starts on the tonic chord of C major, silently', () => {
       const { played, audio } = fakeAudio()
-      renderExplorer({ audio })
+      renderShell({ audio })
 
       expect(within(chordPanel()).getByRole('heading', { name: 'C' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado I · C mayor')).toBeInTheDocument()
@@ -391,7 +391,7 @@ describe('KeyExplorer', () => {
     it('loads the tonic of a key picked on the circle without playing it', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      renderExplorer({ audio })
+      renderShell({ audio })
       await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
 
       await user.click(screen.getByRole('radio', { name: /^A menor/ }))
@@ -405,7 +405,7 @@ describe('KeyExplorer', () => {
     it('loads the tonic of the respelled key without playing it', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      renderExplorer({ audio })
+      renderShell({ audio })
       await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
       await user.click(within(keyPanel()).getByRole('button', { name: 'V C♯' }))
 
@@ -419,7 +419,7 @@ describe('KeyExplorer', () => {
     it('opens a modes-table chord as a seventh when sevenths are on', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      renderExplorer({ audio })
+      renderShell({ audio })
       await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
       const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
       const dorian = within(table).getByRole('row', { name: /^Dórico/ })
@@ -437,7 +437,7 @@ describe('KeyExplorer', () => {
     it('opens a chord of a minor key with both numberings', async () => {
       const user = userEvent.setup()
       const { audio } = fakeAudio()
-      renderExplorer({ audio })
+      renderShell({ audio })
       await user.click(screen.getByRole('radio', { name: /^A menor/ }))
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'III C' }))
@@ -449,7 +449,7 @@ describe('KeyExplorer', () => {
     it('opens and plays a chord clicked in the key panel', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      renderExplorer({ audio })
+      renderShell({ audio })
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
 
@@ -474,7 +474,7 @@ describe('KeyExplorer', () => {
     it('opens and plays a chord clicked in the modes table', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      renderExplorer({ audio })
+      renderShell({ audio })
       const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
       const dorian = within(table).getByRole('row', { name: /^Dórico/ })
 
@@ -494,7 +494,7 @@ describe('KeyExplorer', () => {
     it('replays the chord with the play button', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      renderExplorer({ audio })
+      renderShell({ audio })
 
       await user.click(within(chordPanel()).getByRole('button', { name: 'Escuchar C' }))
 
@@ -504,7 +504,7 @@ describe('KeyExplorer', () => {
     it('follows the triads / sevenths switch for the open chord', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      renderExplorer({ audio })
+      renderShell({ audio })
       await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
@@ -548,7 +548,7 @@ describe('KeyExplorer', () => {
 
     it('shows the most common position of the open chord', async () => {
       const { drawn, ...diagrams } = withDiagrams()
-      renderExplorer(diagrams)
+      renderShell(diagrams)
 
       expect(
         await within(chordPanel()).findByRole('img', {
@@ -562,7 +562,7 @@ describe('KeyExplorer', () => {
     it('steps through the other positions and back', async () => {
       const user = userEvent.setup()
       const { drawn, ...diagrams } = withDiagrams()
-      renderExplorer(diagrams)
+      renderShell(diagrams)
       const previous = await within(chordPanel()).findByRole('button', {
         name: 'Posición anterior',
       })
@@ -591,7 +591,7 @@ describe('KeyExplorer', () => {
 
     it('stops at the last position', async () => {
       const user = userEvent.setup()
-      renderExplorer(withDiagrams())
+      renderShell(withDiagrams())
       const next = await within(chordPanel()).findByRole('button', { name: 'Posición siguiente' })
 
       await user.click(next)
@@ -606,7 +606,7 @@ describe('KeyExplorer', () => {
 
     it('starts again at the first position for a newly opened chord', async () => {
       const user = userEvent.setup()
-      renderExplorer(withDiagrams())
+      renderShell(withDiagrams())
       await user.click(
         await within(chordPanel()).findByRole('button', { name: 'Posición siguiente' }),
       )
@@ -623,7 +623,7 @@ describe('KeyExplorer', () => {
 
     it('draws the seventh chord when sevenths are on', async () => {
       const user = userEvent.setup()
-      renderExplorer(withDiagrams())
+      renderShell(withDiagrams())
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
 
@@ -635,7 +635,7 @@ describe('KeyExplorer', () => {
     })
 
     it('says so when there is no diagram for the chord', async () => {
-      renderExplorer({ voicings: () => Promise.resolve([]) })
+      renderShell({ voicings: () => Promise.resolve([]) })
 
       expect(
         await within(chordPanel()).findByText('No hay diagrama para este acorde'),
@@ -644,7 +644,7 @@ describe('KeyExplorer', () => {
     })
 
     it('says so when the diagram data cannot be loaded', async () => {
-      renderExplorer({ voicings: () => Promise.reject(new Error('offline')) })
+      renderShell({ voicings: () => Promise.reject(new Error('offline')) })
 
       expect(
         await within(chordPanel()).findByText('No se pudo cargar el diagrama'),
@@ -654,7 +654,7 @@ describe('KeyExplorer', () => {
     it('ignores a late answer for a chord that is no longer open', async () => {
       const user = userEvent.setup()
       const pending = new Map<string, (list: Voicing[]) => void>()
-      renderExplorer({
+      renderShell({
         voicings: (root, quality) =>
           new Promise((resolve) => void pending.set(`${root} ${quality}`, resolve)),
       })
@@ -671,7 +671,7 @@ describe('KeyExplorer', () => {
     it('ignores a late failure for a chord that is no longer open', async () => {
       const user = userEvent.setup()
       const pending = new Map<string, { resolve: (list: Voicing[]) => void; reject: () => void }>()
-      renderExplorer({
+      renderShell({
         voicings: (root, quality) =>
           new Promise((resolve, reject) => {
             pending.set(`${root} ${quality}`, { resolve, reject: () => reject(new Error('late')) })
@@ -688,7 +688,7 @@ describe('KeyExplorer', () => {
 
     it('draws the matching shape for minor and diminished triads', async () => {
       const user = userEvent.setup()
-      renderExplorer(withDiagrams())
+      renderShell(withDiagrams())
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'ii Dm' }))
       expect(
@@ -706,7 +706,7 @@ describe('KeyExplorer', () => {
     })
 
     it('says the diagram is loading until the data arrives', () => {
-      renderExplorer()
+      renderShell()
 
       expect(within(chordPanel()).getByText('Cargando diagrama…')).toBeInTheDocument()
     })
@@ -715,7 +715,7 @@ describe('KeyExplorer', () => {
   describe('enharmonic spelling', () => {
     it('uses the sharp spelling for F#/Gb and offers the flat one', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
 
       await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
 
@@ -725,7 +725,7 @@ describe('KeyExplorer', () => {
 
     it('respells the whole key when switching to the alternate spelling', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       await user.click(screen.getByRole('radio', { name: /^D bemol o C sostenido mayor/ }))
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como C♯ mayor' }))
@@ -749,7 +749,7 @@ describe('KeyExplorer', () => {
 
     it('names the highlighted sectors with the spelling of the respelled key', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       await user.click(screen.getByRole('radio', { name: /^D bemol o C sostenido mayor/ }))
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como C♯ mayor' }))
@@ -766,7 +766,7 @@ describe('KeyExplorer', () => {
 
     it('shows a single spelling on an ambiguous sector that belongs to the key', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
 
       await user.click(screen.getByRole('radio', { name: /^E mayor/ }))
 
@@ -777,7 +777,7 @@ describe('KeyExplorer', () => {
     })
 
     it('offers no alternate spelling for an unambiguous key', () => {
-      renderExplorer()
+      renderShell()
 
       expect(within(keyPanel()).queryByRole('button', { name: /^Ver como/ })).toBeNull()
     })
@@ -791,7 +791,7 @@ describe('KeyExplorer', () => {
     it('restores the key, the chord kind and the open chord from the URL', () => {
       visit('/?key=G&mode=minor&chords=7th&chord=dorian.4')
 
-      renderExplorer()
+      renderShell()
 
       expect(screen.getByRole('radio', { name: /^G menor/ })).toBeChecked()
       expect(seventhsButton()).toHaveAttribute('aria-pressed', 'true')
@@ -802,7 +802,7 @@ describe('KeyExplorer', () => {
     it('falls back to C major for an invalid key, keeps the valid parameters and cleans the URL', () => {
       visit('/?key=H&chords=7th')
 
-      renderExplorer()
+      renderShell()
 
       expect(screen.getByRole('radio', { name: /^C mayor/ })).toBeChecked()
       expect(seventhsButton()).toHaveAttribute('aria-pressed', 'true')
@@ -810,14 +810,14 @@ describe('KeyExplorer', () => {
     })
 
     it('leaves the URL empty while everything is at its default', () => {
-      renderExplorer()
+      renderShell()
 
       expect(window.location.search).toBe('')
     })
 
     it('writes the key picked on the circle', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
 
       await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
       expect(window.location.search).toBe('?key=G')
@@ -828,7 +828,7 @@ describe('KeyExplorer', () => {
 
     it('writes the respelled key with its sharp encoded', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
 
       await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
       expect(window.location.search).toBe('?key=F%23')
@@ -839,7 +839,7 @@ describe('KeyExplorer', () => {
 
     it('writes the chord kind and the chord opened from either panel', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
 
       await user.click(seventhsButton())
       expect(window.location.search).toBe('?chords=7th')
@@ -856,7 +856,7 @@ describe('KeyExplorer', () => {
     it('drops the open chord from the URL when a new key loads its tonic', async () => {
       const user = userEvent.setup()
       visit('/?chord=key.5')
-      renderExplorer()
+      renderShell()
 
       await user.click(screen.getByRole('radio', { name: /^D mayor/ }))
 
@@ -866,7 +866,7 @@ describe('KeyExplorer', () => {
     it('keeps the path and the hash when it rewrites the query', async () => {
       const user = userEvent.setup()
       visit('/cheatsheet/?key=E#notes')
-      renderExplorer()
+      renderShell()
 
       await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
 
@@ -877,7 +877,7 @@ describe('KeyExplorer', () => {
 
     it('replaces the history entry instead of adding one, so Back leaves the app', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       const entries = window.history.length
 
       await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
@@ -890,7 +890,7 @@ describe('KeyExplorer', () => {
   describe('keyboard', () => {
     it('selects the focused sector with Enter', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       screen.getByRole('radio', { name: /^A mayor/ }).focus()
 
       await user.keyboard('{Enter}')
@@ -900,7 +900,7 @@ describe('KeyExplorer', () => {
 
     it('selects the focused sector with Space', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       screen.getByRole('radio', { name: /^B menor/ }).focus()
 
       await user.keyboard(' ')
@@ -910,7 +910,7 @@ describe('KeyExplorer', () => {
 
     it('puts only the selected sector in the tab order', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
 
       await user.tab()
       expect(screen.getByRole('radio', { name: /^C mayor/ })).toHaveFocus()
@@ -923,7 +923,7 @@ describe('KeyExplorer', () => {
 
     it('moves focus clockwise and counter-clockwise with the arrow keys', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       screen.getByRole('radio', { name: /^C mayor/ }).focus()
 
       await user.keyboard('{ArrowRight}')
@@ -935,7 +935,7 @@ describe('KeyExplorer', () => {
 
     it('switches between the outer and inner ring with up and down', async () => {
       const user = userEvent.setup()
-      renderExplorer()
+      renderShell()
       screen.getByRole('radio', { name: /^G mayor/ }).focus()
 
       await user.keyboard('{ArrowDown}')
