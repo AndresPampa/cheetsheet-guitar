@@ -1,8 +1,6 @@
 import type { Key } from '../theory/index.ts'
+import type { ChordKind } from '../state/index.ts'
 import { displaySymbol, modeName, signatureText } from './notation.ts'
-
-/** Which chord on each degree the panel lists. The circle always shows triads. */
-export type ChordKind = 'triads' | 'sevenths'
 
 const CHORD_KINDS: Array<{ kind: ChordKind; label: string }> = [
   { kind: 'triads', label: 'Triadas' },

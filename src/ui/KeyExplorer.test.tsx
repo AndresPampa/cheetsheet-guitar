@@ -1,7 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ComponentProps } from 'react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { loadVoicings, type Voicing } from '../voicings/index.ts'
 import { KeyExplorer } from './KeyExplorer.tsx'
 
@@ -22,6 +22,9 @@ const chordList = () =>
     .map((item) => item.textContent)
 
 describe('KeyExplorer', () => {
+  // The explorer reads and rewrites the URL: every test starts from a clean one.
+  beforeEach(() => window.history.replaceState(null, '', '/'))
+
   it('draws 12 major and 12 minor sectors', () => {
     renderExplorer()
 
@@ -777,6 +780,110 @@ describe('KeyExplorer', () => {
       renderExplorer()
 
       expect(within(keyPanel()).queryByRole('button', { name: /^Ver como/ })).toBeNull()
+    })
+  })
+
+  describe('state in the URL', () => {
+    const visit = (url: string) => window.history.replaceState(null, '', url)
+    const chordPanel = () => screen.getByRole('region', { name: 'Acorde seleccionado' })
+    const seventhsButton = () => within(keyPanel()).getByRole('button', { name: 'Séptimas' })
+
+    it('restores the key, the chord kind and the open chord from the URL', () => {
+      visit('/?key=G&mode=minor&chords=7th&chord=dorian.4')
+
+      renderExplorer()
+
+      expect(screen.getByRole('radio', { name: /^G menor/ })).toBeChecked()
+      expect(seventhsButton()).toHaveAttribute('aria-pressed', 'true')
+      expect(within(chordPanel()).getByRole('heading', { name: 'C7' })).toBeInTheDocument()
+      expect(within(chordPanel()).getByText('Grado IV7 · G dórico')).toBeInTheDocument()
+    })
+
+    it('falls back to C major for an invalid key, keeps the valid parameters and cleans the URL', () => {
+      visit('/?key=H&chords=7th')
+
+      renderExplorer()
+
+      expect(screen.getByRole('radio', { name: /^C mayor/ })).toBeChecked()
+      expect(seventhsButton()).toHaveAttribute('aria-pressed', 'true')
+      expect(window.location.search).toBe('?chords=7th')
+    })
+
+    it('leaves the URL empty while everything is at its default', () => {
+      renderExplorer()
+
+      expect(window.location.search).toBe('')
+    })
+
+    it('writes the key picked on the circle', async () => {
+      const user = userEvent.setup()
+      renderExplorer()
+
+      await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
+      expect(window.location.search).toBe('?key=G')
+
+      await user.click(screen.getByRole('radio', { name: /^A menor/ }))
+      expect(window.location.search).toBe('?key=A&mode=minor')
+    })
+
+    it('writes the respelled key with its sharp encoded', async () => {
+      const user = userEvent.setup()
+      renderExplorer()
+
+      await user.click(screen.getByRole('radio', { name: /^F sostenido o G bemol mayor/ }))
+      expect(window.location.search).toBe('?key=F%23')
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como G♭ mayor' }))
+      expect(window.location.search).toBe('?key=Gb')
+    })
+
+    it('writes the chord kind and the chord opened from either panel', async () => {
+      const user = userEvent.setup()
+      renderExplorer()
+
+      await user.click(seventhsButton())
+      expect(window.location.search).toBe('?chords=7th')
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'V7 G7' }))
+      expect(window.location.search).toBe('?chords=7th&chord=key.5')
+
+      const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
+      const dorian = within(table).getByRole('row', { name: /^Dórico/ })
+      await user.click(within(dorian).getByRole('button', { name: /^IV7 F7/ }))
+      expect(window.location.search).toBe('?chords=7th&chord=dorian.4')
+    })
+
+    it('drops the open chord from the URL when a new key loads its tonic', async () => {
+      const user = userEvent.setup()
+      visit('/?chord=key.5')
+      renderExplorer()
+
+      await user.click(screen.getByRole('radio', { name: /^D mayor/ }))
+
+      expect(window.location.search).toBe('?key=D')
+    })
+
+    it('keeps the path and the hash when it rewrites the query', async () => {
+      const user = userEvent.setup()
+      visit('/cheatsheet/?key=E#notes')
+      renderExplorer()
+
+      await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
+
+      expect(window.location.pathname).toBe('/cheatsheet/')
+      expect(window.location.search).toBe('?key=G')
+      expect(window.location.hash).toBe('#notes')
+    })
+
+    it('replaces the history entry instead of adding one, so Back leaves the app', async () => {
+      const user = userEvent.setup()
+      renderExplorer()
+      const entries = window.history.length
+
+      await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
+      await user.click(seventhsButton())
+
+      expect(window.history.length).toBe(entries)
     })
   })
 

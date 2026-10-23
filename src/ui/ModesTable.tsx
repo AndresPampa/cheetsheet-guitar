@@ -1,5 +1,5 @@
 import type { Mode, ModeName } from '../theory/index.ts'
-import type { ChordKind } from './KeyPanel.tsx'
+import type { ChordKind } from '../state/index.ts'
 import { characteristicText, displayRoman, displaySymbol, greekModeName } from './notation.ts'
 import './ModesTable.css'
 
