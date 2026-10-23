@@ -7,14 +7,14 @@ los diagramas en la guitarra y el sonido de cada acorde.
 
 ## Estado
 
-🚧 **En desarrollo.** La v1 se construye por partes; ya funcionan el círculo, el interruptor
-Triadas / Séptimas, la tabla de modos paralelos, el panel de acorde con sonido y diagrama en la
-guitarra, la interfaz en español e inglés, los nombres Do Re Mi, el tema claro / oscuro y la
-selección guardada en la URL. Falta la última parte: accesibilidad, celular y tests de punta a punta.
+✅ **v1 completa.** Funcionan el círculo, el interruptor Triadas / Séptimas, la tabla de modos
+paralelos, el panel de acorde con sonido y diagrama en la guitarra, la interfaz en español e
+inglés, los nombres Do Re Mi, el tema claro / oscuro y la selección guardada en la URL; se usa con
+teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwright.
 
 | Versión | Alcance | Estado |
 |---|---|---|
-| v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi | 🚧 En curso (8 de 9 partes) |
+| v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi, accesibilidad y celular | ✅ Completa |
 | v2 | Modos de menor armónica y melódica, extensiones (9/11/13, sus, add), armador de progresiones | 💡 Idea |
 | v3 | Despliegue y backend para guardar progresiones | 💡 Idea |
 
@@ -41,6 +41,11 @@ selección guardada en la URL. Falta la última parte: accesibilidad, celular y 
 - ✅ **La selección queda en la URL** (tonalidad, Triadas / Séptimas, acorde abierto, idioma y
   nombres de notas), así que se puede guardar en favoritos o compartir. Por ejemplo,
   `?key=G&mode=minor&chords=7th&chord=dorian.4` abre G menor con séptimas y el IV7 de G dórico.
+- ✅ **Accesible**: todo se usa con teclado (flechas en el círculo), el lector de pantalla anuncia
+  cada tonalidad con su armadura y cada acorde con su grado, la calidad no depende solo del color y
+  el contraste cumple WCAG 2.1 AA en los dos temas (auditado con axe; el texto del círculo, que axe
+  no mide en SVG, con un test propio). En el celular los paneles se apilan sin scroll horizontal,
+  incluso a 320 px.
 
 ## Arquitectura
 
@@ -155,6 +160,8 @@ Requiere Node.js ≥ 22.12.
 npm install          # instalar dependencias
 npm run dev          # servidor local en http://localhost:5173
 npm test             # tests (Vitest)
+npx playwright install chromium   # una sola vez, para los tests de punta a punta
+npm run test:e2e     # tests de punta a punta (Playwright: escritorio y celular)
 npm run lint         # oxlint + chequeo de tipos
 npm run build        # build de producción en dist/
 ```

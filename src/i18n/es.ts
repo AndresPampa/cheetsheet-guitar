@@ -1,3 +1,4 @@
+import type { KeySignature } from '../theory/index.ts'
 import type { Messages } from './messages.ts'
 import type { Notation } from './notation.ts'
 import { characteristicText, displaySymbol, spokenNote } from './notation.ts'
@@ -10,6 +11,21 @@ const MODE_NAMES: Messages['modeName'] = {
   mixolydian: 'Mixolidio',
   aeolian: 'Eólico',
   locrian: 'Locrio',
+}
+
+/** `sin alteraciones`, `1 sostenido`, `3 bemoles`. */
+function signatureCount({ accidental, notes }: KeySignature): string {
+  if (accidental === 'none') return 'sin alteraciones'
+  const count = notes.length
+  const word =
+    accidental === 'sharp'
+      ? count === 1
+        ? 'sostenido'
+        : 'sostenidos'
+      : count === 1
+        ? 'bemol'
+        : 'bemoles'
+  return `${count} ${word}`
 }
 
 /** The Spanish dictionary, naming notes as `notation` says. */
@@ -45,22 +61,14 @@ export function es(notation: Notation): Messages {
     keysGroup: 'Tonalidades',
     sectorSpellings: (spoken) => spoken.join(' o '),
     sectorDegree: (roman) => `grado ${roman}`,
+    sectorSignature: (signatures) => signatures.map(signatureCount).join(' o '),
 
     keyRegion: 'Tonalidad seleccionada',
     respell: (key) => `Ver como ${key}`,
-    signature: ({ accidental, notes }) => {
-      if (accidental === 'none') return 'Armadura: sin alteraciones'
-      const count = notes.length
-      const word =
-        accidental === 'sharp'
-          ? count === 1
-            ? 'sostenido'
-            : 'sostenidos'
-          : count === 1
-            ? 'bemol'
-            : 'bemoles'
-      return `Armadura: ${count} ${word} (${notes.map(symbol).join(' ')})`
-    },
+    signature: (signature) =>
+      signature.accidental === 'none'
+        ? `Armadura: ${signatureCount(signature)}`
+        : `Armadura: ${signatureCount(signature)} (${signature.notes.map(symbol).join(' ')})`,
     chordKindGroup: 'Tipo de acorde',
     triads: 'Triadas',
     sevenths: 'Séptimas',

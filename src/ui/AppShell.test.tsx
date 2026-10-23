@@ -81,13 +81,67 @@ describe('AppShell', () => {
 
     await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
 
-    expect(screen.getByRole('radio', { name: 'G mayor, grado I' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'G mayor, grado I, 1 sostenido' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'C mayor, grado IV' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'D mayor, grado V' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'A menor, grado ii' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'B menor, grado iii' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'E menor, grado vi' })).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: 'F mayor' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'F mayor, 1 bemol' })).toBeInTheDocument()
+  })
+
+  // PRD story 12, decided with the user 2026-10-22: free sectors and the I announce the key
+  // signature; the other diatonic sectors announce only their chord role (their key spelling
+  // may differ from the sector's, e.g. G# major's signature on the Ab sector).
+  describe('key signature in the sector names', () => {
+    it('names each free sector with the signature of its spellings', () => {
+      renderShell()
+
+      expect(screen.getByRole('radio', { name: 'E bemol mayor, 3 bemoles' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('radio', { name: 'B o C bemol mayor, 5 sostenidos o 7 bemoles' }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole('radio', {
+          name: 'D sostenido o E bemol menor, 6 sostenidos o 6 bemoles',
+        }),
+      ).toBeInTheDocument()
+    })
+
+    it('names the tonic sector with the signature of the selected key', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      expect(
+        screen.getByRole('radio', { name: 'C mayor, grado I, sin alteraciones' }),
+      ).toBeChecked()
+
+      await user.click(screen.getByRole('radio', { name: /^E menor/ }))
+
+      expect(screen.getByRole('radio', { name: 'E menor, grado i, 1 sostenido' })).toBeChecked()
+    })
+
+    it('names the tonic sector with the chosen enharmonic spelling', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(screen.getByRole('radio', { name: /^D bemol o C sostenido mayor/ }))
+      await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como C♯ mayor' }))
+
+      expect(
+        screen.getByRole('radio', { name: 'C sostenido mayor, grado I, 7 sostenidos' }),
+      ).toBeChecked()
+    })
+
+    it('names the sectors in English with the language switch', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(screen.getByRole('button', { name: 'English' }))
+
+      expect(screen.getByRole('radio', { name: 'C major, degree I, no accidentals' })).toBeChecked()
+      expect(screen.getByRole('radio', { name: 'A major, 3 sharps' })).toBeInTheDocument()
+    })
   })
 
   it('marks the diminished chord on the innermost ring, not on a minor key', async () => {
@@ -103,7 +157,9 @@ describe('AppShell', () => {
     expect(within(circle).getByText('A♯°').closest('g')).not.toHaveClass('is-diatonic')
     expect(within(circle).getByText('B♭°')).toBeInTheDocument()
     // The F#m key sector is still a plain key, not the diminished chord.
-    expect(screen.getByRole('radio', { name: 'F sostenido menor' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('radio', { name: 'F sostenido menor, 3 sostenidos' }),
+    ).toBeInTheDocument()
   })
 
   it('selects a minor key from the inner ring with minor-key numerals', async () => {
@@ -743,7 +799,9 @@ describe('AppShell', () => {
         'vi A♯m',
         'vii° B♯°',
       ])
-      expect(screen.getByRole('radio', { name: 'C sostenido mayor, grado I' })).toBeChecked()
+      expect(
+        screen.getByRole('radio', { name: 'C sostenido mayor, grado I, 7 sostenidos' }),
+      ).toBeChecked()
       expect(within(keyPanel()).getByRole('button', { name: 'Ver como D♭ mayor' })).toBeVisible()
     })
 
@@ -930,8 +988,10 @@ describe('AppShell', () => {
       ).toBeInTheDocument()
       expect(screen.getByRole('region', { name: 'Circle of fifths' })).toBeInTheDocument()
       expect(screen.getByRole('radiogroup', { name: 'Keys' })).toBeInTheDocument()
-      expect(screen.getByRole('radio', { name: 'C major, degree I' })).toBeChecked()
-      expect(screen.getByRole('radio', { name: 'F sharp or G flat major' })).toBeInTheDocument()
+      expect(screen.getByRole('radio', { name: 'C major, degree I, no accidentals' })).toBeChecked()
+      expect(
+        screen.getByRole('radio', { name: 'F sharp or G flat major, 6 sharps or 6 flats' }),
+      ).toBeInTheDocument()
       const key = screen.getByRole('region', { name: 'Selected key' })
       expect(within(key).getByRole('heading', { name: 'C major' })).toBeInTheDocument()
       expect(within(key).getByText('Key signature: no accidentals')).toBeInTheDocument()
@@ -1009,14 +1069,16 @@ describe('AppShell', () => {
       renderShell()
       await user.click(languageButton('English'))
 
-      await user.click(screen.getByRole('radio', { name: 'F sharp or G flat major' }))
+      await user.click(
+        screen.getByRole('radio', { name: 'F sharp or G flat major, 6 sharps or 6 flats' }),
+      )
 
       const key = screen.getByRole('region', { name: 'Selected key' })
       expect(
         within(key).getByText('Key signature: 6 sharps (F♯ C♯ G♯ D♯ A♯ E♯)'),
       ).toBeInTheDocument()
       expect(within(key).getByRole('button', { name: 'See as G♭ major' })).toBeInTheDocument()
-      expect(screen.getByRole('radio', { name: 'F sharp major, degree I' })).toBeChecked()
+      expect(screen.getByRole('radio', { name: 'F sharp major, degree I, 6 sharps' })).toBeChecked()
     })
 
     it('describes the chord diagram in English', async () => {
@@ -1059,7 +1121,7 @@ describe('AppShell', () => {
       renderShell()
 
       expect(languageButton('English')).toHaveAttribute('aria-pressed', 'true')
-      expect(screen.getByRole('radio', { name: 'G major, degree I' })).toBeChecked()
+      expect(screen.getByRole('radio', { name: 'G major, degree I, 1 sharp' })).toBeChecked()
       expect(document.documentElement.lang).toBe('en')
     })
 
@@ -1073,7 +1135,9 @@ describe('AppShell', () => {
       expect(
         screen.getByRole('heading', { level: 1, name: 'Círculo de Quintas' }),
       ).toBeInTheDocument()
-      expect(screen.getByRole('radio', { name: 'C mayor, grado I' })).toBeChecked()
+      expect(
+        screen.getByRole('radio', { name: 'C mayor, grado I, sin alteraciones' }),
+      ).toBeChecked()
       expect(document.documentElement.lang).toBe('es')
       expect(window.location.search).toBe('')
     })
@@ -1100,10 +1164,14 @@ describe('AppShell', () => {
       await user.click(namesButton('Do Re Mi'))
 
       expect(namesButton('Do Re Mi')).toHaveAttribute('aria-pressed', 'true')
-      expect(screen.getByRole('radio', { name: 'Do mayor, grado I' })).toBeChecked()
+      expect(
+        screen.getByRole('radio', { name: 'Do mayor, grado I, sin alteraciones' }),
+      ).toBeChecked()
       expect(screen.getByRole('radio', { name: 'Sol mayor, grado V' })).toHaveTextContent('Sol')
       expect(
-        screen.getByRole('radio', { name: 'Fa sostenido o Sol bemol mayor' }),
+        screen.getByRole('radio', {
+          name: 'Fa sostenido o Sol bemol mayor, 6 sostenidos o 6 bemoles',
+        }),
       ).toHaveTextContent('Fa♯Sol♭')
       expect(within(keyPanel()).getByRole('heading', { name: 'Do mayor' })).toBeInTheDocument()
       expect(chordList()).toEqual([
@@ -1122,7 +1190,11 @@ describe('AppShell', () => {
       renderShell()
       await user.click(namesButton('Do Re Mi'))
 
-      await user.click(screen.getByRole('radio', { name: 'Fa sostenido o Sol bemol mayor' }))
+      await user.click(
+        screen.getByRole('radio', {
+          name: 'Fa sostenido o Sol bemol mayor, 6 sostenidos o 6 bemoles',
+        }),
+      )
 
       expect(
         within(keyPanel()).getByText('Armadura: 6 sostenidos (Fa♯ Do♯ Sol♯ Re♯ La♯ Mi♯)'),
@@ -1208,8 +1280,12 @@ describe('AppShell', () => {
       await user.click(namesButton('Do Re Mi'))
 
       expect(screen.getByRole('group', { name: 'Note names' })).toBeInTheDocument()
-      expect(screen.getByRole('radio', { name: 'Do major, degree I' })).toBeChecked()
-      expect(screen.getByRole('radio', { name: 'Fa sharp or Sol flat major' })).toBeInTheDocument()
+      expect(
+        screen.getByRole('radio', { name: 'Do major, degree I, no accidentals' }),
+      ).toBeChecked()
+      expect(
+        screen.getByRole('radio', { name: 'Fa sharp or Sol flat major, 6 sharps or 6 flats' }),
+      ).toBeInTheDocument()
       expect(screen.getByRole('table', { name: 'Parallel modes of Do' })).toBeInTheDocument()
     })
 
@@ -1230,7 +1306,7 @@ describe('AppShell', () => {
       renderShell()
 
       expect(namesButton('Do Re Mi')).toHaveAttribute('aria-pressed', 'true')
-      expect(screen.getByRole('radio', { name: 'Sol mayor, grado I' })).toBeChecked()
+      expect(screen.getByRole('radio', { name: 'Sol mayor, grado I, 1 sostenido' })).toBeChecked()
     })
 
     it('still plays the chord with its real spelling', async () => {
@@ -1443,7 +1519,7 @@ describe('AppShell', () => {
         'Do Re Mi',
         'Oscuro',
         'Claro',
-        'C mayor, grado I',
+        'C mayor, grado I, sin alteraciones',
         'Triadas',
       ])
     })

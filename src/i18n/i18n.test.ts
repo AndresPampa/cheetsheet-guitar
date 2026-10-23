@@ -71,6 +71,30 @@ describe('getMessages', () => {
     })
   })
 
+  // PRD story 12: a circle sector announces its signature as a count, without the notes.
+  describe('sector signature, for screen readers', () => {
+    const cases: Array<[string, Parameters<typeof es.sectorSignature>[0], string, string]> = [
+      ['no accidentals', [{ accidental: 'none', notes: [] }], 'sin alteraciones', 'no accidentals'],
+      ['one sharp', [{ accidental: 'sharp', notes: ['F#'] }], '1 sostenido', '1 sharp'],
+      ['one flat', [{ accidental: 'flat', notes: ['Bb'] }], '1 bemol', '1 flat'],
+      ['three flats', [{ accidental: 'flat', notes: ['Bb', 'Eb', 'Ab'] }], '3 bemoles', '3 flats'],
+      [
+        'both spellings of an enharmonic sector',
+        [
+          { accidental: 'sharp', notes: ['F#', 'C#', 'G#', 'D#', 'A#', 'E#'] },
+          { accidental: 'flat', notes: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'] },
+        ],
+        '6 sostenidos o 6 bemoles',
+        '6 sharps or 6 flats',
+      ],
+    ]
+
+    it.each(cases)('counts %s in both languages', (_, signatures, spanish, english) => {
+      expect(es.sectorSignature(signatures)).toBe(spanish)
+      expect(en.sectorSignature(signatures)).toBe(english)
+    })
+  })
+
   describe('spoken notes, for screen readers', () => {
     const cases: Array<[string, string, string]> = [
       ['C', 'C', 'C'],

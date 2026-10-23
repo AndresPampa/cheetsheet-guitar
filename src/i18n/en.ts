@@ -1,3 +1,4 @@
+import type { KeySignature } from '../theory/index.ts'
 import type { Messages } from './messages.ts'
 import type { Notation } from './notation.ts'
 import { characteristicText, displaySymbol, spokenNote } from './notation.ts'
@@ -13,6 +14,10 @@ const MODE_NAMES: Messages['modeName'] = {
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`
+
+/** `no accidentals`, `1 sharp`, `3 flats`. */
+const signatureCount = ({ accidental, notes }: KeySignature): string =>
+  accidental === 'none' ? 'no accidentals' : plural(notes.length, accidental)
 
 /** The English dictionary, naming notes as `notation` says. */
 export function en(notation: Notation): Messages {
@@ -48,14 +53,14 @@ export function en(notation: Notation): Messages {
     keysGroup: 'Keys',
     sectorSpellings: (spoken) => spoken.join(' or '),
     sectorDegree: (roman) => `degree ${roman}`,
+    sectorSignature: (signatures) => signatures.map(signatureCount).join(' or '),
 
     keyRegion: 'Selected key',
     respell: (key) => `See as ${key}`,
-    signature: ({ accidental, notes }) => {
-      if (accidental === 'none') return 'Key signature: no accidentals'
-      const count = plural(notes.length, accidental)
-      return `Key signature: ${count} (${notes.map(symbol).join(' ')})`
-    },
+    signature: (signature) =>
+      signature.accidental === 'none'
+        ? `Key signature: ${signatureCount(signature)}`
+        : `Key signature: ${signatureCount(signature)} (${signature.notes.map(symbol).join(' ')})`,
     chordKindGroup: 'Chord type',
     triads: 'Triads',
     sevenths: 'Sevenths',
