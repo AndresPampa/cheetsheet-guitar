@@ -96,6 +96,12 @@ describe('serializeState', () => {
     )
   })
 
+  it("writes the chord on degree 1 of a mode, since only the key's I is the default", () => {
+    expect(serializeState({ ...DEFAULT_STATE, chord: { source: 'dorian', degree: 1 } })).toBe(
+      '?chord=dorian.1',
+    )
+  })
+
   it('keeps C in the URL for C minor, since only the major tonic is the default', () => {
     expect(serializeState({ ...DEFAULT_STATE, mode: 'minor' })).toBe('?mode=minor')
   })

@@ -809,6 +809,14 @@ describe('AppShell', () => {
       expect(window.location.search).toBe('?chords=7th')
     })
 
+    it('drops parameters it does not know, such as tracking ones', () => {
+      visit('/?utm_source=newsletter&key=G&fbclid=abc')
+
+      renderShell()
+
+      expect(window.location.search).toBe('?key=G')
+    })
+
     it('leaves the URL empty while everything is at its default', () => {
       renderShell()
 
@@ -1252,6 +1260,7 @@ describe('AppShell', () => {
         media === '(prefers-color-scheme: light)' ? query : { ...query, matches: false },
       )
       return {
+        listeners: () => listeners.size,
         change: (next: boolean) =>
           act(() => {
             query.matches = next
@@ -1344,6 +1353,16 @@ describe('AppShell', () => {
       system.change(true)
       expect(themeButton('Oscuro')).toHaveAttribute('aria-pressed', 'true')
       expect(html).toHaveAttribute('data-theme', 'dark')
+    })
+
+    it('stops following the system theme once the app is gone', () => {
+      const system = fakeSystemTheme(false)
+      const { unmount } = renderShell()
+      expect(system.listeners()).toBe(1)
+
+      unmount()
+
+      expect(system.listeners()).toBe(0)
     })
 
     it('still works when the browser blocks storage', async () => {

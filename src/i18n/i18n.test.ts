@@ -25,6 +25,8 @@ describe('displayRoman', () => {
     expect(displayRoman('#iv°')).toBe('♯iv°')
     expect(displayRoman('viiø7')).toBe('viiø7')
     expect(displayRoman('bIIImaj7')).toBe('♭IIImaj7')
+    expect(displayRoman('bVII7b9')).toBe('♭VII7b9')
+    expect(displayRoman('#iv7#5')).toBe('♯iv7#5')
   })
 })
 
@@ -106,6 +108,20 @@ describe('getMessages', () => {
     expect(en.characteristic('6M', 'A')).toBe('major 6th (A)')
     expect(es.characteristic('4A', 'F#')).toBe('♯4 (F♯)')
     expect(en.characteristic('5d', 'Gb')).toBe('♭5 (G♭)')
+  })
+
+  // The characteristic note of each mode of C, against C ionian.
+  const characteristics: Array<[string, string, string, string]> = [
+    ['dorian', '6M', 'A', '6ª mayor (A)'],
+    ['phrygian', '2m', 'Db', '♭2 (D♭)'],
+    ['lydian', '4A', 'F#', '♯4 (F♯)'],
+    ['mixolydian', '7m', 'Bb', '♭7 (B♭)'],
+    ['aeolian', '6m', 'Ab', '♭6 (A♭)'],
+    ['locrian', '5d', 'Gb', '♭5 (G♭)'],
+  ]
+
+  it.each(characteristics)('names the characteristic of C %s', (_, interval, note, text) => {
+    expect(es.characteristic(interval, note)).toBe(text)
   })
 
   it('names the diagram position and starting fret', () => {
