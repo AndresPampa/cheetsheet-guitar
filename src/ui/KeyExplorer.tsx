@@ -104,14 +104,6 @@ export function KeyExplorer({ audio, voicings, drawDiagram }: KeyExplorerProps) 
           />
         </div>
       </section>
-      <section className="panel panel-modes" aria-label="Modos">
-        <ModesTable
-          root={selection.tonic}
-          modes={modes}
-          chordKind={chordKind}
-          onChordClick={(source, degree) => open({ source, degree })}
-        />
-      </section>
       <section className="panel panel-chord" aria-label="Acorde seleccionado">
         <ChordPanel
           symbol={chord.symbol}
@@ -129,6 +121,14 @@ export function KeyExplorer({ audio, voicings, drawDiagram }: KeyExplorerProps) 
               draw={drawDiagram}
             />
           }
+        />
+      </section>
+      <section className="panel panel-modes" aria-label="Modos">
+        <ModesTable
+          root={selection.tonic}
+          modes={modes}
+          chordKind={chordKind}
+          onChordClick={(source, degree) => open({ source, degree })}
         />
       </section>
     </main>

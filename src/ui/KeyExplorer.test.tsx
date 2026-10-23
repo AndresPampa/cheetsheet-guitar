@@ -31,6 +31,16 @@ describe('KeyExplorer', () => {
     expect(screen.getAllByRole('radio')).toHaveLength(24)
   })
 
+  it('orders the panels as they are laid out: circle, chord, then the full-width modes table', () => {
+    renderExplorer()
+
+    const panelNames = screen
+      .getAllByRole('region')
+      .map((region) => region.getAttribute('aria-label'))
+      .filter((name) => name !== 'Tonalidad seleccionada')
+    expect(panelNames).toEqual(['Círculo de quintas', 'Acorde seleccionado', 'Modos'])
+  })
+
   it('names the enharmonic sectors with both spellings', () => {
     renderExplorer()
 
