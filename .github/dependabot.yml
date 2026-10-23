@@ -1,0 +1,22 @@
+# Weekly update PRs; every one has to pass the ci check before it can be merged.
+# cooldown = the project's rule: no dependency version younger than two weeks.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    open-pull-requests-limit: 5
+    groups:
+      # playwright-core is overridden to follow @playwright/test (package.json): bump them together.
+      playwright:
+        patterns: ['@playwright/test', 'playwright', 'playwright-core', '@axe-core/playwright']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14

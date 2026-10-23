@@ -65,6 +65,18 @@ describe('parseState', () => {
       ['a padded chord degree', '?chord=key.03', {}],
       ['an unknown note naming', '?names=german&lang=en', { language: 'en' }],
       ['an unknown language', '?lang=fr&names=solfege', { notation: 'solfege' }],
+      // Hostile input (v1.5, public deploy): anything outside the allowlists is just invalid.
+      [
+        'markup in the key',
+        '?key=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E&lang=en',
+        { language: 'en' },
+      ],
+      ['a prototype name as the key', '?key=__proto__&mode=minor', { mode: 'minor' }],
+      ['a prototype name as the chord source', '?chord=constructor.1', {}],
+      ['a script URL as the language', '?lang=javascript:alert(1)', {}],
+      ['a language that only starts like English', '?lang=eng', {}],
+      ['a language cut short', '?lang=e', {}],
+      ['a 10 000-character key', `?key=${'C'.repeat(10_000)}`, {}],
     ]
 
     it.each(cases)('ignores %s', (_, search, kept) => {
