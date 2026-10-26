@@ -15,7 +15,8 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
 | Versión | Alcance | Estado |
 |---|---|---|
 | v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi, accesibilidad y celular | ✅ Completa |
-| v1.5 | Publicación en Vercel con CI como portero y headers de seguridad | 🚧 En curso |
+| v1.5 | Publicación en Vercel con CI como portero y headers de seguridad | ✅ Completa |
+| v1.6 | Créditos al pie: autor, código en GitHub e Instagram | 🚧 En curso |
 | v2 | Modos de menor armónica y melódica, extensiones (9/11/13, sus, add), armador de progresiones | 💡 Idea |
 | v3 | Backend para guardar progresiones | 💡 Idea |
 

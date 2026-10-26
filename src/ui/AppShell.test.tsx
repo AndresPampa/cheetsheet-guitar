@@ -1583,4 +1583,61 @@ describe('AppShell', () => {
       expect(screen.getByRole('radio', { name: /^G mayor/ })).toHaveFocus()
     })
   })
+
+  // Spec footer-credits: the credits are always in English, whatever language the app is in.
+  describe('footer credits', () => {
+    const GITHUB_URL = 'https://github.com/AndresPampa/cheetsheet-guitar'
+    const INSTAGRAM_URL = 'https://www.instagram.com/andrespampa/'
+    const footer = () => screen.getByRole('contentinfo')
+    const githubLink = () =>
+      within(footer()).getByRole('link', { name: 'Code on GitHub (opens in a new tab)' })
+    const instagramLink = () =>
+      within(footer()).getByRole('link', { name: 'Instagram @andrespampa (opens in a new tab)' })
+
+    it('shows the credits in English, marked lang="en", while the app is in Spanish', () => {
+      renderShell()
+
+      expect(document.documentElement.lang).toBe('es')
+      expect(footer()).toHaveAttribute('lang', 'en')
+      expect(footer()).toHaveTextContent('Made by Andrés Pampa')
+      expect(githubLink()).toHaveAttribute('href', GITHUB_URL)
+      expect(within(githubLink()).getByText('Code on GitHub')).toBeInTheDocument()
+      expect(instagramLink()).toHaveAttribute('href', INSTAGRAM_URL)
+      expect(within(instagramLink()).getByText('@andrespampa')).toBeInTheDocument()
+      expect(within(footer()).getAllByRole('link')).toHaveLength(2)
+    })
+
+    it('keeps the same English credits when the language switches to English', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(screen.getByRole('button', { name: 'English' }))
+
+      expect(document.documentElement.lang).toBe('en')
+      expect(footer()).toHaveAttribute('lang', 'en')
+      expect(footer()).toHaveTextContent('Made by Andrés Pampa')
+      expect(githubLink()).toHaveAttribute('href', GITHUB_URL)
+      expect(instagramLink()).toHaveAttribute('href', INSTAGRAM_URL)
+      expect(within(footer()).getAllByRole('link')).toHaveLength(2)
+    })
+
+    it.each([
+      ['GitHub', 'Code on GitHub (opens in a new tab)'],
+      ['Instagram', 'Instagram @andrespampa (opens in a new tab)'],
+    ])(
+      'opens the %s link in a new tab without opener or referrer, its icon hidden from assistive tech',
+      (_site, name) => {
+        renderShell()
+
+        const link = within(footer()).getByRole('link', { name })
+        expect(link).toHaveAttribute('target', '_blank')
+        const rel = (link.getAttribute('rel') ?? '').split(/\s+/)
+        expect(rel).toContain('noopener')
+        expect(rel).toContain('noreferrer')
+        const icon = link.querySelector('svg')
+        expect(icon).not.toBeNull()
+        expect(icon).toHaveAttribute('aria-hidden', 'true')
+      },
+    )
+  })
 })

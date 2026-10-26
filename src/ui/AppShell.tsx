@@ -13,6 +13,7 @@ import { useTheme, useUrlState, type ChordRef } from '../state/index.ts'
 import { ChordDiagram, type VoicingsLoader } from './ChordDiagram.tsx'
 import { ChordPanel } from './ChordPanel.tsx'
 import { CircleOfFifths, type CircleSelection } from './CircleOfFifths.tsx'
+import { Credits } from './Credits.tsx'
 import { KeyPanel } from './KeyPanel.tsx'
 import { ModesTable } from './ModesTable.tsx'
 import { SegmentedSwitch } from './SegmentedSwitch.tsx'
@@ -158,6 +159,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
             />
           </section>
         </main>
+        <Credits />
       </div>
     </MessagesContext>
   )
