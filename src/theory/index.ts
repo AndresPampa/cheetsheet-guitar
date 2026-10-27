@@ -5,6 +5,7 @@ export {
   getCircleSpelling,
 } from './circle.ts'
 export type { CircleHighlight, CirclePosition, CircleRing, CircleSpelling } from './circle.ts'
+export { getChordFormula } from './formula.ts'
 export { getKey } from './key.ts'
 export { getModesContaining, getParallelModes } from './modes.ts'
 export type { ModalChord, ModalSeventh, Mode, ModeMatch, ModeName } from './modes.ts'

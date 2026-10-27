@@ -48,7 +48,10 @@ export interface Messages {
   listen: string
   listenTo: (displayedSymbol: string) => string
   degreeIn: (displayedRoman: string, context: string) => string
-  notes: (displayedNotes: string) => string
+  /** Accessible name of the formula table: `Fórmula de Cm`. */
+  formulaOf: (displayedSymbol: string) => string
+  /** Long name per degree of a formula (`b3` → `3ª menor`), read instead of the sign. */
+  intervalName: Record<string, string>
   appearsIn: string
   modesContaining: string
   mostRepresentative: string

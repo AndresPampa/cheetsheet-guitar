@@ -158,7 +158,7 @@ test.describe('theme before first paint, light system', () => {
 // in Chrome; the unit tests in src/ui guard those spaces.
 test('Chrome names a mode-table cell with its hidden hints as separate words', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('table')).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Modos paralelos de C' })).toBeVisible()
   const cdp = await page.context().newCDPSession(page)
   await cdp.send('Accessibility.enable')
 

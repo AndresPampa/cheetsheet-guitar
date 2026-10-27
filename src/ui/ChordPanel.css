@@ -18,6 +18,24 @@
   margin: 4px 0;
 }
 
+.chord-formula {
+  border-collapse: collapse;
+  margin: 8px 0;
+  text-align: center;
+}
+
+.chord-formula th,
+.chord-formula td {
+  min-width: 2.5em;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+}
+
+.chord-formula th {
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
 .play {
   font: inherit;
   font-size: 0.875rem;

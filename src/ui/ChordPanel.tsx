@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { displayRoman, useMessages } from '../i18n/index.ts'
-import type { ModeMatch } from '../theory/index.ts'
+import { getChordFormula, type ModeMatch } from '../theory/index.ts'
 import './ChordPanel.css'
 
 interface ChordPanelProps {
@@ -27,6 +27,7 @@ export function ChordPanel({
 }: ChordPanelProps) {
   const t = useMessages()
   const shownSymbol = t.symbol(symbol)
+  const formula = getChordFormula(notes)
   return (
     <div className="chord-panel">
       {/* Announces the newly opened chord to screen readers. */}
@@ -42,7 +43,23 @@ export function ChordPanel({
         </button>
       </div>
       <p>{t.degreeIn(displayRoman(roman), context)}</p>
-      <p>{t.notes(notes.map(t.symbol).join(' '))}</p>
+      <table className="chord-formula" aria-label={t.formulaOf(shownSymbol)}>
+        <tbody>
+          <tr>
+            {formula.map((degree) => (
+              <th key={degree} scope="col">
+                <span aria-hidden="true">{displayRoman(degree)}</span>
+                <span className="sr-only">{t.intervalName[degree] ?? degree}</span>
+              </th>
+            ))}
+          </tr>
+          <tr>
+            {notes.map((note) => (
+              <td key={note}>{t.symbol(note)}</td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
       {diagram}
       <p className="chord-panel-modes-title">{t.appearsIn}</p>
       <ul className="chord-panel-modes" aria-label={t.modesContaining}>
