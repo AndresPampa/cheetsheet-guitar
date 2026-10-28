@@ -1,16 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useMessages, type Messages } from '../i18n/index.ts'
 import type { Theme } from '../state/index.ts'
-import type { Voicing, VoicingQuality } from '../voicings/index.ts'
+import type { Voicing, VoicingChord } from '../voicings/index.ts'
 import type { DiagramDrawer } from './svguitarDiagram.ts'
 
-export type VoicingsLoader = (root: string, quality: VoicingQuality) => Promise<Voicing[]>
+export type VoicingsLoader = (chord: VoicingChord) => Promise<Voicing[]>
 
 interface ChordDiagramProps {
   /** Display name of the chord, for the accessible description: `C`, `B♭maj7`. */
   name: string
-  root: string
-  quality: VoicingQuality
+  chord: VoicingChord
   voicings: VoicingsLoader
   draw: DiagramDrawer
   /** svguitar bakes the colors in when it draws: a new theme needs a new drawing. */
@@ -24,9 +23,11 @@ function tablature({ frets, baseFret }: Voicing, t: Messages): string {
 }
 
 /** The open chord on the fretboard, with every position the data has for it. */
-export function ChordDiagram({ name, root, quality, voicings, draw, theme }: ChordDiagramProps) {
+export function ChordDiagram({ name, chord: open, voicings, draw, theme }: ChordDiagramProps) {
   const t = useMessages()
-  const chord = `${root} ${quality}`
+  // Root and suffix fix the notes: the key changes only when another chord opens.
+  const chord = `${open.root} ${open.suffix}`
+  const load = useEffectEvent(() => voicings(open))
   // `list: null` records a failed load, so the panel says so instead of loading forever.
   const [loaded, setLoaded] = useState<{ chord: string; list: Voicing[] | null } | null>(null)
   // Remembered per chord, so a newly opened chord starts at its most common position.
@@ -35,19 +36,19 @@ export function ChordDiagram({ name, root, quality, voicings, draw, theme }: Cho
 
   useEffect(() => {
     let current = true
-    voicings(root, quality).then(
+    load().then(
       (list) => {
-        if (current) setLoaded({ chord: `${root} ${quality}`, list })
+        if (current) setLoaded({ chord, list })
       },
       (error: unknown) => {
         console.error('[diagram] could not load the voicings', error)
-        if (current) setLoaded({ chord: `${root} ${quality}`, list: null })
+        if (current) setLoaded({ chord, list: null })
       },
     )
     return () => {
       current = false
     }
-  }, [voicings, root, quality])
+  }, [chord])
 
   const state = loaded?.chord === chord ? loaded : undefined
   const list = state?.list

@@ -797,13 +797,12 @@ describe('AppShell', () => {
       const user = userEvent.setup()
       const pending = new Map<string, (list: Voicing[]) => void>()
       renderShell({
-        voicings: (root, quality) =>
-          new Promise((resolve) => void pending.set(`${root} ${quality}`, resolve)),
+        voicings: (chord) => new Promise((resolve) => void pending.set(chord.root, resolve)),
       })
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
-      pending.get('F major')!([F_SHAPE])
-      pending.get('C major')!([C_SHAPE])
+      pending.get('F')!([F_SHAPE])
+      pending.get('C')!([C_SHAPE])
 
       expect(
         await within(chordPanel()).findByRole('img', { name: /^Diagrama de F:/ }),
@@ -814,16 +813,16 @@ describe('AppShell', () => {
       const user = userEvent.setup()
       const pending = new Map<string, { resolve: (list: Voicing[]) => void; reject: () => void }>()
       renderShell({
-        voicings: (root, quality) =>
+        voicings: (chord) =>
           new Promise((resolve, reject) => {
-            pending.set(`${root} ${quality}`, { resolve, reject: () => reject(new Error('late')) })
+            pending.set(chord.root, { resolve, reject: () => reject(new Error('late')) })
           }),
       })
       await user.click(within(keyPanel()).getByRole('button', { name: 'IV F' }))
-      pending.get('F major')!.resolve([F_SHAPE])
+      pending.get('F')!.resolve([F_SHAPE])
       await within(chordPanel()).findByRole('img', { name: /^Diagrama de F:/ })
 
-      await act(async () => pending.get('C major')!.reject())
+      await act(async () => pending.get('C')!.reject())
 
       expect(within(chordPanel()).getByRole('img', { name: /^Diagrama de F:/ })).toBeInTheDocument()
     })

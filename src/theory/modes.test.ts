@@ -347,10 +347,13 @@ describe('getParallelModes invariants over every root on the circle', () => {
   })
 })
 
-// ORACLE — hand-written: which parallel modes of C contain a chord, by its symbol.
-const C_CONTAINING: Array<[string, Array<{ mode: ModeName; roman: string; star: boolean }>]> = [
+// ORACLE — hand-written: which parallel modes of C contain a chord, by its notes (the symbol
+// is only the label). Characterization net: these outputs predate the notes-based lookup.
+type Match = { mode: ModeName; roman: string; star: boolean }
+const C_CONTAINING: Array<[string, string[], Match[]]> = [
   [
     'F',
+    ['F', 'A', 'C'],
     [
       { mode: 'ionian', roman: 'IV', star: false },
       { mode: 'dorian', roman: 'IV', star: true },
@@ -359,6 +362,7 @@ const C_CONTAINING: Array<[string, Array<{ mode: ModeName; roman: string; star: 
   ],
   [
     'Bb',
+    ['Bb', 'D', 'F'],
     [
       { mode: 'dorian', roman: 'bVII', star: false },
       { mode: 'mixolydian', roman: 'bVII', star: true },
@@ -367,6 +371,7 @@ const C_CONTAINING: Array<[string, Array<{ mode: ModeName; roman: string; star: 
   ],
   [
     'Fm',
+    ['F', 'Ab', 'C'],
     [
       { mode: 'phrygian', roman: 'iv', star: false },
       { mode: 'aeolian', roman: 'iv', star: true },
@@ -375,30 +380,62 @@ const C_CONTAINING: Array<[string, Array<{ mode: ModeName; roman: string; star: 
   ],
   [
     'Db',
+    ['Db', 'F', 'Ab'],
     [
       { mode: 'phrygian', roman: 'bII', star: true },
       { mode: 'locrian', roman: 'bII', star: false },
     ],
   ],
-  ['B°', [{ mode: 'ionian', roman: 'vii°', star: false }]],
-  // Sevenths are matched by their own symbol: F7 lives only in dorian, Fmaj7 elsewhere.
-  ['F7', [{ mode: 'dorian', roman: 'IV7', star: true }]],
+  ['B°', ['B', 'D', 'F'], [{ mode: 'ionian', roman: 'vii°', star: false }]],
+  // A seventh is matched with its 7th: F A C Eb lives only in dorian, F A C E elsewhere.
+  ['F7', ['F', 'A', 'C', 'Eb'], [{ mode: 'dorian', roman: 'IV7', star: true }]],
   [
     'Cmaj7',
+    ['C', 'E', 'G', 'B'],
     [
       { mode: 'ionian', roman: 'Imaj7', star: false },
       { mode: 'lydian', roman: 'Imaj7', star: false },
     ],
   ],
-  ['E', []],
+  ['E', ['E', 'G#', 'B'], []],
+]
+
+// ORACLE — hand-written: extended chords among the parallel modes of C. The roman is the
+// seventh's when the chord has the degree's 7th, the triad's otherwise.
+const C_CONTAINING_EXTENDED: Array<[string, string[], Match[]]> = [
+  ['Cmaj7(#11)', ['C', 'E', 'G', 'B', 'F#'], [{ mode: 'lydian', roman: 'Imaj7', star: false }]],
+  ['Cmaj7(11)', ['C', 'E', 'G', 'B', 'F'], [{ mode: 'ionian', roman: 'Imaj7', star: false }]],
+  [
+    'Cadd11',
+    ['C', 'E', 'G', 'F'],
+    [
+      { mode: 'ionian', roman: 'I', star: false },
+      { mode: 'mixolydian', roman: 'I', star: false },
+    ],
+  ],
+  [
+    'Dm9',
+    ['D', 'F', 'A', 'C', 'E'],
+    [
+      { mode: 'ionian', roman: 'ii7', star: false },
+      { mode: 'mixolydian', roman: 'ii7', star: false },
+    ],
+  ],
 ]
 
 describe('getModesContaining', () => {
-  it.each(C_CONTAINING)('finds %s in the parallel modes of C', (symbol, expected) => {
-    expect(getModesContaining('C', symbol)).toEqual(expected)
+  it.each(C_CONTAINING)('finds %s in the parallel modes of C', (_, notes, expected) => {
+    expect(getModesContaining('C', notes)).toEqual(expected)
   })
 
+  it.each(C_CONTAINING_EXTENDED)(
+    'finds the extended chord %s in the parallel modes of C',
+    (_, notes, expected) => {
+      expect(getModesContaining('C', notes)).toEqual(expected)
+    },
+  )
+
   it('rejects a root that is not on the circle', () => {
-    expect(() => getModesContaining('H', 'C')).toThrow(RangeError)
+    expect(() => getModesContaining('H', ['C', 'E', 'G'])).toThrow(RangeError)
   })
 })

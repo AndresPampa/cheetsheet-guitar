@@ -37,4 +37,21 @@ describe('getChordFormula', () => {
   it.each(spellings)('names the degrees of a chord spelled with %s', (_, notes, formula) => {
     expect(getChordFormula(notes)).toEqual(formula)
   })
+
+  // In a chord stacked in thirds, degrees 2, 4 and 6 only appear as extensions: 9, 11, 13.
+  const extensions: Array<[string, string[], string[]]> = [
+    ['Cmaj13', ['C', 'E', 'G', 'B', 'D', 'A'], ['1', '3', '5', '7', '9', '13']],
+    ['Em7(b9)', ['E', 'G', 'B', 'D', 'F'], ['1', 'b3', '5', 'b7', 'b9']],
+    ['Fmaj7(#11)', ['F', 'A', 'C', 'E', 'B'], ['1', '3', '5', '7', '#11']],
+    ['Am(addb13)', ['A', 'C', 'E', 'F'], ['1', 'b3', '5', 'b13']],
+    [
+      'Gbm7b5(b9,b13)',
+      ['Gb', 'Bbb', 'Dbb', 'Fb', 'Abb', 'Ebb'],
+      ['1', 'b3', 'b5', 'b7', 'b9', 'b13'],
+    ],
+  ]
+
+  it.each(extensions)('names the extensions of %s as 9, 11 and 13', (_, notes, formula) => {
+    expect(getChordFormula(notes)).toEqual(formula)
+  })
 })
