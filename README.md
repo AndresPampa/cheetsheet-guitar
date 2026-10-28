@@ -16,8 +16,11 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
 |---|---|---|
 | v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi, accesibilidad y celular | ✅ Completa |
 | v1.5 | Publicación en Vercel con CI como portero y headers de seguridad | ✅ Completa |
-| v1.6 | Créditos al pie: autor, código en GitHub e Instagram | 🚧 En curso |
-| v2 | Modos de menor armónica y melódica, extensiones (9/11/13, sus, add), armador de progresiones | 💡 Idea |
+| v1.6 | Créditos al pie: autor, código en GitHub e Instagram | ✅ Completa |
+| v1.7 | Fórmula del acorde: tabla con los grados (1, 3, 5…) y las notas del acorde seleccionado | 🚧 En curso |
+| v2.1 | Extensiones (9/11/13, sus, add) | 📋 Planificada |
+| v2.0 | Modos de menor armónica y melódica | ⏸️ En pausa (definida) |
+| v2.2 | Armador de progresiones | 💡 Idea |
 | v3 | Backend para guardar progresiones | 💡 Idea |
 
 ## Funcionalidades (v1)
@@ -32,7 +35,8 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
   característica y grados alterados (♭II, ♯iv°, ♭VII). Se marcan los acordes que contienen la nota
   característica, los prestados del jónico y ⭐ el más representativo.
 - ✅ **Panel de acorde**: al hacer click en un acorde (panel de tonalidad o tabla de modos) suena
-  como un rasgueo y muestra grado, notas, ▶ para repetirlo y en qué modos aparece.
+  como un rasgueo y muestra grado, la fórmula (tabla de grados `1 ♭3 5` sobre sus notas), ▶ para
+  repetirlo y en qué modos aparece.
 - ✅ **Diagramas en la guitarra** del acorde (trastes, dedos, cejilla, cuerdas al aire y
   silenciadas), con 4 posiciones por acorde para recorrer con ◀ ▶.
 - ✅ **Idioma ES / EN** (español por defecto): se traduce todo, incluidos los modos, las calidades

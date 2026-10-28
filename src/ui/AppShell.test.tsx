@@ -20,6 +20,13 @@ const chordList = () =>
   within(keyPanel())
     .getAllByRole('listitem')
     .map((item) => item.textContent)
+// The chord formula table of a chord panel: one column per degree, the notes in the cells.
+const formulaTable = (panel: HTMLElement) =>
+  within(panel).getByRole('table', { name: /^(Fórmula de|Formula of) / })
+const formulaNotes = (panel: HTMLElement) =>
+  within(formulaTable(panel))
+    .getAllByRole('cell')
+    .map((cell) => cell.textContent)
 
 describe('AppShell', () => {
   // The explorer reads and rewrites the URL: every test starts from a clean one.
@@ -439,7 +446,7 @@ describe('AppShell', () => {
 
       expect(within(chordPanel()).getByRole('heading', { name: 'C' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado I · C mayor')).toBeInTheDocument()
-      expect(within(chordPanel()).getByText('Notas: C E G')).toBeInTheDocument()
+      expect(formulaNotes(chordPanel())).toEqual(['C', 'E', 'G'])
       expect(modesWithChord()).toEqual(['Jónico I', 'Lidio I', 'Mixolidio I'])
       expect(played).toEqual([])
     })
@@ -454,7 +461,7 @@ describe('AppShell', () => {
 
       expect(within(chordPanel()).getByRole('heading', { name: 'Am' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado i · A menor')).toBeInTheDocument()
-      expect(within(chordPanel()).getByText('Notas: A C E')).toBeInTheDocument()
+      expect(formulaNotes(chordPanel())).toEqual(['A', 'C', 'E'])
       expect(played).toEqual([['F', 'A', 'C']])
     })
 
@@ -511,7 +518,7 @@ describe('AppShell', () => {
 
       expect(within(chordPanel()).getByRole('heading', { name: 'F' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado IV · C mayor')).toBeInTheDocument()
-      expect(within(chordPanel()).getByText('Notas: F A C')).toBeInTheDocument()
+      expect(formulaNotes(chordPanel())).toEqual(['F', 'A', 'C'])
       expect(modesWithChord()).toEqual([
         'Jónico IV',
         'Dórico IV ⭐ (más representativo)',
@@ -538,7 +545,7 @@ describe('AppShell', () => {
 
       expect(within(chordPanel()).getByRole('heading', { name: 'B♭' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado ♭VII · C dórico')).toBeInTheDocument()
-      expect(within(chordPanel()).getByText('Notas: B♭ D F')).toBeInTheDocument()
+      expect(formulaNotes(chordPanel())).toEqual(['B♭', 'D', 'F'])
       expect(modesWithChord()).toEqual([
         'Dórico ♭VII',
         'Mixolidio ♭VII ⭐ (más representativo)',
@@ -568,12 +575,91 @@ describe('AppShell', () => {
 
       expect(within(chordPanel()).getByRole('heading', { name: 'Fmaj7' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado IVmaj7 · C mayor')).toBeInTheDocument()
-      expect(within(chordPanel()).getByText('Notas: F A C E')).toBeInTheDocument()
+      expect(formulaNotes(chordPanel())).toEqual(['F', 'A', 'C', 'E'])
       expect(modesWithChord()).toEqual(['Jónico IVmaj7', 'Mixolidio IVmaj7'])
       expect(played).toEqual([
         ['F', 'A', 'C'],
         ['F', 'A', 'C', 'E'],
       ])
+    })
+
+    // Spec chord-formula: each degree header shows its sign hidden from screen readers and is
+    // named by the long interval name; the cells are the notes in the chosen naming.
+    describe('formula table', () => {
+      const shownDegrees = (table: HTMLElement) =>
+        within(table)
+          .getAllByRole('columnheader')
+          .map((header) => header.querySelector('[aria-hidden="true"]')?.textContent)
+      const expectDegreeNames = (table: HTMLElement, names: string[]) => {
+        const headers = within(table).getAllByRole('columnheader')
+        expect(headers).toHaveLength(names.length)
+        names.forEach((name, column) => expect(headers[column]).toHaveAccessibleName(name))
+      }
+
+      it('replaces the notes line with the formula of the default C major triad', () => {
+        renderShell()
+
+        const table = within(chordPanel()).getByRole('table', { name: 'Fórmula de C' })
+        expectDegreeNames(table, ['fundamental', '3ª mayor', '5ª justa'])
+        expect(shownDegrees(table)).toEqual(['1', '3', '5'])
+        expect(formulaNotes(chordPanel())).toEqual(['C', 'E', 'G'])
+        expect(within(chordPanel()).queryByText(/Notas:/)).not.toBeInTheDocument()
+      })
+
+      it('shows the flatted degrees of a minor and a diminished triad', async () => {
+        const user = userEvent.setup()
+        window.history.replaceState(null, '', '/?key=C&mode=minor')
+        renderShell()
+
+        const minor = within(chordPanel()).getByRole('table', { name: 'Fórmula de Cm' })
+        expect(shownDegrees(minor)).toEqual(['1', '♭3', '5'])
+        expect(formulaNotes(chordPanel())).toEqual(['C', 'E♭', 'G'])
+
+        await user.click(within(keyPanel()).getByRole('button', { name: 'ii° D°' }))
+
+        const diminished = within(chordPanel()).getByRole('table', { name: 'Fórmula de D°' })
+        expectDegreeNames(diminished, ['fundamental', '3ª menor', '5ª disminuida'])
+        expect(shownDegrees(diminished)).toEqual(['1', '♭3', '♭5'])
+        expect(formulaNotes(chordPanel())).toEqual(['D', 'F', 'A♭'])
+      })
+
+      it('follows the triads / sevenths switch with a seventh column', async () => {
+        const user = userEvent.setup()
+        renderShell()
+
+        await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
+
+        const majorSeventh = within(chordPanel()).getByRole('table', { name: 'Fórmula de Cmaj7' })
+        expectDegreeNames(majorSeventh, ['fundamental', '3ª mayor', '5ª justa', '7ª mayor'])
+        expect(shownDegrees(majorSeventh)).toEqual(['1', '3', '5', '7'])
+        expect(formulaNotes(chordPanel())).toEqual(['C', 'E', 'G', 'B'])
+
+        await user.click(within(keyPanel()).getByRole('button', { name: 'V7 G7' }))
+
+        const dominant = within(chordPanel()).getByRole('table', { name: 'Fórmula de G7' })
+        expectDegreeNames(dominant, ['fundamental', '3ª mayor', '5ª justa', '7ª menor'])
+        expect(shownDegrees(dominant)).toEqual(['1', '3', '5', '♭7'])
+        expect(formulaNotes(chordPanel())).toEqual(['G', 'B', 'D', 'F'])
+      })
+
+      it('names the notes in solfège when the naming is Do Re Mi', () => {
+        window.history.replaceState(null, '', '/?key=C&mode=minor&names=solfege')
+
+        renderShell()
+
+        expect(formulaNotes(chordPanel())).toEqual(['Do', 'Mi♭', 'Sol'])
+      })
+
+      it('names the table and its degrees in English', () => {
+        window.history.replaceState(null, '', '/?key=C&mode=minor&lang=en')
+
+        renderShell()
+
+        const chord = screen.getByRole('region', { name: 'Selected chord' })
+        const table = within(chord).getByRole('table', { name: 'Formula of Cm' })
+        expectDegreeNames(table, ['root', 'minor 3rd', 'perfect 5th'])
+        expect(shownDegrees(table)).toEqual(['1', '♭3', '5'])
+      })
     })
   })
 
@@ -1012,7 +1098,7 @@ describe('AppShell', () => {
         '▶ Listen',
       )
       expect(within(chord).getByText('Degree I · C major')).toBeInTheDocument()
-      expect(within(chord).getByText('Notes: C E G')).toBeInTheDocument()
+      expect(formulaNotes(chord)).toEqual(['C', 'E', 'G'])
       expect(within(chord).getByText('Appears in:')).toBeInTheDocument()
       expect(
         within(within(chord).getByRole('list', { name: 'Modes containing it' }))
@@ -1232,7 +1318,7 @@ describe('AppShell', () => {
       expect(within(chordPanel()).getByRole('heading', { name: 'Mi♭' })).toBeInTheDocument()
       expect(within(chordPanel()).getByRole('button', { name: 'Escuchar Mi♭' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado ♭III · Do dórico')).toBeInTheDocument()
-      expect(within(chordPanel()).getByText('Notas: Mi♭ Sol Si♭')).toBeInTheDocument()
+      expect(formulaNotes(chordPanel())).toEqual(['Mi♭', 'Sol', 'Si♭'])
     })
 
     it('names the modes table in solfège', async () => {

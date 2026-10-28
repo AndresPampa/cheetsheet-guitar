@@ -154,6 +154,36 @@ describe('getMessages', () => {
     expect(es.fromFret(3)).toBe('desde el traste 3')
     expect(en.fromFret(3)).toBe('from fret 3')
   })
+
+  // The chord formula table: each degree header is named by its long interval name.
+  it('names the seven degrees of a v1 chord formula in Spanish', () => {
+    expect(es.intervalName).toEqual({
+      '1': 'fundamental',
+      '3': '3ª mayor',
+      b3: '3ª menor',
+      '5': '5ª justa',
+      b5: '5ª disminuida',
+      '7': '7ª mayor',
+      b7: '7ª menor',
+    })
+  })
+
+  it('names the seven degrees of a v1 chord formula in English', () => {
+    expect(en.intervalName).toEqual({
+      '1': 'root',
+      '3': 'major 3rd',
+      b3: 'minor 3rd',
+      '5': 'perfect 5th',
+      b5: 'diminished 5th',
+      '7': 'major 7th',
+      b7: 'minor 7th',
+    })
+  })
+
+  it('names the formula table after the shown chord', () => {
+    expect(es.formulaOf('Cm')).toBe('Fórmula de Cm')
+    expect(en.formulaOf('Cm')).toBe('Formula of Cm')
+  })
 })
 
 describe('solfège naming (Do Re Mi), independent of the language', () => {
