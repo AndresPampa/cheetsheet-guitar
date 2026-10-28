@@ -136,13 +136,12 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               roman={chord.roman}
               context={context}
               notes={chord.notes}
-              modes={getModesContaining(tonic, chord.symbol)}
+              modes={getModesContaining(tonic, chord.notes)}
               onPlay={() => audio.playChord(chord.notes)}
               diagram={
                 <ChordDiagram
                   name={t.symbol(chord.symbol)}
-                  root={chord.root}
-                  quality={chord.quality}
+                  chord={{ ...chord, suffix: chord.symbol.slice(chord.root.length) }}
                   voicings={voicings}
                   draw={drawDiagram}
                   theme={theme}

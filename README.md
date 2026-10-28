@@ -17,8 +17,8 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
 | v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi, accesibilidad y celular | ✅ Completa |
 | v1.5 | Publicación en Vercel con CI como portero y headers de seguridad | ✅ Completa |
 | v1.6 | Créditos al pie: autor, código en GitHub e Instagram | ✅ Completa |
-| v1.7 | Fórmula del acorde: tabla con los grados (1, 3, 5…) y las notas del acorde seleccionado | 🚧 En curso |
-| v2.1 | Extensiones (9/11/13, sus, add) | 📋 Planificada |
+| v1.7 | Fórmula del acorde: tabla con los grados (1, 3, 5…) y las notas del acorde seleccionado | ✅ Completa |
+| v2.1 | Extensiones: hasta dos de 9, 11 y 13 sobre la triada o la séptima, con cifrado, fórmula, diagrama y sonido | 🚧 En curso |
 | v2.0 | Modos de menor armónica y melódica | ⏸️ En pausa (definida) |
 | v2.2 | Armador de progresiones | 💡 Idea |
 | v3 | Backend para guardar progresiones | 💡 Idea |
