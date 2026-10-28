@@ -18,10 +18,27 @@
   margin: 4px 0;
 }
 
+/* Diagram and formula side by side; the formula wraps below when the panel is too narrow. */
+.chord-panel-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+}
+
 .chord-formula {
   border-collapse: collapse;
-  margin: 8px 0;
+  /* Centered in the free space to the right of the diagram. */
+  margin: 8px auto;
   text-align: center;
+}
+
+/* On phones a seventh's 4 columns do not fit beside the diagram: always stack, so the table
+   does not jump when switching triads / sevenths. */
+@media (max-width: 480px) {
+  .chord-panel-body {
+    display: block;
+  }
 }
 
 .chord-formula th,

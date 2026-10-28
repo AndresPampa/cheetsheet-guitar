@@ -43,24 +43,26 @@ export function ChordPanel({
         </button>
       </div>
       <p>{t.degreeIn(displayRoman(roman), context)}</p>
-      <table className="chord-formula" aria-label={t.formulaOf(shownSymbol)}>
-        <tbody>
-          <tr>
-            {formula.map((degree) => (
-              <th key={degree} scope="col">
-                <span aria-hidden="true">{displayRoman(degree)}</span>
-                <span className="sr-only">{t.intervalName[degree] ?? degree}</span>
-              </th>
-            ))}
-          </tr>
-          <tr>
-            {notes.map((note) => (
-              <td key={note}>{t.symbol(note)}</td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
-      {diagram}
+      <div className="chord-panel-body">
+        {diagram}
+        <table className="chord-formula" aria-label={t.formulaOf(shownSymbol)}>
+          <tbody>
+            <tr>
+              {formula.map((degree) => (
+                <th key={degree} scope="col">
+                  <span aria-hidden="true">{displayRoman(degree)}</span>
+                  <span className="sr-only">{t.intervalName[degree] ?? degree}</span>
+                </th>
+              ))}
+            </tr>
+            <tr>
+              {notes.map((note) => (
+                <td key={note}>{t.symbol(note)}</td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <p className="chord-panel-modes-title">{t.appearsIn}</p>
       <ul className="chord-panel-modes" aria-label={t.modesContaining}>
         {modes.map((match) => (
