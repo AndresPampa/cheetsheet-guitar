@@ -48,6 +48,7 @@ Thumbs.db
 .agents/
 .claude/
 .codex/
+.impeccable/
 .opencode/
 docs/
 openspec/

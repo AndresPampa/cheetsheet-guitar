@@ -23,7 +23,7 @@ diagrama y sonido.
 | v1.6 | Créditos al pie: autor, código en GitHub e Instagram | ✅ Completa |
 | v1.7 | Fórmula del acorde: tabla con los grados (1, 3, 5…) y las notas del acorde seleccionado | ✅ Completa |
 | v2.1 | Extensiones: hasta dos de 9, 11 y 13 sobre la triada o la séptima, con cifrado, fórmula, diagrama y sonido | ✅ Completa |
-| v2.0 | Modos de menor armónica y melódica | ⏸️ En pausa (definida) |
+| v2.0 | Modos de menor armónica y melódica: selector de escala madre sobre la tabla de modos, acordes aumentados, mMaj7 y °7 con sus extensiones | 🚧 En curso |
 | v2.2 | Armador de progresiones | 💡 Idea |
 | v3 | Backend para guardar progresiones | 💡 Idea |
 
