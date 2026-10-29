@@ -12,6 +12,10 @@ paralelos, el panel de acorde con sonido y diagrama en la guitarra, la interfaz 
 inglés, los nombres Do Re Mi, el tema claro / oscuro y la selección guardada en la URL; se usa con
 teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwright.
 
+✅ **v2.1 extensiones.** Al acorde abierto se le pueden sumar hasta dos de 9, 11 y 13, tomadas de
+la escala de la tonalidad o del modo (♭9, ♯11 y ♭13 donde corresponde), con cifrado, fórmula,
+diagrama y sonido.
+
 | Versión | Alcance | Estado |
 |---|---|---|
 | v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi, accesibilidad y celular | ✅ Completa |
@@ -19,11 +23,11 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
 | v1.6 | Créditos al pie: autor, código en GitHub e Instagram | ✅ Completa |
 | v1.7 | Fórmula del acorde: tabla con los grados (1, 3, 5…) y las notas del acorde seleccionado | ✅ Completa |
 | v2.1 | Extensiones: hasta dos de 9, 11 y 13 sobre la triada o la séptima, con cifrado, fórmula, diagrama y sonido | ✅ Completa |
-| v2.0 | Modos de menor armónica y melódica | ⏸️ En pausa (definida) |
+| v2.0 | Modos de menor armónica y melódica: selector de escala madre sobre la tabla de modos, acordes aumentados, mMaj7 y °7 con sus extensiones | 🚧 En curso |
 | v2.2 | Armador de progresiones | 💡 Idea |
 | v3 | Backend para guardar progresiones | 💡 Idea |
 
-## Funcionalidades (v1)
+## Funcionalidades
 
 - ✅ **Círculo de quintas**: mayores afuera, menores relativas en el medio y el acorde
   disminuido (vii°) en el anillo interior. Al seleccionar una
@@ -31,6 +35,11 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
   enarmónicas (F♯/G♭, C♯/D♭, B/C♭) muestran los dos nombres y se puede cambiar de grafía.
 - ✅ **Triadas / Séptimas**: el panel de la tonalidad y la tabla de modos muestran triadas o
   acordes de séptima (maj7, m7, 7, m7♭5).
+- ✅ **Extensiones 9 / 11 / 13** (al lado de Triadas / Séptimas): hasta dos sobre la triada o la
+  séptima del acorde abierto, diatónicas a la tonalidad o al modo de donde salió (`Cadd9`, `C6/9`,
+  `Dm11`, `G13`, `Fmaj7(♯11)`, `Em7(♭9)`). Cambian el cifrado, la fórmula, el diagrama (o avisan
+  que no hay), el sonido y los modos donde aparece; se mantienen al cambiar de acorde o de
+  tonalidad.
 - ✅ **Tabla de modos paralelos** (jónico… locrio) de la raíz seleccionada: escala, nota
   característica y grados alterados (♭II, ♯iv°, ♭VII). Se marcan los acordes que contienen la nota
   característica, los prestados del jónico y ⭐ el más representativo.
@@ -44,9 +53,10 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
 - ✅ **C D E / Do Re Mi** (C D E por defecto), independiente del idioma: cambia los nombres de las
   notas en toda la app y deja los sufijos de acorde como están (`Fa♯m7`).
 - ✅ **Tema claro / oscuro**: sigue al del sistema hasta que elijas uno, y lo recuerda.
-- ✅ **La selección queda en la URL** (tonalidad, Triadas / Séptimas, acorde abierto, idioma y
-  nombres de notas), así que se puede guardar en favoritos o compartir. Por ejemplo,
-  `?key=G&mode=minor&chords=7th&chord=dorian.4` abre G menor con séptimas y el IV7 de G dórico.
+- ✅ **La selección queda en la URL** (tonalidad, Triadas / Séptimas, extensiones, acorde abierto,
+  idioma y nombres de notas), así que se puede guardar en favoritos o compartir. Por ejemplo,
+  `?key=G&mode=minor&chords=7th&chord=dorian.4&ext=9` abre G menor con séptimas y el IV7 de G
+  dórico con su 9ª (`C9`).
 - ✅ **Accesible**: todo se usa con teclado (flechas en el círculo), el lector de pantalla anuncia
   cada tonalidad con su armadura y cada acorde con su grado, la calidad no depende solo del color y
   el contraste cumple WCAG 2.1 AA en los dos temas (auditado con axe; el texto del círculo, que axe
@@ -64,9 +74,9 @@ flowchart LR
     subgraph ui["src/ui — React"]
         KE["AppShell<br/>encabezado + interruptores<br/>+ 3 paneles"]
         COF["CircleOfFifths"]
-        KP["KeyPanel<br/>+ Triadas / Séptimas"]
+        KP["KeyPanel<br/>+ Triadas / Séptimas<br/>+ extensiones 9 / 11 / 13"]
         MT["ModesTable"]
-        CP["ChordPanel<br/>▶ + modos donde aparece"]
+        CP["ChordPanel<br/>▶ + fórmula + modos donde aparece"]
         KE --> COF & KP & MT & CP
     end
 
@@ -88,8 +98,11 @@ flowchart LR
         KEY["key.ts<br/>getKey"]
         MOD["modes.ts<br/>getParallelModes<br/>getModesContaining"]
         CIR["circle.ts<br/>CIRCLE_OF_FIFTHS"]
+        EXT["extensions.ts<br/>getExtendedChord<br/>(9 / 11 / 13 + cifrado)"]
+        FOR["formula.ts<br/>getChordFormula"]
         MOD --> KEY
         CIR --> KEY
+        EXT --> KEY & FOR
     end
 
     subgraph audio["src/audio"]
@@ -101,13 +114,13 @@ flowchart LR
     TONAL[("tonal")]
     TONEJS[("Tone.js")]
 
-    KE --> KEY & CIR & MOD
+    KE --> KEY & CIR & MOD & EXT
     KE --> PORT
     TONEA --> TONEJS
     KEY & MOD & CIR --> TONAL
 
     subgraph voicings["src/voicings"]
-        LV["loadVoicings<br/>chords-db + erratas"]
+        LV["loadVoicings<br/>chords-db, filtradas<br/>por las notas del acorde"]
     end
 
     DRAW["svguitarDiagram<br/>dibujo del mástil"]

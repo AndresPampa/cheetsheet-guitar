@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ComponentProps } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -698,7 +698,8 @@ describe('AppShell', () => {
         }),
       ).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Posición 1 de 4')).toBeInTheDocument()
-      expect(drawn.at(-1)).toEqual([-1, 3, 2, 0, 1, 0])
+      // The figure commits before the passive draw effect runs: await the draw itself.
+      await waitFor(() => expect(drawn.at(-1)).toEqual([-1, 3, 2, 0, 1, 0]))
     })
 
     it('steps through the other positions and back', async () => {
@@ -1818,6 +1819,8 @@ describe('AppShell', () => {
         drawDiagram: (_container, voicing) => void drawn.push(voicing.frets),
       })
       await screen.findByRole('img', { name: /^Diagrama de C/ })
+      // The initial draw is a passive effect that may still be pending: wait for it before counting.
+      await waitFor(() => expect(drawn.at(-1)).toEqual([-1, 3, 2, 0, 1, 0]))
       const before = drawn.length
 
       await user.click(themeButton('Claro'))
@@ -1825,6 +1828,7 @@ describe('AppShell', () => {
       expect(drawn).toHaveLength(before + 1)
       expect(drawn.at(-1)).toEqual([-1, 3, 2, 0, 1, 0])
     })
+
     it('applies the new theme before the diagram redraws, so it reads the new colors', async () => {
       const user = userEvent.setup()
       fakeSystemTheme(false)
