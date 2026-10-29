@@ -7,15 +7,18 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test'
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEME_KEY = 'cheetsheet-guitar:theme'
 const OPEN_CHORD = '/?key=G&chords=7th&chord=dorian.4'
+// Spec chord-extensions: C major I with 9 and 13 is Cmaj13, which chords-db can voice.
+const EXTENDED_CHORD = '/?chords=7th&ext=9,13'
 // WCAG 1.4.3: normal-size text (every circle label is under 18.66px bold).
 const MIN_TEXT_CONTRAST = 4.5
 
 const circle = (page: Page) => page.getByRole('radiogroup', { name: 'Tonalidades' })
 
 /** The open chord's diagram is drawn after two lazy imports (chords-db, svguitar). */
-async function waitForDiagram(page: Page) {
-  await expect(page.getByRole('img', { name: /^Diagrama de C7/ }).locator('svg')).toBeVisible()
+async function waitForDiagram(page: Page, name: RegExp = /^Diagrama de C7/) {
+  await expect(page.getByRole('img', { name }).locator('svg')).toBeVisible()
 }
+const CMAJ13_DIAGRAM = /^Diagrama de Cmaj13:/
 
 async function axeViolations(page: Page, testInfo: TestInfo) {
   const { violations, incomplete } = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze()
@@ -79,6 +82,15 @@ for (const colorScheme of ['dark', 'light'] as const) {
       expect(await axeViolations(page, testInfo)).toEqual([])
     })
 
+    test('an open chord with extensions has no WCAG 2.1 AA violations', async ({
+      page,
+    }, testInfo) => {
+      await page.goto(EXTENDED_CHORD)
+      await waitForDiagram(page, CMAJ13_DIAGRAM)
+
+      expect(await axeViolations(page, testInfo)).toEqual([])
+    })
+
     test('every circle label contrasts at least 4.5:1 with its sector', async ({ page }) => {
       // G major: free, diatonic and selected sectors on all three rings.
       await page.goto('/?key=G')
@@ -108,6 +120,17 @@ test('the page reflows at 320px without sideways scrolling', async ({ page }) =>
   await page.setViewportSize({ width: 320, height: 640 })
   await page.goto(OPEN_CHORD)
   await waitForDiagram(page)
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  )
+  expect(overflow).toBe(0)
+})
+
+test('the page reflows at 320px with extensions chosen', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  await page.goto(EXTENDED_CHORD)
+  await waitForDiagram(page, CMAJ13_DIAGRAM)
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

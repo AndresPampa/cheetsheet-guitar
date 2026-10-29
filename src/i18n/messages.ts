@@ -52,6 +52,12 @@ export interface Messages {
   formulaOf: (displayedSymbol: string) => string
   /** Long name per degree of a formula (`b3` → `3ª menor`), read instead of the sign. */
   intervalName: Record<string, string>
+  /** Accessible name of the 9 / 11 / 13 toggles: they change only the open chord. */
+  extensionsGroup: string
+  /** Short visible label next to them. */
+  extensionsLabel: string
+  /** Shown, and read on the disabled toggle, when two extensions are chosen. */
+  maxExtensions: string
   appearsIn: string
   modesContaining: string
   mostRepresentative: string

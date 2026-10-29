@@ -45,7 +45,7 @@ test('switching to sevenths updates the key panel and the modes table', async ({
     'IVmaj7 Cmaj7',
     'V7 D7',
     'vi7 Em7',
-    'viiø7 F♯m7b5',
+    'viiø7 F♯m7♭5',
   ])
   await expect(modeRow(page, 'Dórico').getByRole('button', { name: /^IV7 C7/ })).toBeVisible()
   // Decision 18: the circle always stays in triads.
@@ -67,4 +67,34 @@ test('the selection survives a reload through the URL', async ({ page }) => {
     'aria-pressed',
     'true',
   )
+})
+
+// Spec chord-extensions, "Flujo Cmaj13 (E2E)".
+test('a Cmaj13 built with two extensions shows its formula and survives a reload', async ({
+  page,
+}) => {
+  const chordPanel = page.getByRole('region', { name: 'Acorde seleccionado' })
+  // The selector lives in the key panel; it changes the chord open in the chord panel.
+  const extension = (name: string) =>
+    keyPanel(page)
+      .getByRole('group', { name: 'Extensiones del acorde abierto' })
+      .getByRole('button', { name, exact: true })
+  await page.goto('/')
+
+  await keyPanel(page).getByRole('button', { name: 'Séptimas' }).click()
+  await extension('9').click()
+  await extension('13').click()
+
+  await expect(chordPanel.getByRole('heading', { name: 'Cmaj13' })).toBeVisible()
+  await expect(
+    chordPanel.getByRole('table', { name: 'Fórmula de Cmaj13' }).locator('th [aria-hidden="true"]'),
+  ).toHaveText(['1', '3', '5', '7', '9', '13'])
+  await expect(page).toHaveURL(/chords=7th/)
+  await expect(page).toHaveURL(/ext=9(,|%2C)13/)
+
+  await page.reload()
+
+  await expect(chordPanel.getByRole('heading', { name: 'Cmaj13' })).toBeVisible()
+  await expect(extension('9')).toHaveAttribute('aria-pressed', 'true')
+  await expect(extension('13')).toHaveAttribute('aria-pressed', 'true')
 })

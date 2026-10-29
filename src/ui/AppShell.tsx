@@ -5,6 +5,7 @@ import {
   CIRCLE_OF_FIFTHS,
   getCircleHighlights,
   getCircleSpelling,
+  getExtendedChord,
   getKey,
   getModesContaining,
   getParallelModes,
@@ -45,7 +46,7 @@ interface AppShellProps {
  */
 export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const [state, update] = useUrlState()
-  const { tonic, mode, chordKind, chord: chordRef, language, notation } = state
+  const { tonic, mode, chordKind, chord: chordRef, extensions, language, notation } = state
   const t = getMessages(language, notation)
   const [theme, setTheme] = useTheme()
   const keyInfo = getKey(tonic, mode)
@@ -59,11 +60,11 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const respell = (respelled: string) => update({ tonic: respelled, chord: TONIC_CHORD })
 
   const resolve = ({ source, degree }: ChordRef) => {
-    const chords =
-      source === 'key' ? keyInfo.chords : modes.find((parallel) => parallel.name === source)!.chords
-    const chord = chords[degree - 1]!
-    // The root is the triad's: a seventh chord is built on the same one.
-    return { ...(chordKind === 'sevenths' ? chord.seventh : chord), root: chord.root }
+    const origin = source === 'key' ? keyInfo : modes.find((parallel) => parallel.name === source)!
+    const base = origin.chords[degree - 1]!
+    // The roman stays the base chord's: Imaj7 for Cmaj9.
+    const roman = chordKind === 'sevenths' ? base.seventh.roman : base.roman
+    return { ...getExtendedChord(origin.scale, degree, chordKind, extensions), roman }
   }
 
   const open = (ref: ChordRef) => {
@@ -126,6 +127,8 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
                 onRespell={respell}
                 chordKind={chordKind}
                 onChordKindChange={(kind) => update({ chordKind: kind })}
+                extensions={extensions}
+                onExtensionsChange={(chosen) => update({ extensions: chosen })}
                 onChordClick={(degree) => open({ source: 'key', degree })}
               />
             </div>
@@ -141,7 +144,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               diagram={
                 <ChordDiagram
                   name={t.symbol(chord.symbol)}
-                  chord={{ ...chord, suffix: chord.symbol.slice(chord.root.length) }}
+                  chord={chord}
                   voicings={voicings}
                   draw={drawDiagram}
                   theme={theme}
