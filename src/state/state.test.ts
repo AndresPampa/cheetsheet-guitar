@@ -8,6 +8,7 @@ const FULL_STATE: AppState = {
   chord: { source: 'dorian', degree: 4 },
   notation: 'solfege',
   language: 'en',
+  extensions: [],
 }
 const FULL_SEARCH = '?key=F%23&mode=minor&chords=7th&chord=dorian.4&names=solfege&lang=en'
 
@@ -20,6 +21,7 @@ describe('parseState', () => {
       chord: { source: 'key', degree: 1 },
       notation: 'letters',
       language: 'es',
+      extensions: [],
     })
     expect(DEFAULT_STATE).toEqual(parseState(''))
   })
@@ -126,5 +128,46 @@ describe('serializeState', () => {
 
   it.each(roundTrips)('reads back what it writes for $tonic $mode', (state) => {
     expect(parseState(serializeState(state))).toEqual(state)
+  })
+})
+
+describe('extensions in the URL', () => {
+  const validCases: Array<[string, Partial<AppState>]> = [
+    ['?ext=9,13', { extensions: [9, 13] }],
+    ['?ext=11', { extensions: [11] }],
+    ['?key=G&ext=13', { tonic: 'G', extensions: [13] }],
+    ['?key=G', { tonic: 'G', extensions: [] }],
+  ]
+
+  it.each(validCases)('reads %s, with an empty list when ext is absent', (search, expected) => {
+    expect(parseState(search)).toEqual({ ...DEFAULT_STATE, ...expected })
+  })
+
+  const invalidCases: Array<[string, string]> = [
+    ['more than two', '?key=G&ext=9,11,13'],
+    ['a repeated one', '?key=G&ext=9,9'],
+    ['a value outside 9, 11, 13', '?key=G&ext=7'],
+    ['a non-numeric value', '?key=G&ext=9,x'],
+    ['an empty value', '?key=G&ext='],
+    ['an empty item', '?key=G&ext=9,,13'],
+  ]
+
+  it.each(invalidCases)('falls back to no extensions on %s, keeping the key', (_, search) => {
+    expect(parseState(search)).toEqual({ ...DEFAULT_STATE, tonic: 'G', extensions: [] })
+  })
+
+  it('reads extensions sorted from lowest to highest when the URL has them out of order', () => {
+    expect(parseState('?ext=13,9').extensions).toEqual([9, 13])
+  })
+
+  it('writes extensions sorted and reads them back when the state has them out of order', () => {
+    const search = serializeState({ ...DEFAULT_STATE, extensions: [13, 9] })
+
+    expect(['?ext=9%2C13', '?ext=9,13']).toContain(search)
+    expect(parseState(search).extensions).toEqual([9, 13])
+  })
+
+  it('omits ext when there are no extensions', () => {
+    expect(serializeState({ ...DEFAULT_STATE, extensions: [] })).not.toContain('ext')
   })
 })

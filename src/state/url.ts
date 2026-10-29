@@ -1,4 +1,10 @@
-import { getKey, getParallelModes, type KeyMode, type ModeName } from '../theory/index.ts'
+import {
+  getKey,
+  getParallelModes,
+  type Extension,
+  type KeyMode,
+  type ModeName,
+} from '../theory/index.ts'
 import type { Language, Notation } from '../i18n/index.ts'
 
 /** Which chord on each degree the panels list. The circle always shows triads. */
@@ -20,6 +26,8 @@ export interface AppState {
   mode: KeyMode
   chordKind: ChordKind
   chord: ChordRef
+  /** Added to the open chord, in stacking order: `[]`, `[9]`, `[9, 13]`. */
+  extensions: Extension[]
   notation: Notation
   language: Language
 }
@@ -29,6 +37,7 @@ export const DEFAULT_STATE: AppState = {
   mode: 'major',
   chordKind: 'triads',
   chord: { source: 'key', degree: 1 },
+  extensions: [],
   notation: 'letters',
   language: 'es',
 }
@@ -37,6 +46,8 @@ export const DEFAULT_STATE: AppState = {
 const SEVENTHS = '7th'
 const MODE_NAMES = new Set<string>(getParallelModes('C').map((mode) => mode.name))
 const CHORD_PATTERN = /^([a-z]+)\.([1-7])$/
+// Up to two of 9, 11, 13, comma-separated; repeats are rejected below.
+const EXT_PATTERN = /^(9|11|13)(,(9|11|13))?$/
 
 const isCircleKey = (tonic: string, mode: KeyMode) => {
   try {
@@ -61,6 +72,13 @@ const parseChord = (value: string | null): ChordRef => {
   return { source, degree: Number(degree) }
 }
 
+const parseExtensions = (value: string | null): Extension[] => {
+  if (value === null || !EXT_PATTERN.test(value)) return []
+  const extensions = value.split(',').map(Number) as Extension[]
+  if (new Set(extensions).size !== extensions.length) return []
+  return extensions.sort((a, b) => a - b)
+}
+
 /**
  * Reads the state from a query string (`location.search`, with or without `?`). Each invalid
  * or missing parameter falls back to its own default; the valid ones are kept. A tonic that is
@@ -75,6 +93,7 @@ export function parseState(search: string): AppState {
     mode,
     chordKind: params.get('chords') === SEVENTHS ? 'sevenths' : 'triads',
     chord: parseChord(params.get('chord')),
+    extensions: parseExtensions(params.get('ext')),
     notation: params.get('names') === 'solfege' ? 'solfege' : 'letters',
     language: params.get('lang') === 'en' ? 'en' : 'es',
   }
@@ -89,6 +108,9 @@ export function serializeState(state: AppState): string {
   const { source, degree } = state.chord
   if (source !== DEFAULT_STATE.chord.source || degree !== DEFAULT_STATE.chord.degree) {
     params.set('chord', `${source}.${degree}`)
+  }
+  if (state.extensions.length > 0) {
+    params.set('ext', [...state.extensions].sort((a, b) => a - b).join(','))
   }
   if (state.notation !== DEFAULT_STATE.notation) params.set('names', state.notation)
   if (state.language !== DEFAULT_STATE.language) params.set('lang', state.language)

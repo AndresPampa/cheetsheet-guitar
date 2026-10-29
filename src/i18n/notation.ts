@@ -31,11 +31,12 @@ export function parseSymbol(
 
 const signs = (accidentals: string) => accidentals.replace(/#/g, '♯').replace(/b/g, '♭')
 
-/** `F#` → `F♯` (or `Fa♯`), `Bbm` → `B♭m`, `B°` stays `B°`; the chord suffix is kept. */
+/** `F#` → `F♯` (or `Fa♯`), `Bbm` → `B♭m`, `Bm7b5` → `Bm7♭5`, `Fmaj7(#11)` → `Fmaj7(♯11)`. */
 export function displaySymbol(symbol: string, notation: Notation = 'letters'): string {
   const parsed = parseSymbol(symbol)
   if (parsed === null) return symbol
-  return noteName(parsed.letter, notation) + signs(parsed.accidentals) + parsed.rest
+  // Suffixes only spell alterations with `b` and `#`, so the same signs apply to them.
+  return noteName(parsed.letter, notation) + signs(parsed.accidentals) + signs(parsed.rest)
 }
 
 export type AccidentalWords = Record<'#' | 'b' | '##' | 'bb', string>

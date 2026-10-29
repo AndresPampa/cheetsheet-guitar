@@ -12,6 +12,12 @@ describe('symbol, with letter names', () => {
     ['Bbb', 'B♭♭'],
     ['B°', 'B°'],
     ['N.C.', 'N.C.'],
+    // v2.1: the alterations of the suffix get their signs too.
+    ['Bm7b5', 'Bm7♭5'],
+    ['Fmaj7(#11)', 'Fmaj7(♯11)'],
+    ['Em7(b9,b13)', 'Em7(♭9,♭13)'],
+    ['F#m7b5', 'F♯m7♭5'],
+    ['C6/9', 'C6/9'],
   ]
 
   it.each(cases)('shows %s as %s', (symbol, shown) => {
@@ -156,7 +162,8 @@ describe('getMessages', () => {
   })
 
   // The chord formula table: each degree header is named by its long interval name.
-  it('names the seven degrees of a v1 chord formula in Spanish', () => {
+  // v2.1 adds the six extension degrees (9 b9 11 #11 13 b13) to the seven of v1.
+  it('names every degree of a chord formula, up to the 13th, in Spanish', () => {
     expect(es.intervalName).toEqual({
       '1': 'fundamental',
       '3': '3ª mayor',
@@ -165,10 +172,16 @@ describe('getMessages', () => {
       b5: '5ª disminuida',
       '7': '7ª mayor',
       b7: '7ª menor',
+      '9': '9ª mayor',
+      b9: '9ª menor',
+      '11': '11ª justa',
+      '#11': '11ª aumentada',
+      '13': '13ª mayor',
+      b13: '13ª menor',
     })
   })
 
-  it('names the seven degrees of a v1 chord formula in English', () => {
+  it('names every degree of a chord formula, up to the 13th, in English', () => {
     expect(en.intervalName).toEqual({
       '1': 'root',
       '3': 'major 3rd',
@@ -177,7 +190,22 @@ describe('getMessages', () => {
       b5: 'diminished 5th',
       '7': 'major 7th',
       b7: 'minor 7th',
+      '9': 'major 9th',
+      b9: 'minor 9th',
+      '11': 'perfect 11th',
+      '#11': 'augmented 11th',
+      '13': 'major 13th',
+      b13: 'minor 13th',
     })
+  })
+
+  it('names the extensions selector, its visible label and its limit in both languages', () => {
+    expect(es.extensionsGroup).toBe('Extensiones del acorde abierto')
+    expect(en.extensionsGroup).toBe('Extensions of the open chord')
+    expect(es.extensionsLabel).toBe('Extensiones')
+    expect(en.extensionsLabel).toBe('Extensions')
+    expect(es.maxExtensions).toBe('Máximo 2 extensiones')
+    expect(en.maxExtensions).toBe('Up to 2 extensions')
   })
 
   it('names the formula table after the shown chord', () => {
@@ -200,13 +228,14 @@ describe('solfège naming (Do Re Mi), independent of the language', () => {
     ['Bb', 'Si♭'],
     ['F#m7', 'Fa♯m7'],
     ['Bbmaj7', 'Si♭maj7'],
-    ['Bm7b5', 'Sim7b5'],
+    ['Bm7b5', 'Sim7♭5'],
+    ['Bbmaj7(#11)', 'Si♭maj7(♯11)'],
     ['G°', 'Sol°'],
     ['Bbb', 'Si♭♭'],
     ['N.C.', 'N.C.'],
   ]
 
-  it.each(symbols)('shows %s as %s, keeping the chord suffix', (symbol, shown) => {
+  it.each(symbols)('shows %s as %s, with signs in the chord suffix', (symbol, shown) => {
     expect(esDo.symbol(symbol)).toBe(shown)
     expect(enDo.symbol(symbol)).toBe(shown)
   })

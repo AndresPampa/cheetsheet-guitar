@@ -117,11 +117,26 @@ test('hostile URL parameters fall back to defaults and run nothing', async ({ pa
 
   await page.goto(
     '/?key=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E&mode=%3Cscript%3Ealert(2)%3C%2Fscript%3E' +
-      '&chord=__proto__.1&lang=javascript:alert(3)',
+      '&chord=__proto__.1&lang=javascript:alert(3)' +
+      // Starts with a valid extension, so a parser that only splits on commas would keep the 9.
+      '&ext=9%2C%3Cscript%3Ealert(4)%3C%2Fscript%3E',
   )
 
   const keyPanel = page.getByRole('region', { name: 'Tonalidad seleccionada' })
   await expect(keyPanel.getByRole('heading')).toHaveText('C mayor')
+  const extensions = keyPanel.getByRole('group', { name: 'Extensiones del acorde abierto' })
+  await expect(extensions.getByRole('button', { name: '9' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
+  await expect(extensions.getByRole('button', { name: '11' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
+  await expect(extensions.getByRole('button', { name: '13' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
   await expect(page.locator('img[src="x"]')).toHaveCount(0)
   // The only inline script is index.html's theme script: nothing was injected.
   await expect(page.locator('script:not([src])')).toHaveCount(1)

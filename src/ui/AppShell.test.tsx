@@ -223,7 +223,7 @@ describe('AppShell', () => {
         'IVmaj7 Fmaj7',
         'V7 G7',
         'vi7 Am7',
-        'viiø7 Bm7b5',
+        'viiø7 Bm7♭5',
       ])
     })
 
@@ -236,7 +236,7 @@ describe('AppShell', () => {
 
       expect(chordList()).toEqual([
         'i7 Em7',
-        'iiø7 F♯m7b5',
+        'iiø7 F♯m7♭5',
         'IIImaj7 Gmaj7',
         'iv7 Am7',
         'v7 Bm7',
@@ -260,7 +260,7 @@ describe('AppShell', () => {
         'IVmaj7 C♭maj7',
         'V7 D♭7',
         'vi7 E♭m7',
-        'viiø7 Fm7b5',
+        'viiø7 Fm7♭5',
       ])
     })
 
@@ -419,7 +419,7 @@ describe('AppShell', () => {
       expect(degreesOf('Mixolidio')).toEqual([
         'I7 C7 (característica) (prestado)',
         'ii7 Dm7',
-        'iiiø7 Em7b5 (característica) (prestado)',
+        'iiiø7 Em7♭5 (característica) (prestado)',
         'IVmaj7 Fmaj7',
         'v7 Gm7 (característica) (prestado)',
         'vi7 Am7',
@@ -850,6 +850,262 @@ describe('AppShell', () => {
       renderShell()
 
       expect(within(chordPanel()).getByText('Cargando diagrama…')).toBeInTheDocument()
+    })
+  })
+
+  // Spec chord-extensions, "Selector de extensiones en el panel de tonalidad" (v2.1 slice 2).
+  // The selector lives in the key panel, but it only changes the open chord.
+  describe('extensions selector in the key panel', () => {
+    const chordPanel = () => screen.getByRole('region', { name: 'Acorde seleccionado' })
+    const extensionsGroup = () =>
+      within(keyPanel()).getByRole('group', { name: 'Extensiones del acorde abierto' })
+    const toggle = (name: '9' | '11' | '13') =>
+      within(extensionsGroup()).getByRole('button', { name })
+    const heading = (name: string) => within(chordPanel()).getByRole('heading', { name })
+    const shownDegrees = (table: HTMLElement) =>
+      within(table)
+        .getAllByRole('columnheader')
+        .map((header) => header.querySelector('[aria-hidden="true"]')?.textContent)
+    const modesWithChord = () =>
+      within(within(chordPanel()).getByRole('list', { name: 'Modos donde aparece' }))
+        .getAllByRole('listitem')
+        .map((item) => item.textContent)
+    const fakeAudio = () => {
+      const played: string[][] = []
+      return { played, audio: { playChord: (notes: string[]) => void played.push(notes) } }
+    }
+    const MAX_NOTICE = 'Máximo 2 extensiones'
+
+    it('shows the visible label "Extensiones" in the key panel', () => {
+      renderShell()
+
+      expect(within(keyPanel()).getByText('Extensiones')).toBeVisible()
+    })
+
+    it('adds the 9th to the open triad, with its formula and the URL', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      await user.click(toggle('9'))
+
+      expect(toggle('9')).toHaveAttribute('aria-pressed', 'true')
+      expect(toggle('11')).toHaveAttribute('aria-pressed', 'false')
+      expect(heading('Cadd9')).toBeInTheDocument()
+      const table = within(chordPanel()).getByRole('table', { name: 'Fórmula de Cadd9' })
+      expect(shownDegrees(table)).toEqual(['1', '3', '5', '9'])
+      expect(formulaNotes(chordPanel())).toEqual(['C', 'E', 'G', 'D'])
+      expect(within(table).getAllByRole('columnheader')[3]).toHaveAccessibleName('9ª mayor')
+      expect(window.location.search).toBe('?ext=9')
+    })
+
+    it('stacks two extensions on the seventh and disables the third at the limit', async () => {
+      const user = userEvent.setup()
+      window.history.replaceState(null, '', '/?chords=7th')
+      renderShell()
+
+      await user.click(toggle('13'))
+      await user.click(toggle('9'))
+
+      expect(heading('Cmaj13')).toBeInTheDocument()
+      const table = within(chordPanel()).getByRole('table', { name: 'Fórmula de Cmaj13' })
+      expect(shownDegrees(table)).toEqual(['1', '3', '5', '7', '9', '13'])
+      expect(formulaNotes(chordPanel())).toEqual(['C', 'E', 'G', 'B', 'D', 'A'])
+      expect(within(chordPanel()).getByText('Grado Imaj7 · C mayor')).toBeInTheDocument()
+      // Unavailable but still focusable (aria-disabled), like the diagram's position buttons.
+      expect(toggle('11')).toHaveAttribute('aria-disabled', 'true')
+      expect(toggle('11')).not.toBeDisabled()
+      expect(toggle('11')).not.toHaveAttribute('tabindex', '-1')
+      expect(toggle('11')).toHaveAccessibleDescription(MAX_NOTICE)
+      expect(within(keyPanel()).getByText(MAX_NOTICE)).toBeVisible()
+      expect(within(chordPanel()).queryByText(MAX_NOTICE)).toBeNull()
+    })
+
+    it('ignores a click on the disabled third extension', async () => {
+      const user = userEvent.setup()
+      window.history.replaceState(null, '', '/?chords=7th')
+      renderShell()
+      await user.click(toggle('13'))
+      await user.click(toggle('9'))
+
+      await user.click(toggle('11'))
+
+      expect(toggle('9')).toHaveAttribute('aria-pressed', 'true')
+      expect(toggle('11')).toHaveAttribute('aria-pressed', 'false')
+      expect(toggle('13')).toHaveAttribute('aria-pressed', 'true')
+      expect(heading('Cmaj13')).toBeInTheDocument()
+    })
+
+    it('frees the limit and hides the notice when one of the two is removed', async () => {
+      const user = userEvent.setup()
+      window.history.replaceState(null, '', '/?chords=7th')
+      renderShell()
+      await user.click(toggle('13'))
+      await user.click(toggle('9'))
+
+      await user.click(toggle('9'))
+
+      expect(heading('Cmaj7(13)')).toBeInTheDocument()
+      expect(toggle('9')).toHaveAttribute('aria-pressed', 'false')
+      expect(toggle('11')).not.toHaveAttribute('aria-disabled', 'true')
+      expect(within(keyPanel()).queryByText(MAX_NOTICE)).toBeNull()
+    })
+
+    it('shows no limit notice while fewer than two extensions are chosen', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      expect(within(keyPanel()).queryByText(MAX_NOTICE)).toBeNull()
+
+      await user.click(toggle('11'))
+
+      expect(toggle('11')).toHaveAttribute('aria-pressed', 'true')
+      expect(within(keyPanel()).queryByText(MAX_NOTICE)).toBeNull()
+    })
+
+    it('spells a diatonic sharp 11th with its sign when the IV is opened', async () => {
+      const user = userEvent.setup()
+      window.history.replaceState(null, '', '/?chords=7th&ext=11')
+      renderShell()
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'IVmaj7 Fmaj7' }))
+
+      expect(heading('Fmaj7(♯11)')).toBeInTheDocument()
+      const table = within(chordPanel()).getByRole('table', { name: 'Fórmula de Fmaj7(♯11)' })
+      expect(shownDegrees(table).at(-1)).toBe('♯11')
+      expect(within(table).getAllByRole('columnheader').at(-1)).toHaveAccessibleName(
+        '11ª aumentada',
+      )
+      expect(formulaNotes(chordPanel())).toEqual(['F', 'A', 'C', 'E', 'B'])
+      expect(modesWithChord()).toEqual(['Jónico IVmaj7'])
+    })
+
+    it('keeps the extensions across another chord, the chord kind and the key', async () => {
+      const user = userEvent.setup()
+      const { played, audio } = fakeAudio()
+      window.history.replaceState(null, '', '/?ext=9')
+      renderShell({ audio })
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'V G' }))
+
+      expect(heading('Gadd9')).toBeInTheDocument()
+      expect(played).toEqual([['G', 'B', 'D', 'A']])
+      expect(toggle('9')).toHaveAttribute('aria-pressed', 'true')
+
+      await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
+
+      expect(heading('G9')).toBeInTheDocument()
+
+      await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
+
+      expect(heading('Gmaj9')).toBeInTheDocument()
+      expect(toggle('9')).toHaveAttribute('aria-pressed', 'true')
+      expect(window.location.search).toContain('ext=9')
+    })
+
+    it('extends a chord opened from the modes table and plays its notes', async () => {
+      const user = userEvent.setup()
+      const { played, audio } = fakeAudio()
+      window.history.replaceState(null, '', '/?chords=7th&ext=11')
+      renderShell({ audio })
+      const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
+      const lydian = within(table).getByRole('row', { name: /^Lidio/ })
+
+      await user.click(within(lydian).getByRole('button', { name: /^Imaj7 Cmaj7/ }))
+
+      expect(heading('Cmaj7(♯11)')).toBeInTheDocument()
+      expect(within(chordPanel()).getByText('Grado Imaj7 · C lidio')).toBeInTheDocument()
+      expect(played).toEqual([['C', 'E', 'G', 'B', 'F#']])
+    })
+
+    it('plays the extended notes from the play button', async () => {
+      const user = userEvent.setup()
+      const { played, audio } = fakeAudio()
+      window.history.replaceState(null, '', '/?ext=9')
+      renderShell({ audio })
+
+      await user.click(within(chordPanel()).getByRole('button', { name: 'Escuchar Cadd9' }))
+
+      expect(played).toEqual([['C', 'E', 'G', 'D']])
+    })
+
+    it('says there is no diagram instead of drawing the unextended chord', async () => {
+      window.history.replaceState(null, '', '/?chords=7th&ext=11')
+      renderShell({ voicings: loadVoicings })
+
+      expect(heading('Cmaj7(11)')).toBeInTheDocument()
+      expect(
+        await within(chordPanel()).findByText('No hay diagrama para este acorde'),
+      ).toBeInTheDocument()
+      expect(within(chordPanel()).queryByRole('img')).toBeNull()
+    })
+
+    it('leaves the key panel and the modes table without extensions', () => {
+      window.history.replaceState(null, '', '/?chords=7th&ext=9,13')
+
+      renderShell()
+
+      expect(chordList()).toEqual([
+        'Imaj7 Cmaj7',
+        'ii7 Dm7',
+        'iii7 Em7',
+        'IVmaj7 Fmaj7',
+        'V7 G7',
+        'vi7 Am7',
+        'viiø7 Bm7♭5',
+      ])
+      const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
+      const ionian = within(table).getByRole('row', { name: /^Jónico/ })
+      expect(
+        within(ionian)
+          .getAllByRole('button')
+          .map((cell) => cell.textContent),
+      ).toEqual([
+        'Imaj7 Cmaj7',
+        'ii7 Dm7',
+        'iii7 Em7',
+        'IVmaj7 Fmaj7',
+        'V7 G7',
+        'vi7 Am7',
+        'viiø7 Bm7♭5',
+      ])
+    })
+
+    describe('when the language, the note names or the theme change', () => {
+      afterEach(() => {
+        localStorage.clear()
+        document.documentElement.removeAttribute('data-theme')
+      })
+
+      it('does not ask for the voicings again', async () => {
+        const user = userEvent.setup()
+        const asked: string[] = []
+        window.history.replaceState(null, '', '/?ext=9')
+        renderShell({
+          voicings: (chord) => {
+            asked.push(`${chord.root}${chord.suffix}`)
+            return loadVoicings(chord)
+          },
+        })
+        await within(chordPanel()).findByRole('img', { name: /^Diagrama de Cadd9:/ })
+        const before = asked.length
+
+        await user.click(screen.getByRole('button', { name: 'English' }))
+        await user.click(
+          within(screen.getByRole('group', { name: 'Note names' })).getByRole('button', {
+            name: 'Do Re Mi',
+          }),
+        )
+        await user.click(
+          within(screen.getByRole('group', { name: 'Theme' })).getByRole('button', {
+            name: 'Light',
+          }),
+        )
+
+        expect(
+          screen.getByRole('region', { name: 'Selected chord' }).querySelector('[role="img"]'),
+        ).toHaveAccessibleName(/^Diagram of Doadd9:/)
+        expect(asked).toHaveLength(before)
+      })
     })
   })
 
@@ -1289,7 +1545,7 @@ describe('AppShell', () => {
       ).toBeInTheDocument()
     })
 
-    it('keeps the chord suffixes when sevenths are on', async () => {
+    it('keeps the chord suffixes, with their signs, when sevenths are on', async () => {
       const user = userEvent.setup()
       renderShell()
       await user.click(namesButton('Do Re Mi'))
@@ -1303,7 +1559,7 @@ describe('AppShell', () => {
         'IVmaj7 Famaj7',
         'V7 Sol7',
         'vi7 Lam7',
-        'viiø7 Sim7b5',
+        'viiø7 Sim7♭5',
       ])
     })
 
