@@ -298,6 +298,36 @@ describe('getExtendedChord extension order', () => {
   })
 })
 
+// ORACLE — hand-written (specs/chord-extensions, "Cifrado sobre C menor armónica"): the new
+// qualities of the harmonic minor. mMaj7 stacks like maj7 on a natural 9; maj7#5 and °7 always
+// take parentheses; the augmented triad always takes `+(add…)`, never `+6`.
+const C_HARMONIC_MINOR = ['C', 'D', 'Eb', 'F', 'G', 'Ab', 'B']
+
+const HARMONIC_SYMBOL_CASES: Array<
+  [symbol: string, degree: number, base: Base, extensions: Ext[], root: string, suffix: string]
+> = [
+  ['CmMaj9', 1, 'sevenths', [9], 'C', 'mMaj9'],
+  ['CmMaj11', 1, 'sevenths', [9, 11], 'C', 'mMaj11'],
+  ['CmMaj9(b13)', 1, 'sevenths', [9, 13], 'C', 'mMaj9(b13)'],
+  ['CmMaj7(11)', 1, 'sevenths', [11], 'C', 'mMaj7(11)'],
+  ['Eb+', 3, 'triads', [], 'Eb', '+'],
+  ['Eb+(add9)', 3, 'triads', [9], 'Eb', '+(add9)'],
+  ['Eb+(add13)', 3, 'triads', [13], 'Eb', '+(add13)'],
+  ['Ebmaj7#5(9)', 3, 'sevenths', [9], 'Eb', 'maj7#5(9)'],
+  ['Ebmaj7#5(9,11)', 3, 'sevenths', [9, 11], 'Eb', 'maj7#5(9,11)'],
+  ['B°7', 7, 'sevenths', [], 'B', '°7'],
+  ['B°7(b9)', 7, 'sevenths', [9], 'B', '°7(b9)'],
+  ['B°7(b11,b13)', 7, 'sevenths', [11, 13], 'B', '°7(b11,b13)'],
+]
+
+describe('getExtendedChord in C harmonic minor', () => {
+  it.each(HARMONIC_SYMBOL_CASES)('names %s', (symbol, degree, base, exts, root, suffix) => {
+    const chord = getExtendedChord(C_HARMONIC_MINOR, degree, base, exts)
+
+    expect(chord).toMatchObject({ root, symbol, suffix })
+  })
+})
+
 describe('getExtendedChord invalid input', () => {
   const INVALID: Array<[string, number, Ext[]]> = [
     ['three extensions', 1, [9, 11, 13]],

@@ -1,4 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import {
+  getChordFormula,
+  getExtendedChord,
+  getParallelModes,
+  type ChordBase,
+  type Extension,
+} from '../theory/index.ts'
 import { displayRoman, getMessages } from './index.ts'
 
 const es = getMessages('es')
@@ -108,6 +115,7 @@ describe('getMessages', () => {
       ['Bb', 'B bemol', 'B flat'],
       ['C##', 'C doble sostenido', 'C double sharp'],
       ['Bbb', 'B doble bemol', 'B double flat'],
+      ['Bbbb', 'B triple bemol', 'B triple flat'],
       ['E#m', 'E sostenido', 'E sharp'],
     ]
 
@@ -162,7 +170,8 @@ describe('getMessages', () => {
   })
 
   // The chord formula table: each degree header is named by its long interval name.
-  // v2.1 adds the six extension degrees (9 b9 11 #11 13 b13) to the seven of v1.
+  // v2.1 adds the six extension degrees (9 b9 11 #11 13 b13) to the seven of v1; v2.0 (parent
+  // scales, specs/chord-extensions "Nombres de los grados nuevos") adds #5 bb7 #9 b11.
   it('names every degree of a chord formula, up to the 13th, in Spanish', () => {
     expect(es.intervalName).toEqual({
       '1': 'fundamental',
@@ -170,12 +179,16 @@ describe('getMessages', () => {
       b3: '3ª menor',
       '5': '5ª justa',
       b5: '5ª disminuida',
+      '#5': '5ª aumentada',
       '7': '7ª mayor',
       b7: '7ª menor',
+      bb7: '7ª disminuida',
       '9': '9ª mayor',
       b9: '9ª menor',
+      '#9': '9ª aumentada',
       '11': '11ª justa',
       '#11': '11ª aumentada',
+      b11: '11ª disminuida',
       '13': '13ª mayor',
       b13: '13ª menor',
     })
@@ -188,12 +201,16 @@ describe('getMessages', () => {
       b3: 'minor 3rd',
       '5': 'perfect 5th',
       b5: 'diminished 5th',
+      '#5': 'augmented 5th',
       '7': 'major 7th',
       b7: 'minor 7th',
+      bb7: 'diminished 7th',
       '9': 'major 9th',
       b9: 'minor 9th',
+      '#9': 'augmented 9th',
       '11': 'perfect 11th',
       '#11': 'augmented 11th',
+      b11: 'diminished 11th',
       '13': 'major 13th',
       b13: 'minor 13th',
     })
@@ -263,4 +280,57 @@ describe('solfège naming (Do Re Mi), independent of the language', () => {
     expect(esDo.characteristic('6M', 'A')).toBe('6ª mayor (La)')
     expect(enDo.characteristic('4A', 'F#')).toBe('♯4 (Fa♯)')
   })
+})
+
+// Property (specs/chord-extensions, "Ningún grado alcanzable sin nombre"): over the harmonic
+// minor, every degree a chord formula can reach is one of these hand-written labels and has a
+// long name in both languages. The 18 roots the circle can select, written by hand.
+const CIRCLE_ROOTS = [
+  'C',
+  'G',
+  'D',
+  'A',
+  'E',
+  'B',
+  'F#',
+  'C#',
+  'G#',
+  'D#',
+  'A#',
+  'F',
+  'Bb',
+  'Eb',
+  'Ab',
+  'Db',
+  'Gb',
+  'Cb',
+]
+const REACHABLE_LABELS = new Set('1 3 b3 5 b5 #5 7 b7 bb7 9 b9 #9 11 #11 b11 13 b13'.split(' '))
+const BASES: ChordBase[] = ['triads', 'sevenths']
+const EXTENSION_COMBOS: Extension[][] = [[], [9], [11], [13], [9, 11], [9, 13], [11, 13]]
+
+const harmonicFormulaLabels = (root: string): Set<string> =>
+  new Set(
+    getParallelModes(root, 'harmonic').flatMap((mode) =>
+      [1, 2, 3, 4, 5, 6, 7].flatMap((degree) =>
+        BASES.flatMap((base) =>
+          EXTENSION_COMBOS.flatMap((exts) =>
+            getChordFormula(getExtendedChord(mode.scale, degree, base, exts).notes),
+          ),
+        ),
+      ),
+    ),
+  )
+
+describe('intervalName over the harmonic minor parent scale', () => {
+  it.each(CIRCLE_ROOTS)(
+    '%s: every reachable formula degree is a known label named in Spanish and English',
+    (root) => {
+      const labels = [...harmonicFormulaLabels(root)]
+
+      expect(labels.filter((label) => !REACHABLE_LABELS.has(label))).toEqual([])
+      expect(labels.filter((label) => es.intervalName[label] === undefined)).toEqual([])
+      expect(labels.filter((label) => en.intervalName[label] === undefined)).toEqual([])
+    },
+  )
 })

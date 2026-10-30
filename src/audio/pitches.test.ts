@@ -41,6 +41,12 @@ describe('playbackPitches', () => {
       ['Abb', 'Cb', 'Ebb'],
       ['Abb3', 'Cb4', 'Ebb4'],
     ],
+    // A triple flat (only Cb superlocrian bb7 has one) plays its pitch under a plain name:
+    // Bbbb3 = Ab3 (MIDI 56), then Dbb4 = 60 and Fbb4 = 63.
+    [
+      ['Bbbb', 'Dbb', 'Fbb'],
+      ['Ab3', 'Dbb4', 'Fbb4'],
+    ],
   ])('voices %j upwards from the root as %j', (notes, expected) => {
     expect(playbackPitches(notes)).toEqual(expected)
   })

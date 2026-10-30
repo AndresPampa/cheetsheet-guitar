@@ -139,10 +139,41 @@ describe('loadVoicings', () => {
     ['Cmaj7(#11)', chord('C', 'maj7(#11)', ['C', 'E', 'G', 'B', 'F#'])],
     ['Dm13', chord('D', 'm13', ['D', 'F', 'A', 'C', 'E', 'B'])],
     ['Bm7b5(b9)', chord('B', 'm7b5(b9)', ['B', 'D', 'F', 'A', 'C'])],
+    ['Ebmaj7#5(9)', chord('Eb', 'maj7#5(9)', ['Eb', 'G', 'B', 'D', 'F'])],
   ]
 
   it.each(NO_ENTRY)('gives no voicings for %s, a suffix the data lacks', async (_, query) => {
     expect(await loadVoicings(query)).toEqual([])
+  })
+
+  // ORACLE — the parent-scale suffixes, each looked up under the data's own name (+ → aug,
+  // °7 → dim7, mMaj7 → mmaj7, mMaj9 → mmaj9, mMaj11 → mmaj11; maj7#5 as it is). Frets verified
+  // by hand from the standard tuning, from the 6th string to the 1st:
+  //   C+       x 3 2 1 1 x  →  C E G# C
+  //   C°7      x x 1 2 1 2  →  Eb A(Bbb) C Gb
+  //   CmMaj7   x 3 1 0 0 x  →  C Eb G B
+  //   Cmaj7#5  x 3 2 1 0 0  →  C E G# B E
+  //   CmMaj9   x 3 1 4 3 x  →  C Eb B D (no fifth)
+  const PARENT_SCALE_SUFFIXES: Array<[string, ChordQuery, number[]]> = [
+    ['C+', chord('C', '+', ['C', 'E', 'G#']), [-1, 3, 2, 1, 1, -1]],
+    ['C°7', chord('C', '°7', ['C', 'Eb', 'Gb', 'Bbb']), [-1, -1, 1, 2, 1, 2]],
+    ['CmMaj7', chord('C', 'mMaj7', ['C', 'Eb', 'G', 'B']), [-1, 3, 1, 0, 0, -1]],
+    ['Cmaj7#5', chord('C', 'maj7#5', ['C', 'E', 'G#', 'B']), [-1, 3, 2, 1, 0, 0]],
+    ['CmMaj9', chord('C', 'mMaj9', ['C', 'Eb', 'G', 'B', 'D']), [-1, 3, 1, 4, 3, -1]],
+  ]
+
+  it.each(PARENT_SCALE_SUFFIXES)('finds %s under its chords-db name', async (_, query, frets) => {
+    const [first] = await loadVoicings(query)
+
+    expect(first?.frets).toEqual(frets)
+  })
+
+  // ORACLE — 8 8 9 8 8 10 sounds C F B Eb G D, verified by hand. The data's other three CmMaj11
+  // positions have no 9th (D).
+  it('finds CmMaj11 under its chords-db name, only the position with the 9th', async () => {
+    const voicings = await loadVoicings(chord('C', 'mMaj11', ['C', 'Eb', 'G', 'B', 'D', 'F']))
+
+    expect(voicings.map((v) => v.frets)).toEqual([[8, 8, 9, 8, 8, 10]])
   })
 })
 
@@ -177,6 +208,15 @@ const EXTENDED_FORMULAS: Array<[string, number[]]> = [
   ['m9', [0, 3, 7, 10, 2]],
   ['m11', [0, 3, 7, 10, 2, 5]],
 ]
+/** The suffixes of the parent-scale qualities (harmonic minor), as theory emits them. */
+const PARENT_SCALE_FORMULAS: Array<[string, number[]]> = [
+  ['+', [0, 4, 8]],
+  ['°7', [0, 3, 6, 9]],
+  ['mMaj7', [0, 3, 7, 11]],
+  ['maj7#5', [0, 4, 8, 11]],
+  ['mMaj9', [0, 3, 7, 11, 2]],
+  ['mMaj11', [0, 3, 7, 11, 2, 5]],
+]
 const PERFECT_FIFTH = 7
 // One name per pitch class: the loader matches notes by pitch, so the spelling is irrelevant.
 const CHROMATIC = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
@@ -205,9 +245,11 @@ describe('loadVoicings over the whole catalogue', () => {
 
   // ORACLE — the extended chords chords-db cannot voice, listed explicitly instead of skipped.
   // E madd9: the data's 4 positions sound F minor add9 (a chords-db erratum).
+  // The 6 parent-scale suffixes add none: measured over the raw data (2026-10-29), each of their
+  // 72 chords keeps at least one position (CmMaj11 only one: the others lack the 9th).
   it('lists exactly the extended chords with no voicing', async () => {
     const empty: string[] = []
-    for (const [suffix, formula] of EXTENDED_FORMULAS) {
+    for (const [suffix, formula] of [...EXTENDED_FORMULAS, ...PARENT_SCALE_FORMULAS]) {
       for (const [root, pc] of ROOTS) {
         if ((await loadVoicings(query(root, pc, suffix, formula))).length === 0) {
           empty.push(`${root}${suffix}`)
@@ -236,7 +278,7 @@ describe('loadVoicings over the whole catalogue', () => {
     ])
   })
 
-  const ALL_FORMULAS = [...V1_FORMULAS, ...EXTENDED_FORMULAS]
+  const ALL_FORMULAS = [...V1_FORMULAS, ...EXTENDED_FORMULAS, ...PARENT_SCALE_FORMULAS]
 
   it.each(ROOTS)(
     '%s: every voicing sounds only its chord and all of it but the perfect fifth',

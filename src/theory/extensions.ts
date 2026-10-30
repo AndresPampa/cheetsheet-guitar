@@ -1,5 +1,5 @@
 import { getChordFormula } from './formula.ts'
-import { diatonicChords, type SeventhQuality } from './key.ts'
+import { diatonicChords, SEVENTH_SUFFIX, type SeventhQuality } from './key.ts'
 
 /** Same values as the app's Triads / Sevenths switch. */
 export type ChordBase = 'triads' | 'sevenths'
@@ -15,15 +15,21 @@ export interface ExtendedChord {
   symbol: string
 }
 
-// A natural 9 on these sevenths renames the chord: Cmaj9, Dm9, G9 (and then maj11, m13, 13…).
-const STACKED: Partial<Record<SeventhQuality, string>> = { maj7: 'maj', m7: 'm', '7': '' }
+// A natural 9 on these sevenths renames the chord: Cmaj9, Dm9, G9, CmMaj9 (then maj11, m13…).
+const STACKED: Partial<Record<SeventhQuality, string>> = {
+  maj7: 'maj',
+  m7: 'm',
+  '7': '',
+  mMaj7: 'mMaj',
+}
 
 const withParens = (head: string, rest: string[], add: string) =>
   rest.length === 0 ? head : `${head}(${add}${rest.join(',')})`
 
-/** `''`/`m`/`°` plus the extension labels (`9`, `#11`, `b13`…): `add9`, `m69`, `6(add#11)`. */
+/** `''`/`m`/`°`/`+` plus the extension labels (`9`, `#11`, `b13`…): `add9`, `m69`, `+(add9)`. */
 function triadSuffix(base: string, labels: string[]): string {
-  if (base === '°') return withParens(base, labels, 'add')
+  // Always in parentheses: `C+6` would read as an augmented sixth chord.
+  if (base === '°' || base === '+') return withParens(base, labels, 'add')
   let head = base
   let rest = labels
   if (rest.includes('13')) {
@@ -37,10 +43,12 @@ function triadSuffix(base: string, labels: string[]): string {
   return withParens(head, rest, 'add')
 }
 
-/** `maj7`/`m7`/`7`/`m7b5` plus the extension labels: `maj9(#11)`, `13`, `m7b5(b9)`. */
+/** The seventh's suffix plus the extension labels: `maj9(#11)`, `13`, `m7b5(b9)`, `°7(b9)`. */
 function seventhSuffix(quality: SeventhQuality, labels: string[]): string {
   const stem = STACKED[quality]
-  if (stem === undefined || labels[0] !== '9') return withParens(quality, labels, '')
+  if (stem === undefined || labels[0] !== '9') {
+    return withParens(SEVENTH_SUFFIX[quality], labels, '')
+  }
   const top = labels[1] === '11' || labels[1] === '13' ? labels[1] : '9'
   return withParens(stem + top, labels.slice(top === '9' ? 1 : 2), '')
 }

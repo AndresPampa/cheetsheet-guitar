@@ -33,8 +33,18 @@ interface GuitarDb {
 /** The data's 12 roots, by pitch class (C = 0); sharps are spelled out in its keys. */
 const DB_ROOTS = ['C', 'Csharp', 'D', 'Eb', 'E', 'F', 'Fsharp', 'G', 'Ab', 'A', 'Bb', 'B']
 
-// The data names the plain triads; other suffixes are looked up as they are (none → no voicings).
-const DB_SUFFIX: Record<string, string> = { '': 'major', m: 'minor', '°': 'dim' }
+// The data names these in its own words; other suffixes are looked up as they are.
+// A suffix it lacks gives no voicings.
+const DB_SUFFIX: Record<string, string> = {
+  '': 'major',
+  m: 'minor',
+  '°': 'dim',
+  '+': 'aug',
+  '°7': 'dim7',
+  mMaj7: 'mmaj7',
+  mMaj9: 'mmaj9',
+  mMaj11: 'mmaj11',
+}
 
 const PERFECT_FIFTH = 7
 

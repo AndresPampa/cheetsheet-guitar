@@ -14,9 +14,9 @@ export function playbackPitches(notes: string[]): string[] {
     if (Note.midi(`${note}${ROOT_OCTAVE}`) === null) throw new RangeError(`unknown note "${note}"`)
     let octave = ROOT_OCTAVE
     while (Note.midi(`${note}${octave}`)! <= previous) octave += 1
-    const pitch = `${note}${octave}`
-    previous = Note.midi(pitch)!
-    pitches.push(pitch)
+    previous = Note.midi(`${note}${octave}`)!
+    // Tone.js cannot read a triple accidental (only C♭ superlocrian ♭♭7 has one): play its pitch.
+    pitches.push(note.includes('bbb') ? Note.fromMidi(previous) : `${note}${octave}`)
   }
   return pitches
 }
