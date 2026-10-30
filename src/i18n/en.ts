@@ -11,6 +11,13 @@ const MODE_NAMES: Messages['modeName'] = {
   mixolydian: 'Mixolydian',
   aeolian: 'Aeolian',
   locrian: 'Locrian',
+  'harmonic-minor': 'Harmonic minor',
+  'locrian-nat6': 'Locrian ♮6',
+  'ionian-sharp5': 'Ionian ♯5',
+  'dorian-sharp4': 'Dorian ♯4',
+  'phrygian-dominant': 'Phrygian dominant',
+  'lydian-sharp2': 'Lydian ♯2',
+  'superlocrian-bb7': 'Superlocrian ♭♭7',
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`
@@ -46,6 +53,7 @@ export function en(notation: Notation): Messages {
           b: 'flat',
           '##': 'double sharp',
           bb: 'double flat',
+          bbb: 'triple flat',
         },
         notation,
       ),
@@ -84,6 +92,11 @@ export function en(notation: Notation): Messages {
       '#11': 'augmented 11th',
       '13': 'major 13th',
       b13: 'minor 13th',
+      // Degrees only the harmonic minor's modes reach.
+      '#5': 'augmented 5th',
+      bb7: 'diminished 7th',
+      '#9': 'augmented 9th',
+      b11: 'diminished 11th',
     },
     extensionsGroup: 'Extensions of the open chord',
     extensionsLabel: 'Extensions',

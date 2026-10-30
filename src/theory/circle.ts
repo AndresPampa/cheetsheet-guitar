@@ -9,7 +9,7 @@ export interface CircleSpelling {
 }
 
 /** Major keys outside, relative minors in the middle, each major key's vii° innermost. */
-export type CircleRing = ChordQuality
+export type CircleRing = Exclude<ChordQuality, 'augmented'>
 
 export interface CirclePosition {
   /** 0 = C / Am at the top, increasing clockwise by fifths. */
@@ -102,10 +102,9 @@ export function getCircleSpelling(
  * minor chords in the middle and the diminished chord on the innermost ring.
  */
 export function getCircleHighlights(key: Key): CircleHighlight[] {
-  return key.chords.map((chord) => ({
-    index: indexByPitch(chord.root, chord.quality),
-    ring: chord.quality,
-    roman: chord.roman,
-    symbol: chord.symbol,
-  }))
+  return key.chords.map(({ root, quality, roman, symbol }) => {
+    // Unreachable: the circle's keys are major and natural minor, which have no augmented triad.
+    if (quality === 'augmented') throw new Error(`no circle ring for the augmented ${symbol}`)
+    return { index: indexByPitch(root, quality), ring: quality, roman, symbol }
+  })
 }

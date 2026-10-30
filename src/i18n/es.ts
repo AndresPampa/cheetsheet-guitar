@@ -11,6 +11,13 @@ const MODE_NAMES: Messages['modeName'] = {
   mixolydian: 'Mixolidio',
   aeolian: 'Eólico',
   locrian: 'Locrio',
+  'harmonic-minor': 'Menor armónica',
+  'locrian-nat6': 'Locrio ♮6',
+  'ionian-sharp5': 'Jónico ♯5',
+  'dorian-sharp4': 'Dórico ♯4',
+  'phrygian-dominant': 'Frigio dominante',
+  'lydian-sharp2': 'Lidio ♯2',
+  'superlocrian-bb7': 'Superlocrio ♭♭7',
 }
 
 /** `sin alteraciones`, `1 sostenido`, `3 bemoles`. */
@@ -54,6 +61,7 @@ export function es(notation: Notation): Messages {
           b: 'bemol',
           '##': 'doble sostenido',
           bb: 'doble bemol',
+          bbb: 'triple bemol',
         },
         notation,
       ),
@@ -92,6 +100,11 @@ export function es(notation: Notation): Messages {
       '#11': '11ª aumentada',
       '13': '13ª mayor',
       b13: '13ª menor',
+      // Degrees only the harmonic minor's modes reach.
+      '#5': '5ª aumentada',
+      bb7: '7ª disminuida',
+      '#9': '9ª aumentada',
+      b11: '11ª disminuida',
     },
     extensionsGroup: 'Extensiones del acorde abierto',
     extensionsLabel: 'Extensiones',

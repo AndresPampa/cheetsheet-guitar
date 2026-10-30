@@ -96,7 +96,7 @@ flowchart LR
 
     subgraph theory["src/theory — TS puro"]
         KEY["key.ts<br/>getKey"]
-        MOD["modes.ts<br/>getParallelModes<br/>getModesContaining"]
+        MOD["modes.ts<br/>getParallelModes<br/>getModesContaining<br/>(escalas madre: mayor, menor armónica)"]
         CIR["circle.ts<br/>CIRCLE_OF_FIFTHS"]
         EXT["extensions.ts<br/>getExtendedChord<br/>(9 / 11 / 13 + cifrado)"]
         FOR["formula.ts<br/>getChordFormula"]

@@ -39,7 +39,7 @@ export function displaySymbol(symbol: string, notation: Notation = 'letters'): s
   return noteName(parsed.letter, notation) + signs(parsed.accidentals) + signs(parsed.rest)
 }
 
-export type AccidentalWords = Record<'#' | 'b' | '##' | 'bb', string>
+export type AccidentalWords = Record<'#' | 'b' | '##' | 'bb' | 'bbb', string>
 
 /** `F#` + `{ '#': 'sostenido' }` → `F sostenido` (or `Fa sostenido`); `E#m` reads its root. */
 export function spokenNote(note: string, words: AccidentalWords, notation: Notation): string {

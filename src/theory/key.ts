@@ -1,8 +1,8 @@
 import { Interval, Key as TonalKey } from 'tonal'
 
 export type KeyMode = 'major' | 'minor'
-export type ChordQuality = 'major' | 'minor' | 'diminished'
-export type SeventhQuality = 'maj7' | 'm7' | '7' | 'm7b5'
+export type ChordQuality = 'major' | 'minor' | 'diminished' | 'augmented'
+export type SeventhQuality = 'maj7' | 'm7' | '7' | 'm7b5' | 'mMaj7' | 'maj7#5' | 'dim7'
 
 /** The four-note chord on a degree: triad plus the diatonic seventh. */
 export interface SeventhChord {
@@ -92,12 +92,14 @@ const TRIAD_QUALITIES: Record<string, ChordQuality> = {
   '3M5P': 'major',
   '3m5P': 'minor',
   '3m5d': 'diminished',
+  '3M5A': 'augmented',
 }
 
 const SYMBOL_SUFFIX: Record<ChordQuality, string> = {
   major: '',
   minor: 'm',
   diminished: '°',
+  augmented: '+',
 }
 
 /** Seventh-chord quality from the intervals above the root (third, fifth, seventh). */
@@ -106,6 +108,9 @@ const SEVENTH_QUALITIES: Record<string, SeventhQuality> = {
   '3m5P7m': 'm7',
   '3M5P7m': '7',
   '3m5d7m': 'm7b5',
+  '3m5P7M': 'mMaj7',
+  '3M5A7M': 'maj7#5',
+  '3m5d7d': 'dim7',
 }
 
 /** Roman numeral case and suffix per seventh quality: `IVmaj7`, `V7`, `ii7`, `viiø7`. */
@@ -114,6 +119,20 @@ const SEVENTH_ROMAN: Record<SeventhQuality, { upper: boolean; suffix: string }> 
   '7': { upper: true, suffix: '7' },
   m7: { upper: false, suffix: '7' },
   m7b5: { upper: false, suffix: 'ø7' },
+  mMaj7: { upper: false, suffix: '(maj7)' },
+  'maj7#5': { upper: true, suffix: '+maj7' },
+  dim7: { upper: false, suffix: '°7' },
+}
+
+/** Chord-symbol suffix per seventh quality: `Cmaj7`, `Bm7b5`, `C°7`. */
+export const SEVENTH_SUFFIX: Record<SeventhQuality, string> = {
+  maj7: 'maj7',
+  m7: 'm7',
+  '7': '7',
+  m7b5: 'm7b5',
+  mMaj7: 'mMaj7',
+  'maj7#5': 'maj7#5',
+  dim7: '°7',
 }
 
 function scaleOf(tonic: string, mode: KeyMode): string[] {
@@ -125,7 +144,7 @@ function scaleOf(tonic: string, mode: KeyMode): string[] {
 function triadQuality(root: string, third: string, fifth: string): ChordQuality {
   const shape = Interval.distance(root, third) + Interval.distance(root, fifth)
   const quality = TRIAD_QUALITIES[shape]
-  // Unreachable for major / natural-minor scales; guards future scales (v2) loudly.
+  // Unreachable for every catalogue scale; guards new ones loudly.
   if (quality === undefined) throw new Error(`unsupported triad shape ${shape} on ${root}`)
   return quality
 }
@@ -134,6 +153,7 @@ function romanFor(degree: number, quality: ChordQuality): string {
   const numeral = ROMANS[degree - 1]!
   if (quality === 'major') return numeral
   if (quality === 'diminished') return `${numeral.toLowerCase()}°`
+  if (quality === 'augmented') return `${numeral}+`
   return numeral.toLowerCase()
 }
 
@@ -144,13 +164,12 @@ function seventhChord(degree: number, notes: [string, string, string, string]): 
     Interval.distance(root, fifth) +
     Interval.distance(root, seventh)
   const quality = SEVENTH_QUALITIES[shape]
-  // Unreachable for major / natural-minor scales; guards future scales (v2) loudly.
+  // Unreachable for every catalogue scale; guards new ones loudly.
   if (quality === undefined) throw new Error(`unsupported seventh shape ${shape} on ${root}`)
   const numeral = ROMANS[degree - 1]!
   const { upper, suffix } = SEVENTH_ROMAN[quality]
   const roman = (upper ? numeral : numeral.toLowerCase()) + suffix
-  // The quality names double as chord-symbol suffixes: Cmaj7, Dm7, G7, Bm7b5.
-  return { quality, roman, symbol: root + quality, notes }
+  return { quality, roman, symbol: root + SEVENTH_SUFFIX[quality], notes }
 }
 
 export function diatonicChords(scale: string[]): DiatonicChord[] {
