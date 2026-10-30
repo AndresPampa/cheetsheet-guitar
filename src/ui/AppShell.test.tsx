@@ -286,7 +286,7 @@ describe('AppShell', () => {
   })
 
   describe('parallel modes table', () => {
-    const modesTable = () => screen.getByRole('table', { name: /^Modos paralelos de/ })
+    const modesTable = () => screen.getByRole('table', { name: /^Modos de la escala mayor de/ })
     const modeRow = (name: string) =>
       within(modesTable()).getByRole('row', { name: new RegExp(`^${name}`) })
     // What a screen reader announces per degree: roman, chord, ⭐ and the hidden flags.
@@ -300,7 +300,7 @@ describe('AppShell', () => {
     it('lists the seven parallel modes of the selected root in order', () => {
       renderShell()
 
-      expect(modesTable()).toHaveAccessibleName('Modos paralelos de C')
+      expect(modesTable()).toHaveAccessibleName('Modos de la escala mayor de C')
       expect(
         within(modesTable())
           .getAllByRole('rowheader')
@@ -387,7 +387,7 @@ describe('AppShell', () => {
 
       await user.click(screen.getByRole('radio', { name: /^A menor/ }))
 
-      expect(modesTable()).toHaveAccessibleName('Modos paralelos de A')
+      expect(modesTable()).toHaveAccessibleName('Modos de la escala mayor de A')
       expect(degreesOf('Eólico')).toEqual([
         'i Am (prestado)',
         'ii° B° (característica) (prestado)',
@@ -406,7 +406,7 @@ describe('AppShell', () => {
 
       await user.click(within(keyPanel()).getByRole('button', { name: 'Ver como G♭ mayor' }))
 
-      expect(modesTable()).toHaveAccessibleName('Modos paralelos de G♭')
+      expect(modesTable()).toHaveAccessibleName('Modos de la escala mayor de G♭')
       expect(modeRow('Locrio')).toHaveTextContent('G♭ A♭♭ B♭♭ C♭ D♭♭ E♭♭ F♭')
     })
 
@@ -447,7 +447,13 @@ describe('AppShell', () => {
       expect(within(chordPanel()).getByRole('heading', { name: 'C' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado I · C mayor')).toBeInTheDocument()
       expect(formulaNotes(chordPanel())).toEqual(['C', 'E', 'G'])
-      expect(modesWithChord()).toEqual(['Jónico I', 'Lidio I', 'Mixolidio I'])
+      expect(modesWithChord()).toEqual([
+        'Jónico I (Escala mayor)',
+        'Lidio I (Escala mayor)',
+        'Mixolidio I (Escala mayor)',
+        'Frigio dominante I ⭐ (más representativo) (Menor armónica)',
+        'Lidio ♯2Lidio sostenido 2 I (Menor armónica)',
+      ])
       expect(played).toEqual([])
     })
 
@@ -484,14 +490,17 @@ describe('AppShell', () => {
       const { played, audio } = fakeAudio()
       renderShell({ audio })
       await user.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
-      const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
+      const table = screen.getByRole('table', { name: /^Modos de la escala mayor de/ })
       const dorian = within(table).getByRole('row', { name: /^Dórico/ })
 
       await user.click(within(dorian).getByRole('button', { name: /^IV7 F7/ }))
 
       expect(within(chordPanel()).getByRole('heading', { name: 'F7' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado IV7 · C dórico')).toBeInTheDocument()
-      expect(modesWithChord()).toEqual(['Dórico IV7 ⭐ (más representativo)'])
+      expect(modesWithChord()).toEqual([
+        'Dórico IV7 ⭐ (más representativo) (Escala mayor)',
+        'Locrio ♮6Locrio natural 6 IV7 ⭐ (más representativo) (Menor armónica)',
+      ])
       expect(played).toEqual([['F', 'A', 'C', 'Eb']])
     })
 
@@ -506,7 +515,12 @@ describe('AppShell', () => {
       await user.click(within(keyPanel()).getByRole('button', { name: 'III C' }))
 
       expect(within(chordPanel()).getByText('Grado III · A menor')).toBeInTheDocument()
-      expect(modesWithChord()).toEqual(['Dórico ♭III', 'Frigio ♭III', 'Eólico ♭III'])
+      expect(modesWithChord()).toEqual([
+        'Dórico ♭III (Escala mayor)',
+        'Frigio ♭III (Escala mayor)',
+        'Eólico ♭III (Escala mayor)',
+        'Dórico ♯4Dórico sostenido 4 ♭III (Menor armónica)',
+      ])
     })
 
     it('opens and plays a chord clicked in the key panel', async () => {
@@ -520,9 +534,11 @@ describe('AppShell', () => {
       expect(within(chordPanel()).getByText('Grado IV · C mayor')).toBeInTheDocument()
       expect(formulaNotes(chordPanel())).toEqual(['F', 'A', 'C'])
       expect(modesWithChord()).toEqual([
-        'Jónico IV',
-        'Dórico IV ⭐ (más representativo)',
-        'Mixolidio IV',
+        'Jónico IV (Escala mayor)',
+        'Dórico IV ⭐ (más representativo) (Escala mayor)',
+        'Mixolidio IV (Escala mayor)',
+        'Locrio ♮6Locrio natural 6 IV ⭐ (más representativo) (Menor armónica)',
+        'Jónico ♯5Jónico sostenido 5 IV (Menor armónica)',
       ])
       expect(played).toEqual([['F', 'A', 'C']])
 
@@ -538,7 +554,7 @@ describe('AppShell', () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
       renderShell({ audio })
-      const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
+      const table = screen.getByRole('table', { name: /^Modos de la escala mayor de/ })
       const dorian = within(table).getByRole('row', { name: /^Dórico/ })
 
       await user.click(within(dorian).getByRole('button', { name: /^♭VII B♭/ }))
@@ -547,9 +563,9 @@ describe('AppShell', () => {
       expect(within(chordPanel()).getByText('Grado ♭VII · C dórico')).toBeInTheDocument()
       expect(formulaNotes(chordPanel())).toEqual(['B♭', 'D', 'F'])
       expect(modesWithChord()).toEqual([
-        'Dórico ♭VII',
-        'Mixolidio ♭VII ⭐ (más representativo)',
-        'Eólico ♭VII',
+        'Dórico ♭VII (Escala mayor)',
+        'Mixolidio ♭VII ⭐ (más representativo) (Escala mayor)',
+        'Eólico ♭VII (Escala mayor)',
       ])
       expect(played).toEqual([['Bb', 'D', 'F']])
     })
@@ -576,7 +592,11 @@ describe('AppShell', () => {
       expect(within(chordPanel()).getByRole('heading', { name: 'Fmaj7' })).toBeInTheDocument()
       expect(within(chordPanel()).getByText('Grado IVmaj7 · C mayor')).toBeInTheDocument()
       expect(formulaNotes(chordPanel())).toEqual(['F', 'A', 'C', 'E'])
-      expect(modesWithChord()).toEqual(['Jónico IVmaj7', 'Mixolidio IVmaj7'])
+      expect(modesWithChord()).toEqual([
+        'Jónico IVmaj7 (Escala mayor)',
+        'Mixolidio IVmaj7 (Escala mayor)',
+        'Jónico ♯5Jónico sostenido 5 IVmaj7 (Menor armónica)',
+      ])
       expect(played).toEqual([
         ['F', 'A', 'C'],
         ['F', 'A', 'C', 'E'],
@@ -977,7 +997,10 @@ describe('AppShell', () => {
         '11ª aumentada',
       )
       expect(formulaNotes(chordPanel())).toEqual(['F', 'A', 'C', 'E', 'B'])
-      expect(modesWithChord()).toEqual(['Jónico IVmaj7'])
+      expect(modesWithChord()).toEqual([
+        'Jónico IVmaj7 (Escala mayor)',
+        'Jónico ♯5Jónico sostenido 5 IVmaj7 (Menor armónica)',
+      ])
     })
 
     it('keeps the extensions across another chord, the chord kind and the key', async () => {
@@ -1008,7 +1031,7 @@ describe('AppShell', () => {
       const { played, audio } = fakeAudio()
       window.history.replaceState(null, '', '/?chords=7th&ext=11')
       renderShell({ audio })
-      const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
+      const table = screen.getByRole('table', { name: /^Modos de la escala mayor de/ })
       const lydian = within(table).getByRole('row', { name: /^Lidio/ })
 
       await user.click(within(lydian).getByRole('button', { name: /^Imaj7 Cmaj7/ }))
@@ -1054,7 +1077,7 @@ describe('AppShell', () => {
         'vi7 Am7',
         'viiø7 Bm7♭5',
       ])
-      const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
+      const table = screen.getByRole('table', { name: /^Modos de la escala mayor de/ })
       const ionian = within(table).getByRole('row', { name: /^Jónico/ })
       expect(
         within(ionian)
@@ -1255,7 +1278,7 @@ describe('AppShell', () => {
       await user.click(within(keyPanel()).getByRole('button', { name: 'V7 G7' }))
       expect(window.location.search).toBe('?chords=7th&chord=key.5')
 
-      const table = screen.getByRole('table', { name: /^Modos paralelos de/ })
+      const table = screen.getByRole('table', { name: /^Modos de la escala mayor de/ })
       const dorian = within(table).getByRole('row', { name: /^Dórico/ })
       await user.click(within(dorian).getByRole('button', { name: /^IV7 F7/ }))
       expect(window.location.search).toBe('?chords=7th&chord=dorian.4')
@@ -1360,11 +1383,17 @@ describe('AppShell', () => {
         within(within(chord).getByRole('list', { name: 'Modes containing it' }))
           .getAllByRole('listitem')
           .map((item) => item.textContent),
-      ).toEqual(['Ionian I', 'Lydian I', 'Mixolydian I'])
+      ).toEqual([
+        'Ionian I (Major scale)',
+        'Lydian I (Major scale)',
+        'Mixolydian I (Major scale)',
+        'Phrygian dominant I ⭐ (most representative) (Harmonic minor)',
+        'Lydian ♯2Lydian sharp 2 I (Harmonic minor)',
+      ])
       expect(within(chord).getByText('Loading diagram…')).toBeInTheDocument()
 
       const modes = screen.getByRole('region', { name: 'Modes' })
-      const table = within(modes).getByRole('table', { name: 'Parallel modes of C' })
+      const table = within(modes).getByRole('table', { name: 'Modes of the C major scale' })
       expect(within(table).getByRole('columnheader', { name: 'Mode' })).toBeInTheDocument()
       expect(
         within(table).getByRole('columnheader', { name: 'Characteristic note' }),
@@ -1397,7 +1426,7 @@ describe('AppShell', () => {
       const user = userEvent.setup()
       renderShell()
       await user.click(languageButton('English'))
-      const table = screen.getByRole('table', { name: 'Parallel modes of C' })
+      const table = screen.getByRole('table', { name: 'Modes of the C major scale' })
       const dorian = within(table).getByRole('row', { name: /^Dorian/ })
 
       await user.click(within(dorian).getByRole('button', { name: /^IV F/ }))
@@ -1489,7 +1518,7 @@ describe('AppShell', () => {
     const namesSwitch = () => screen.getByRole('group', { name: /^(Nombres de notas|Note names)$/ })
     const namesButton = (name: string) => within(namesSwitch()).getByRole('button', { name })
     const chordPanel = () => screen.getByRole('region', { name: 'Acorde seleccionado' })
-    const modesTable = () => screen.getByRole('table', { name: /^Modos paralelos de/ })
+    const modesTable = () => screen.getByRole('table', { name: /^Modos de la escala mayor de/ })
     const dorianRow = () => within(modesTable()).getByRole('row', { name: /^Dórico/ })
 
     it('starts on letter names with the switch on C D E', () => {
@@ -1583,7 +1612,7 @@ describe('AppShell', () => {
 
       await user.click(namesButton('Do Re Mi'))
 
-      expect(modesTable()).toHaveAccessibleName('Modos paralelos de Do')
+      expect(modesTable()).toHaveAccessibleName('Modos de la escala mayor de Do')
       expect(dorianRow()).toHaveTextContent('Do Re Mi♭ Fa Sol La Si♭')
       expect(within(dorianRow()).getByText('6ª mayor (La)')).toBeInTheDocument()
       expect(
@@ -1628,7 +1657,7 @@ describe('AppShell', () => {
       expect(
         screen.getByRole('radio', { name: 'Fa sharp or Sol flat major, 6 sharps or 6 flats' }),
       ).toBeInTheDocument()
-      expect(screen.getByRole('table', { name: 'Parallel modes of Do' })).toBeInTheDocument()
+      expect(screen.getByRole('table', { name: 'Modes of the Do major scale' })).toBeInTheDocument()
     })
 
     it('writes the naming to the URL and restores it', async () => {
@@ -1926,6 +1955,116 @@ describe('AppShell', () => {
 
       await user.keyboard('{ArrowUp}')
       expect(screen.getByRole('radio', { name: /^G mayor/ })).toHaveFocus()
+    })
+  })
+
+  describe('parent scale', () => {
+    const visit = (url: string) => window.history.replaceState(null, '', url)
+    const chordPanel = () => screen.getByRole('region', { name: 'Acorde seleccionado' })
+    const modesTable = () => screen.getByRole('table', { name: /^Modos de la / })
+    const scaleButton = (name: string) =>
+      within(screen.getByRole('group', { name: 'Escala madre' })).getByRole('button', { name })
+    const modeRow = (name: string) =>
+      within(modesTable()).getByRole('row', { name: new RegExp(`^${name}`) })
+    const modesWithChord = () =>
+      within(within(chordPanel()).getByRole('list', { name: 'Modos donde aparece' }))
+        .getAllByRole('listitem')
+        .map((item) => item.textContent)
+
+    it('swaps the modes table for the harmonic minor, leaving the circle and the key panel', async () => {
+      const user = userEvent.setup()
+      visit('/?key=A&mode=minor&chords=7th')
+      renderShell()
+      const keyChords = chordList()
+      expect(scaleButton('Escala mayor')).toHaveAttribute('aria-pressed', 'true')
+      expect(within(modeRow('Eólico')).getByRole('rowheader')).toHaveTextContent('tu tonalidad')
+
+      await user.click(scaleButton('Menor armónica'))
+
+      expect(scaleButton('Menor armónica')).toHaveAttribute('aria-pressed', 'true')
+      expect(modesTable()).toHaveAccessibleName('Modos de la menor armónica de A')
+      expect(
+        within(modesTable())
+          .getAllByRole('rowheader')
+          .map((header) => header.firstChild?.textContent),
+      ).toEqual([
+        'Menor armónica',
+        'Locrio ♮6',
+        'Jónico ♯5',
+        'Dórico ♯4',
+        'Frigio dominante',
+        'Lidio ♯2',
+        'Superlocrio ♭♭7',
+      ])
+      const harmonic = modeRow('Menor armónica')
+      for (const symbol of ['AmMaj7', 'Bm7♭5', 'Cmaj7♯5', 'Dm7', 'E7', 'Fmaj7', 'G♯°7']) {
+        expect(within(harmonic).getByText(symbol)).toBeInTheDocument()
+      }
+      expect(
+        within(harmonic).getByRole('button', { name: /^V7 E7 ?\(más representativo\)/ }),
+      ).toBeInTheDocument()
+      expect(within(modesTable()).queryByText('tu tonalidad')).toBeNull()
+      expect(window.location.search).toContain('scale=harmonic')
+      expect(screen.getByRole('radio', { name: /^A menor/ })).toBeChecked()
+      expect(chordList()).toEqual(keyChords)
+    })
+
+    it('opens, plays and places the V7 of A harmonic minor', async () => {
+      const user = userEvent.setup()
+      const played: string[][] = []
+      visit('/?key=A&mode=minor&chords=7th&scale=harmonic')
+      renderShell({ audio: { playChord: (notes) => void played.push(notes) } })
+
+      await user.click(within(modeRow('Menor armónica')).getByRole('button', { name: /^V7 E7/ }))
+
+      expect(played).toEqual([['E', 'G#', 'B', 'D']])
+      expect(within(chordPanel()).getByRole('heading', { name: 'E7' })).toBeInTheDocument()
+      expect(within(chordPanel()).getByText('Grado V7 · A menor armónica')).toBeInTheDocument()
+      expect(modesWithChord()).toEqual([
+        'Jónico V7 (Escala mayor)',
+        'Menor armónica V7 ⭐ (más representativo) (Menor armónica)',
+      ])
+      expect(window.location.search).toContain('chord=harmonic-minor.5')
+    })
+
+    it('names a mode with signs in words, and drops its chord when the scale changes', async () => {
+      const user = userEvent.setup()
+      visit('/?scale=harmonic&chord=locrian-nat6.4')
+      renderShell()
+      expect(within(chordPanel()).getByRole('heading', { name: 'F' })).toBeInTheDocument()
+      expect(within(chordPanel()).getByText('Grado IV · C locrio ♮6')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      )
+      expect(within(chordPanel()).getByText('Grado IV · C locrio natural 6')).toHaveClass('sr-only')
+
+      await user.click(scaleButton('Escala mayor'))
+
+      expect(within(chordPanel()).getByRole('heading', { name: 'C' })).toBeInTheDocument()
+      expect(window.location.search).not.toContain('chord')
+    })
+
+    it('jumps from a minor key to the harmonic minor with the shortcut, focusing the table', async () => {
+      const user = userEvent.setup()
+      visit('/?key=A&mode=minor&chord=dorian.4')
+      renderShell()
+      const shortcut = within(keyPanel()).getByRole('button', {
+        name: 'V7 y vii°7 en la menor armónica',
+      })
+
+      await user.click(shortcut)
+
+      expect(modesTable()).toHaveAccessibleName('Modos de la menor armónica de A')
+      expect(modesTable()).toHaveFocus()
+      expect(within(chordPanel()).getByRole('heading', { name: 'Am' })).toBeInTheDocument()
+      expect(window.location.search).not.toContain('chord')
+      expect(within(keyPanel()).queryByRole('button', { name: /menor armónica/ })).toBeNull()
+    })
+
+    it('offers no shortcut in a major key', () => {
+      renderShell()
+
+      expect(within(keyPanel()).queryByRole('button', { name: /menor armónica/ })).toBeNull()
     })
   })
 

@@ -51,13 +51,19 @@ export function spokenNote(note: string, words: AccidentalWords, notation: Notat
   return word === undefined ? note : `${name} ${word}`
 }
 
-// The six characteristic intervals of the major-scale modes; only the major sixth has words.
+// The characteristic intervals of every mode, against the closest Greek mode; only the major
+// sixth has words.
 const CHARACTERISTIC_SIGNS: Record<string, string> = {
   '2m': '♭2',
   '4A': '♯4',
   '7m': '♭7',
   '6m': '♭6',
   '5d': '♭5',
+  '7M': '♮7',
+  '3M': '♮3',
+  '5A': '♯5',
+  '2A': '♯2',
+  '7d': '♭♭7',
 }
 
 /** `6M` + `A` + `6ª mayor` → `6ª mayor (A)`; `4A` + `F#` → `♯4 (F♯)`. */

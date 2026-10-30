@@ -20,6 +20,15 @@ const MODE_NAMES: Messages['modeName'] = {
   'superlocrian-bb7': 'Superlocrian ♭♭7',
 }
 
+const MODE_SPOKEN: Messages['modeSpoken'] = {
+  ...MODE_NAMES,
+  'locrian-nat6': 'Locrian natural 6',
+  'ionian-sharp5': 'Ionian sharp 5',
+  'dorian-sharp4': 'Dorian sharp 4',
+  'lydian-sharp2': 'Lydian sharp 2',
+  'superlocrian-bb7': 'Superlocrian double flat 7',
+}
+
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`
 
 /** `no accidentals`, `1 sharp`, `3 flats`. */
@@ -45,6 +54,8 @@ export function en(notation: Notation): Messages {
     modeName: MODE_NAMES,
     // Mode names are proper nouns in English: `C Dorian`.
     modeContext: (root, mode) => `${root} ${MODE_NAMES[mode]}`,
+    modeSpoken: MODE_SPOKEN,
+    modeContextSpoken: (root, mode) => `${root} ${MODE_SPOKEN[mode]}`,
     spokenNote: (note) =>
       spokenNote(
         note,
@@ -73,6 +84,7 @@ export function en(notation: Notation): Messages {
     triads: 'Triads',
     sevenths: 'Sevenths',
     diatonicChords: 'Diatonic chords',
+    harmonicShortcut: { chords: 'V7 and vii°7', joiner: 'in', target: 'harmonic minor' },
 
     listen: 'Listen',
     listenTo: (shown) => `Listen to ${shown}`,
@@ -114,7 +126,12 @@ export function en(notation: Notation): Messages {
     nextPosition: 'Next position',
     position: (current, total) => `Position ${current} of ${total}`,
 
-    modesCaption: (root) => `Parallel modes of ${root}`,
+    modesCaption: (root, scale) =>
+      scale === 'major' ? `Modes of the ${root} major scale` : `Modes of ${root} harmonic minor`,
+    parentScaleGroup: 'Parent scale',
+    parentScaleShort: { major: 'Major', harmonic: 'Harmonic' },
+    parentScaleName: { major: 'Major scale', harmonic: 'Harmonic minor' },
+    yourKey: 'your key',
     modeColumn: 'Mode',
     characteristicColumn: 'Characteristic note',
     noCharacteristic: 'none (reference)',

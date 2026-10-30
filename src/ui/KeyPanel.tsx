@@ -18,6 +18,8 @@ interface KeyPanelProps {
   onExtensionsChange: (extensions: Extension[]) => void
   /** Opens (and plays) the chord on a degree of the key. */
   onChordClick: (degree: number) => void
+  /** Switches the modes table to the harmonic minor; the shortcut shows only when given. */
+  onHarmonicShortcut?: () => void
 }
 
 export function KeyPanel({
@@ -29,6 +31,7 @@ export function KeyPanel({
   extensions,
   onExtensionsChange,
   onChordClick,
+  onHarmonicShortcut,
 }: KeyPanelProps) {
   const t = useMessages()
   const mode = t.keyMode[keyInfo.mode]
@@ -115,6 +118,12 @@ export function KeyPanel({
           )
         })}
       </ol>
+      {onHarmonicShortcut !== undefined && (
+        <button type="button" className="harmonic-shortcut" onClick={onHarmonicShortcut}>
+          {t.harmonicShortcut.chords} <span aria-hidden="true">→</span>
+          <span className="sr-only"> {t.harmonicShortcut.joiner}</span> {t.harmonicShortcut.target}
+        </button>
+      )}
     </section>
   )
 }

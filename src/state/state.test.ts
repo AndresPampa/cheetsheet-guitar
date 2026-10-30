@@ -9,6 +9,7 @@ const FULL_STATE: AppState = {
   notation: 'solfege',
   language: 'en',
   extensions: [],
+  scale: 'major',
 }
 const FULL_SEARCH = '?key=F%23&mode=minor&chords=7th&chord=dorian.4&names=solfege&lang=en'
 
@@ -22,6 +23,7 @@ describe('parseState', () => {
       notation: 'letters',
       language: 'es',
       extensions: [],
+      scale: 'major',
     })
     expect(DEFAULT_STATE).toEqual(parseState(''))
   })
@@ -169,5 +171,52 @@ describe('extensions in the URL', () => {
 
   it('omits ext when there are no extensions', () => {
     expect(serializeState({ ...DEFAULT_STATE, extensions: [] })).not.toContain('ext')
+  })
+})
+
+describe('parent scale in the URL', () => {
+  const scales: Array<[string, Partial<AppState>]> = [
+    ['?scale=harmonic', { scale: 'harmonic' }],
+    ['?key=G', { tonic: 'G', scale: 'major' }],
+    ['?key=G&scale=dorian', { tonic: 'G', scale: 'major' }],
+    ['?key=G&scale=', { tonic: 'G', scale: 'major' }],
+  ]
+
+  it.each(scales)('reads %s, falling back to major when absent or invalid', (search, expected) => {
+    expect(parseState(search)).toEqual({ ...DEFAULT_STATE, ...expected })
+  })
+
+  it('writes and reads back a chord of a harmonic-minor mode', () => {
+    const state: AppState = {
+      ...DEFAULT_STATE,
+      scale: 'harmonic',
+      chord: { source: 'phrygian-dominant', degree: 1 },
+    }
+
+    const search = serializeState(state)
+
+    expect(search).toBe('?chord=phrygian-dominant.1&scale=harmonic')
+    expect(parseState(search)).toEqual(state)
+  })
+
+  it('omits scale when it is major', () => {
+    expect(serializeState(DEFAULT_STATE)).toBe('')
+  })
+
+  const outsideScale: Array<[string, string]> = [
+    ['a harmonic-minor mode with the major scale', '?chord=phrygian-dominant.1'],
+    ['a major mode with the harmonic minor', '?scale=harmonic&chord=dorian.4'],
+  ]
+
+  it.each(outsideScale)('falls back to the I of the key for %s', (_, search) => {
+    expect(parseState(search).chord).toEqual({ source: 'key', degree: 1 })
+  })
+
+  it('keeps a key chord or a mode of the chosen scale', () => {
+    expect(parseState('?scale=harmonic&chord=key.5').chord).toEqual({ source: 'key', degree: 5 })
+    expect(parseState('?scale=harmonic&chord=locrian-nat6.4').chord).toEqual({
+      source: 'locrian-nat6',
+      degree: 4,
+    })
   })
 })

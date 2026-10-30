@@ -1,9 +1,12 @@
 import {
   getKey,
-  getParallelModes,
+  MODE_NAMES,
+  PARENT_SCALES,
+  parentScaleOf,
   type Extension,
   type KeyMode,
   type ModeName,
+  type ParentScale,
 } from '../theory/index.ts'
 import type { Language, Notation } from '../i18n/index.ts'
 
@@ -30,6 +33,8 @@ export interface AppState {
   extensions: Extension[]
   notation: Notation
   language: Language
+  /** The parent scale whose modes the modes table shows. */
+  scale: ParentScale
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -40,12 +45,13 @@ export const DEFAULT_STATE: AppState = {
   extensions: [],
   notation: 'letters',
   language: 'es',
+  scale: 'major',
 }
 
 // URL spelling of the non-default value of each two-valued setting.
 const SEVENTHS = '7th'
-const MODE_NAMES = new Set<string>(getParallelModes('C').map((mode) => mode.name))
-const CHORD_PATTERN = /^([a-z]+)\.([1-7])$/
+const CHORD_SOURCES = new Set<string>(MODE_NAMES)
+const CHORD_PATTERN = /^([a-z0-9-]+)\.([1-7])$/
 // Up to two of 9, 11, 13, comma-separated; repeats are rejected below.
 const EXT_PATTERN = /^(9|11|13)(,(9|11|13))?$/
 
@@ -62,7 +68,7 @@ const isCircleKey = (tonic: string, mode: KeyMode) => {
 const parseMode = (value: string | null): KeyMode => (value === 'minor' ? 'minor' : 'major')
 
 const isChordSource = (source: string): source is ChordRef['source'] =>
-  source === 'key' || MODE_NAMES.has(source)
+  source === 'key' || CHORD_SOURCES.has(source)
 
 const parseChord = (value: string | null): ChordRef => {
   const [, source, degree] = CHORD_PATTERN.exec(value ?? '') ?? []
@@ -79,6 +85,19 @@ const parseExtensions = (value: string | null): Extension[] => {
   return extensions.sort((a, b) => a - b)
 }
 
+const parseScale = (value: string | null): ParentScale =>
+  PARENT_SCALES.find((scale) => scale === value) ?? DEFAULT_STATE.scale
+
+/**
+ * The one rule tying the open chord to the scale: a chord from a mode of another parent scale
+ * falls back to the I of the key. Applied when reading the URL and on every state change.
+ */
+export function normalize(state: AppState): AppState {
+  const { source } = state.chord
+  if (source === 'key' || parentScaleOf(source) === state.scale) return state
+  return { ...state, chord: DEFAULT_STATE.chord }
+}
+
 /**
  * Reads the state from a query string (`location.search`, with or without `?`). Each invalid
  * or missing parameter falls back to its own default; the valid ones are kept. A tonic that is
@@ -88,7 +107,7 @@ export function parseState(search: string): AppState {
   const params = new URLSearchParams(search)
   const mode = parseMode(params.get('mode'))
   const tonic = params.get('key') ?? DEFAULT_STATE.tonic
-  return {
+  return normalize({
     tonic: isCircleKey(tonic, mode) ? tonic : DEFAULT_STATE.tonic,
     mode,
     chordKind: params.get('chords') === SEVENTHS ? 'sevenths' : 'triads',
@@ -96,7 +115,8 @@ export function parseState(search: string): AppState {
     extensions: parseExtensions(params.get('ext')),
     notation: params.get('names') === 'solfege' ? 'solfege' : 'letters',
     language: params.get('lang') === 'en' ? 'en' : 'es',
-  }
+    scale: parseScale(params.get('scale')),
+  })
 }
 
 /** Writes the state as a query string (`''` or `?…`), omitting every default. */
@@ -114,6 +134,7 @@ export function serializeState(state: AppState): string {
   }
   if (state.notation !== DEFAULT_STATE.notation) params.set('names', state.notation)
   if (state.language !== DEFAULT_STATE.language) params.set('lang', state.language)
+  if (state.scale !== DEFAULT_STATE.scale) params.set('scale', state.scale)
   const query = params.toString()
   return query === '' ? '' : `?${query}`
 }

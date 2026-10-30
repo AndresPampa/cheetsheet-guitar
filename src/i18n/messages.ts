@@ -1,4 +1,4 @@
-import type { KeyMode, KeySignature, ModeName } from '../theory/index.ts'
+import type { KeyMode, KeySignature, ModeName, ParentScale } from '../theory/index.ts'
 
 export type Language = 'es' | 'en'
 
@@ -24,6 +24,10 @@ export interface Messages {
   modeName: Record<ModeName, string>
   /** Root plus mode, as the chord panel names where a chord comes from: `C dórico`. */
   modeContext: (displayedRoot: string, mode: ModeName) => string
+  /** Mode names in words, for screen readers: `Locrio ♮6` → `Locrio natural 6`. */
+  modeSpoken: Record<ModeName, string>
+  /** `modeContext` with the spoken mode name: `C locrio natural 6`. */
+  modeContextSpoken: (displayedRoot: string, mode: ModeName) => string
   /** For screen readers: `F#` → `F sostenido`; a chord symbol reads its root. */
   spokenNote: (note: string) => string
 
@@ -43,6 +47,8 @@ export interface Messages {
   triads: string
   sevenths: string
   diatonicChords: string
+  /** Shortcut from a minor key: `V7 y vii°7` + arrow (hidden) + `en la` (read) + `menor armónica`. */
+  harmonicShortcut: { chords: string; joiner: string; target: string }
 
   // Chord panel
   listen: string
@@ -73,7 +79,14 @@ export interface Messages {
   position: (current: number, total: number) => string
 
   // Parallel modes table
-  modesCaption: (displayedRoot: string) => string
+  modesCaption: (displayedRoot: string, scale: ParentScale) => string
+  parentScaleGroup: string
+  /** Visible label on the parent-scale switch. */
+  parentScaleShort: Record<ParentScale, string>
+  /** Full name: the switch's accessible name and the label in "Appears in". */
+  parentScaleName: Record<ParentScale, string>
+  /** Shown under the mode of the selected key. */
+  yourKey: string
   modeColumn: string
   characteristicColumn: string
   noCharacteristic: string

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { AudioPort } from '../audio/index.ts'
 import { getMessages, MessagesContext, type Language, type Notation } from '../i18n/index.ts'
 import {
@@ -9,6 +9,7 @@ import {
   getKey,
   getModesContaining,
   getParallelModes,
+  PARENT_SCALES,
 } from '../theory/index.ts'
 import { useTheme, useUrlState, type ChordRef } from '../state/index.ts'
 import { ChordDiagram, type VoicingsLoader } from './ChordDiagram.tsx'
@@ -46,11 +47,12 @@ interface AppShellProps {
  */
 export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const [state, update] = useUrlState()
-  const { tonic, mode, chordKind, chord: chordRef, extensions, language, notation } = state
+  const { tonic, mode, chordKind, chord: chordRef, extensions, language, notation, scale } = state
   const t = getMessages(language, notation)
   const [theme, setTheme] = useTheme()
   const keyInfo = getKey(tonic, mode)
-  const modes = getParallelModes(tonic)
+  const modes = getParallelModes(tonic, scale)
+  const modesTableRef = useRef<HTMLTableElement>(null)
   const { index, alternate } = getCircleSpelling(tonic, mode)
 
   // Picking a key loads its tonic chord in the panel without playing it.
@@ -74,8 +76,20 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
 
   const chord = resolve(chordRef)
   const root = t.symbol(tonic)
+  const keyContext = `${root} ${t.keyMode[mode]}`
   const context =
-    chordRef.source === 'key' ? `${root} ${t.keyMode[mode]}` : t.modeContext(root, chordRef.source)
+    chordRef.source === 'key'
+      ? { shown: keyContext, spoken: keyContext }
+      : {
+          shown: t.modeContext(root, chordRef.source),
+          spoken: t.modeContextSpoken(root, chordRef.source),
+        }
+
+  // The table node stays the same across the scale change; focus() also scrolls it into view.
+  const showHarmonic = () => {
+    update({ scale: 'harmonic' })
+    modesTableRef.current?.focus()
+  }
 
   // The page itself follows the language: screen readers pick the voice from `lang`.
   useEffect(() => {
@@ -130,6 +144,9 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
                 extensions={extensions}
                 onExtensionsChange={(chosen) => update({ extensions: chosen })}
                 onChordClick={(degree) => open({ source: 'key', degree })}
+                onHarmonicShortcut={
+                  mode === 'minor' && scale !== 'harmonic' ? showHarmonic : undefined
+                }
               />
             </div>
           </section>
@@ -139,7 +156,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               roman={chord.roman}
               context={context}
               notes={chord.notes}
-              modes={getModesContaining(tonic, chord.notes)}
+              modes={getModesContaining(tonic, chord.notes, PARENT_SCALES)}
               onPlay={() => audio.playChord(chord.notes)}
               diagram={
                 <ChordDiagram
@@ -155,7 +172,11 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
           <section className="panel panel-modes" aria-label={t.modesRegion}>
             <ModesTable
               root={tonic}
+              scale={scale}
+              onScaleChange={(chosen) => update({ scale: chosen })}
               modes={modes}
+              anchor={scale === 'major' ? (mode === 'major' ? 'ionian' : 'aeolian') : null}
+              tableRef={modesTableRef}
               chordKind={chordKind}
               onChordClick={(source, degree) => open({ source, degree })}
             />
