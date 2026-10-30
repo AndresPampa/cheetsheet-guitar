@@ -1,26 +1,60 @@
+import type { Ref } from 'react'
 import { displayRoman, useMessages } from '../i18n/index.ts'
 import type { ChordKind } from '../state/index.ts'
-import type { Mode, ModeName } from '../theory/index.ts'
+import { PARENT_SCALES, type Mode, type ModeName, type ParentScale } from '../theory/index.ts'
+import { SegmentedSwitch } from './SegmentedSwitch.tsx'
+import { ShownSpoken } from './ShownSpoken.tsx'
 import './ModesTable.css'
 
 const DEGREES = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 
 interface ModesTableProps {
   root: string
+  scale: ParentScale
+  onScaleChange: (scale: ParentScale) => void
   modes: Mode[]
+  /** The row of the selected key (ionian or aeolian), when the table shows the major scale. */
+  anchor: ModeName | null
+  /** Focused by the harmonic-minor shortcut of the key panel. */
+  tableRef: Ref<HTMLTableElement>
   chordKind: ChordKind
   /** Opens (and plays) the chord on a degree of a mode. */
   onChordClick: (mode: ModeName, degree: number) => void
 }
 
-/** The seven parallel modes of `root`, one row per mode and one column per degree. */
-export function ModesTable({ root, modes, chordKind, onChordClick }: ModesTableProps) {
+/**
+ * The seven modes of `root` from the chosen parent scale, one row per mode and one column per
+ * degree, under the parent-scale switch.
+ */
+export function ModesTable({
+  root,
+  scale,
+  onScaleChange,
+  modes,
+  anchor,
+  tableRef,
+  chordKind,
+  onChordClick,
+}: ModesTableProps) {
   const t = useMessages()
   return (
     <div className="modes-table">
+      <div className="modes-table-scale">
+        <span aria-hidden="true">{t.parentScaleGroup}</span>
+        <SegmentedSwitch
+          label={t.parentScaleGroup}
+          options={PARENT_SCALES.map((parent) => ({
+            value: parent,
+            label: t.parentScaleShort[parent],
+            name: t.parentScaleName[parent],
+          }))}
+          value={scale}
+          onChange={onScaleChange}
+        />
+      </div>
       <div className="modes-table-scroll">
-        <table>
-          <caption>{t.modesCaption(t.symbol(root))}</caption>
+        <table ref={tableRef} tabIndex={-1}>
+          <caption>{t.modesCaption(t.symbol(root), scale)}</caption>
           <thead>
             <tr>
               <th scope="col">{t.modeColumn}</th>
@@ -34,9 +68,18 @@ export function ModesTable({ root, modes, chordKind, onChordClick }: ModesTableP
           </thead>
           <tbody>
             {modes.map((mode) => (
-              <tr key={mode.name}>
+              <tr key={mode.name} className={mode.name === anchor ? 'is-anchor' : undefined}>
                 <th scope="row">
-                  <span className="mode-name">{t.modeName[mode.name]}</span>{' '}
+                  <ShownSpoken
+                    className="mode-name"
+                    shown={t.modeName[mode.name]}
+                    spoken={t.modeSpoken[mode.name]}
+                  />{' '}
+                  {mode.name === anchor && (
+                    <>
+                      <span className="mode-anchor">{t.yourKey}</span>{' '}
+                    </>
+                  )}
                   <span className="mode-scale">{mode.scale.map(t.symbol).join(' ')}</span>
                 </th>
                 <td className="mode-characteristic">

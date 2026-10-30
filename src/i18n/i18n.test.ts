@@ -5,6 +5,7 @@ import {
   getParallelModes,
   type ChordBase,
   type Extension,
+  type ModeName,
 } from '../theory/index.ts'
 import { displayRoman, getMessages } from './index.ts'
 
@@ -131,7 +132,7 @@ describe('getMessages', () => {
   })
 
   it('names an interval it does not know by its code', () => {
-    expect(en.characteristic('3M', 'E')).toBe('3M (E)')
+    expect(en.characteristic('9M', 'D')).toBe('9M (D)')
   })
 
   it('names a mode in context: lowercase in Spanish, capitalized in English', () => {
@@ -333,4 +334,67 @@ describe('intervalName over the harmonic minor parent scale', () => {
       expect(labels.filter((label) => en.intervalName[label] === undefined)).toEqual([])
     },
   )
+})
+
+describe('the harmonic minor parent scale', () => {
+  const names: Array<[ModeName, string, string, string, string]> = [
+    ['locrian-nat6', 'Locrio ♮6', 'Locrio natural 6', 'Locrian ♮6', 'Locrian natural 6'],
+    ['ionian-sharp5', 'Jónico ♯5', 'Jónico sostenido 5', 'Ionian ♯5', 'Ionian sharp 5'],
+    ['dorian-sharp4', 'Dórico ♯4', 'Dórico sostenido 4', 'Dorian ♯4', 'Dorian sharp 4'],
+    ['lydian-sharp2', 'Lidio ♯2', 'Lidio sostenido 2', 'Lydian ♯2', 'Lydian sharp 2'],
+    [
+      'superlocrian-bb7',
+      'Superlocrio ♭♭7',
+      'Superlocrio doble bemol 7',
+      'Superlocrian ♭♭7',
+      'Superlocrian double flat 7',
+    ],
+    ['harmonic-minor', 'Menor armónica', 'Menor armónica', 'Harmonic minor', 'Harmonic minor'],
+    ['dorian', 'Dórico', 'Dórico', 'Dorian', 'Dorian'],
+  ]
+
+  it.each(names)(
+    'shows %s with signs and reads it in words',
+    (mode, esShown, esSpoken, enShown, enSpoken) => {
+      expect([es.modeName[mode], es.modeSpoken[mode]]).toEqual([esShown, esSpoken])
+      expect([en.modeName[mode], en.modeSpoken[mode]]).toEqual([enShown, enSpoken])
+    },
+  )
+
+  it('reads a mode in context with its spoken name', () => {
+    expect(es.modeContextSpoken('C', 'locrian-nat6')).toBe('C locrio natural 6')
+    expect(en.modeContextSpoken('C', 'locrian-nat6')).toBe('C Locrian natural 6')
+  })
+
+  // The characteristic note of each mode of C harmonic minor, against its closest Greek mode.
+  const characteristics: Array<[string, string, string]> = [
+    ['7M', 'B', '♮7 (B)'],
+    ['6M', 'A', '6ª mayor (A)'],
+    ['5A', 'G#', '♯5 (G♯)'],
+    ['4A', 'F#', '♯4 (F♯)'],
+    ['3M', 'E', '♮3 (E)'],
+    ['2A', 'D#', '♯2 (D♯)'],
+    ['7d', 'Bbb', '♭♭7 (B♭♭)'],
+  ]
+
+  it.each(characteristics)('names the characteristic %s (%s) as %s', (interval, note, text) => {
+    expect(es.characteristic(interval, note)).toBe(text)
+  })
+
+  it('names the modes table after its parent scale', () => {
+    expect(es.modesCaption('C', 'major')).toBe('Modos de la escala mayor de C')
+    expect(es.modesCaption('A', 'harmonic')).toBe('Modos de la menor armónica de A')
+    expect(en.modesCaption('C', 'major')).toBe('Modes of the C major scale')
+    expect(en.modesCaption('C', 'harmonic')).toBe('Modes of C harmonic minor')
+    expect(getMessages('es', 'solfege').modesCaption('La', 'harmonic')).toBe(
+      'Modos de la menor armónica de La',
+    )
+  })
+
+  it('names each parent scale short on the switch and in full elsewhere', () => {
+    expect(es.parentScaleShort).toEqual({ major: 'Mayor', harmonic: 'Armónica' })
+    expect(es.parentScaleName).toEqual({ major: 'Escala mayor', harmonic: 'Menor armónica' })
+    expect(en.parentScaleShort).toEqual({ major: 'Major', harmonic: 'Harmonic' })
+    expect(en.parentScaleName).toEqual({ major: 'Major scale', harmonic: 'Harmonic minor' })
+  })
 })

@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react'
 import { displayRoman, useMessages } from '../i18n/index.ts'
-import { getChordFormula, type ModeMatch } from '../theory/index.ts'
+import { getChordFormula, parentScaleOf, type ModeMatch } from '../theory/index.ts'
+import { ShownSpoken } from './ShownSpoken.tsx'
 import './ChordPanel.css'
 
 interface ChordPanelProps {
   symbol: string
   roman: string
-  /** Where the chord was taken from, already translated: `C mayor`, `C Dorian`. */
-  context: string
+  /** Where the chord was taken from, already translated: `C mayor`, `C Dorian`; `spoken` reads
+   * the mode in words (`C locrio natural 6`). */
+  context: { shown: string; spoken: string }
   notes: string[]
-  /** Parallel modes of the root that contain this chord. */
+  /** Modes of the root, from every parent scale, that contain this chord. */
   modes: ModeMatch[]
   onPlay: () => void
   /** The chord on the fretboard. */
@@ -42,7 +44,12 @@ export function ChordPanel({
           ▶ {t.listen}
         </button>
       </div>
-      <p>{t.degreeIn(displayRoman(roman), context)}</p>
+      <p>
+        <ShownSpoken
+          shown={t.degreeIn(displayRoman(roman), context.shown)}
+          spoken={t.degreeIn(displayRoman(roman), context.spoken)}
+        />
+      </p>
       <div className="chord-panel-body">
         {diagram}
         <table className="chord-formula" aria-label={t.formulaOf(shownSymbol)}>
@@ -67,13 +74,15 @@ export function ChordPanel({
       <ul className="chord-panel-modes" aria-label={t.modesContaining}>
         {modes.map((match) => (
           <li key={match.mode}>
-            {t.modeName[match.mode]} {displayRoman(match.roman)}
+            <ShownSpoken shown={t.modeName[match.mode]} spoken={t.modeSpoken[match.mode]} />{' '}
+            {displayRoman(match.roman)}
             {match.star && (
               <>
                 <span aria-hidden="true"> ⭐</span>
                 <span className="sr-only"> {t.mostRepresentative}</span>
               </>
-            )}
+            )}{' '}
+            ({t.parentScaleName[parentScaleOf(match.mode)]})
           </li>
         ))}
       </ul>

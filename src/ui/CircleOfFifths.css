@@ -266,6 +266,10 @@
   background: var(--diminished);
 }
 
+.chord--augmented {
+  background: var(--augmented);
+}
+
 .chord-roman {
   font-size: 0.75rem;
   font-weight: 700;
@@ -307,4 +311,22 @@
 .chord-button:focus-visible {
   outline: 2px solid var(--on-highlight);
   outline-offset: 2px;
+}
+
+/* Shortcut from a minor key to the harmonic minor, under the chords. */
+.harmonic-shortcut {
+  margin-top: 12px;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.harmonic-shortcut:hover,
+.harmonic-shortcut:focus-visible {
+  border-color: var(--accent);
 }

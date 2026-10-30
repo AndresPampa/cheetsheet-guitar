@@ -19,6 +19,8 @@ async function waitForDiagram(page: Page, name: RegExp = /^Diagrama de C7/) {
   await expect(page.getByRole('img', { name }).locator('svg')).toBeVisible()
 }
 const CMAJ13_DIAGRAM = /^Diagrama de Cmaj13:/
+// The harmonic minor table: augmented and diminished cells, measured by axe like any text.
+const HARMONIC_CHORD = '/?key=A&mode=minor&chords=7th&scale=harmonic&chord=harmonic-minor.5'
 
 async function axeViolations(page: Page, testInfo: TestInfo) {
   const { violations, incomplete } = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze()
@@ -87,6 +89,13 @@ for (const colorScheme of ['dark', 'light'] as const) {
     }, testInfo) => {
       await page.goto(EXTENDED_CHORD)
       await waitForDiagram(page, CMAJ13_DIAGRAM)
+
+      expect(await axeViolations(page, testInfo)).toEqual([])
+    })
+
+    test('the harmonic minor table has no WCAG 2.1 AA violations', async ({ page }, testInfo) => {
+      await page.goto(HARMONIC_CHORD)
+      await waitForDiagram(page, /^Diagrama de E7:/)
 
       expect(await axeViolations(page, testInfo)).toEqual([])
     })
@@ -176,12 +185,19 @@ test.describe('theme before first paint, light system', () => {
   })
 })
 
+test('the text for screen readers stays out of a copy', async ({ page }) => {
+  await page.goto('/')
+  const hidden = page.getByRole('table', { name: 'Fórmula de C' }).locator('th .sr-only').first()
+
+  expect(await hidden.evaluate((node) => getComputedStyle(node).userSelect)).toBe('none')
+})
+
 // Answers what jsdom could not: Chrome's real accessible name for a cell. It does NOT guard the
 // leading spaces inside the sr-only spans — the stacked flex layout already separates the words
 // in Chrome; the unit tests in src/ui guard those spaces.
 test('Chrome names a mode-table cell with its hidden hints as separate words', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('table', { name: 'Modos paralelos de C' })).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Modos de la escala mayor de C' })).toBeVisible()
   const cdp = await page.context().newCDPSession(page)
   await cdp.send('Accessibility.enable')
 

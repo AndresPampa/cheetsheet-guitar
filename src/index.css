@@ -11,6 +11,7 @@
   --major: #f2b544;
   --minor: #7fb2ff;
   --diminished: #ef8a97;
+  --augmented: #5fd3bc;
   --on-highlight: #12131a;
 
   color-scheme: dark;
@@ -36,6 +37,8 @@
   --accent: #8a5a00;
   --major: #c98a12;
   --minor: #4f86d9;
+  --diminished: #ef8a97;
+  --augmented: #2a9d8f;
   --surface-raised: #e9eaf1;
   --surface-sunken: #dcdee8;
   --sector-hover: #cfd2df;
@@ -66,4 +69,6 @@ body {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+  /* Copying a table must not paste the hidden names glued to the signs ("♭33ª menor"). */
+  user-select: none;
 }

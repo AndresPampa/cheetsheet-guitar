@@ -20,6 +20,20 @@ const MODE_NAMES: Messages['modeName'] = {
   'superlocrian-bb7': 'Superlocrio ♭♭7',
 }
 
+const MODE_SPOKEN: Messages['modeSpoken'] = {
+  ...MODE_NAMES,
+  'locrian-nat6': 'Locrio natural 6',
+  'ionian-sharp5': 'Jónico sostenido 5',
+  'dorian-sharp4': 'Dórico sostenido 4',
+  'lydian-sharp2': 'Lidio sostenido 2',
+  'superlocrian-bb7': 'Superlocrio doble bemol 7',
+}
+
+const PARENT_SCALE_NAMES: Messages['parentScaleName'] = {
+  major: 'Escala mayor',
+  harmonic: 'Menor armónica',
+}
+
 /** `sin alteraciones`, `1 sostenido`, `3 bemoles`. */
 function signatureCount({ accidental, notes }: KeySignature): string {
   if (accidental === 'none') return 'sin alteraciones'
@@ -53,6 +67,8 @@ export function es(notation: Notation): Messages {
     keyMode: { major: 'mayor', minor: 'menor' },
     modeName: MODE_NAMES,
     modeContext: (root, mode) => `${root} ${MODE_NAMES[mode].toLowerCase()}`,
+    modeSpoken: MODE_SPOKEN,
+    modeContextSpoken: (root, mode) => `${root} ${MODE_SPOKEN[mode].toLowerCase()}`,
     spokenNote: (note) =>
       spokenNote(
         note,
@@ -81,6 +97,7 @@ export function es(notation: Notation): Messages {
     triads: 'Triadas',
     sevenths: 'Séptimas',
     diatonicChords: 'Acordes diatónicos',
+    harmonicShortcut: { chords: 'V7 y vii°7', joiner: 'en la', target: 'menor armónica' },
 
     listen: 'Escuchar',
     listenTo: (shown) => `Escuchar ${shown}`,
@@ -122,7 +139,12 @@ export function es(notation: Notation): Messages {
     nextPosition: 'Posición siguiente',
     position: (current, total) => `Posición ${current} de ${total}`,
 
-    modesCaption: (root) => `Modos paralelos de ${root}`,
+    modesCaption: (root, scale) =>
+      `Modos de la ${PARENT_SCALE_NAMES[scale].toLowerCase()} de ${root}`,
+    parentScaleGroup: 'Escala madre',
+    parentScaleShort: { major: 'Mayor', harmonic: 'Armónica' },
+    parentScaleName: PARENT_SCALE_NAMES,
+    yourKey: 'tu tonalidad',
     modeColumn: 'Modo',
     characteristicColumn: 'Nota característica',
     noCharacteristic: 'ninguna (referencia)',

@@ -16,6 +16,9 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
 la escala de la tonalidad o del modo (♭9, ♯11 y ♭13 donde corresponde), con cifrado, fórmula,
 diagrama y sonido.
 
+🚧 **v2.0 menor armónica (en curso).** La tabla de modos ya muestra los 7 modos de la escala mayor
+o de la menor armónica, con selector, acordes aumentados, mMaj7 y °7; falta la menor melódica.
+
 | Versión | Alcance | Estado |
 |---|---|---|
 | v1 | Círculo interactivo (triadas/séptimas), tabla de los 7 modos con acordes recomendados, diagramas de acordes, audio al hacer click, ES/EN, C D E / Do Re Mi, accesibilidad y celular | ✅ Completa |
@@ -42,10 +45,15 @@ diagrama y sonido.
   tonalidad.
 - ✅ **Tabla de modos paralelos** (jónico… locrio) de la raíz seleccionada: escala, nota
   característica y grados alterados (♭II, ♯iv°, ♭VII). Se marcan los acordes que contienen la nota
-  característica, los prestados del jónico y ⭐ el más representativo.
+  característica, los prestados del jónico, ⭐ el más representativo y la fila de tu tonalidad. En
+  el celular el nombre del modo queda fijo al desplazar la tabla.
+- ✅ **Escala madre: Mayor / Armónica** (arriba de la tabla de modos): cambia la tabla por los 7
+  modos de la menor armónica de la misma raíz (menor armónica, locrio ♮6, jónico ♯5, dórico ♯4,
+  frigio dominante, lidio ♯2, superlocrio ♭♭7), con sus acordes aumentados, mMaj7 y °7. En una
+  tonalidad menor, el atajo "V7 y vii°7 → menor armónica" lleva directo ahí.
 - ✅ **Panel de acorde**: al hacer click en un acorde (panel de tonalidad o tabla de modos) suena
   como un rasgueo y muestra grado, la fórmula (tabla de grados `1 ♭3 5` sobre sus notas), ▶ para
-  repetirlo y en qué modos aparece.
+  repetirlo y en qué modos aparece (de las dos escalas madre, con la escala de cada uno).
 - ✅ **Diagramas en la guitarra** del acorde (trastes, dedos, cejilla, cuerdas al aire y
   silenciadas), con 4 posiciones por acorde para recorrer con ◀ ▶.
 - ✅ **Idioma ES / EN** (español por defecto): se traduce todo, incluidos los modos, las calidades
@@ -53,8 +61,8 @@ diagrama y sonido.
 - ✅ **C D E / Do Re Mi** (C D E por defecto), independiente del idioma: cambia los nombres de las
   notas en toda la app y deja los sufijos de acorde como están (`Fa♯m7`).
 - ✅ **Tema claro / oscuro**: sigue al del sistema hasta que elijas uno, y lo recuerda.
-- ✅ **La selección queda en la URL** (tonalidad, Triadas / Séptimas, extensiones, acorde abierto,
-  idioma y nombres de notas), así que se puede guardar en favoritos o compartir. Por ejemplo,
+- ✅ **La selección queda en la URL** (tonalidad, Triadas / Séptimas, extensiones, escala madre,
+  acorde abierto, idioma y nombres de notas), así que se puede guardar en favoritos o compartir. Por ejemplo,
   `?key=G&mode=minor&chords=7th&chord=dorian.4&ext=9` abre G menor con séptimas y el IV7 de G
   dórico con su 9ª (`C9`).
 - ✅ **Accesible**: todo se usa con teclado (flechas en el círculo), el lector de pantalla anuncia
@@ -75,13 +83,13 @@ flowchart LR
         KE["AppShell<br/>encabezado + interruptores<br/>+ 3 paneles"]
         COF["CircleOfFifths"]
         KP["KeyPanel<br/>+ Triadas / Séptimas<br/>+ extensiones 9 / 11 / 13"]
-        MT["ModesTable"]
+        MT["ModesTable<br/>+ escala madre (Mayor / Armónica)"]
         CP["ChordPanel<br/>▶ + fórmula + modos donde aparece"]
         KE --> COF & KP & MT & CP
     end
 
     subgraph state["src/state"]
-        URL["useUrlState<br/>selección ↔ URL"]
+        URL["useUrlState<br/>selección ↔ URL<br/>normalize: acorde fuera de la escala → I"]
         THEME["useTheme<br/>localStorage o sistema"]
     end
 

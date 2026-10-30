@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { parseState, serializeState, type AppState } from './url.ts'
+import { normalize, parseState, serializeState, type AppState } from './url.ts'
 
 /**
  * The app state, read from the URL once and written back on every change. It replaces the
@@ -16,7 +16,7 @@ export function useUrlState(): [AppState, (patch: Partial<AppState>) => void] {
   }, [state])
 
   const update = useCallback(
-    (patch: Partial<AppState>) => setState((current) => ({ ...current, ...patch })),
+    (patch: Partial<AppState>) => setState((current) => normalize({ ...current, ...patch })),
     [],
   )
   return [state, update]
