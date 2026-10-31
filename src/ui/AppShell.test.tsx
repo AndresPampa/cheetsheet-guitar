@@ -453,6 +453,8 @@ describe('AppShell', () => {
         'Mixolidio I (Escala mayor)',
         'Frigio dominante I ⭐ (más representativo) (Menor armónica)',
         'Lidio ♯2Lidio sostenido 2 I (Menor armónica)',
+        'Lidio dominante I ⭐ (más representativo) (Menor melódica)',
+        'Mixolidio ♭6Mixolidio bemol 6 I (Menor melódica)',
       ])
       expect(played).toEqual([])
     })
@@ -500,6 +502,8 @@ describe('AppShell', () => {
       expect(modesWithChord()).toEqual([
         'Dórico IV7 ⭐ (más representativo) (Escala mayor)',
         'Locrio ♮6Locrio natural 6 IV7 ⭐ (más representativo) (Menor armónica)',
+        'Menor melódica IV7 (Menor melódica)',
+        'Dórico ♭2Dórico bemol 2 IV7 ⭐ (más representativo) (Menor melódica)',
       ])
       expect(played).toEqual([['F', 'A', 'C', 'Eb']])
     })
@@ -520,6 +524,7 @@ describe('AppShell', () => {
         'Frigio ♭III (Escala mayor)',
         'Eólico ♭III (Escala mayor)',
         'Dórico ♯4Dórico sostenido 4 ♭III (Menor armónica)',
+        'Dórico ♭2Dórico bemol 2 ♭III (Menor melódica)',
       ])
     })
 
@@ -539,6 +544,8 @@ describe('AppShell', () => {
         'Mixolidio IV (Escala mayor)',
         'Locrio ♮6Locrio natural 6 IV ⭐ (más representativo) (Menor armónica)',
         'Jónico ♯5Jónico sostenido 5 IV (Menor armónica)',
+        'Menor melódica IV (Menor melódica)',
+        'Dórico ♭2Dórico bemol 2 IV ⭐ (más representativo) (Menor melódica)',
       ])
       expect(played).toEqual([['F', 'A', 'C']])
 
@@ -566,6 +573,8 @@ describe('AppShell', () => {
         'Dórico ♭VII (Escala mayor)',
         'Mixolidio ♭VII ⭐ (más representativo) (Escala mayor)',
         'Eólico ♭VII (Escala mayor)',
+        'Mixolidio ♭6Mixolidio bemol 6 ♭VII (Menor melódica)',
+        'Locrio ♮2Locrio natural 2 ♭VII ⭐ (más representativo) (Menor melódica)',
       ])
       expect(played).toEqual([['Bb', 'D', 'F']])
     })
@@ -1389,6 +1398,8 @@ describe('AppShell', () => {
         'Mixolydian I (Major scale)',
         'Phrygian dominant I ⭐ (most representative) (Harmonic minor)',
         'Lydian ♯2Lydian sharp 2 I (Harmonic minor)',
+        'Lydian dominant I ⭐ (most representative) (Melodic minor)',
+        'Mixolydian ♭6Mixolydian flat 6 I (Melodic minor)',
       ])
       expect(within(chord).getByText('Loading diagram…')).toBeInTheDocument()
 
@@ -2009,6 +2020,42 @@ describe('AppShell', () => {
       expect(chordList()).toEqual(keyChords)
     })
 
+    it('swaps the modes table for the melodic minor, keeping the harmonic shortcut', async () => {
+      const user = userEvent.setup()
+      visit('/?key=A&mode=minor&chords=7th')
+      renderShell()
+
+      await user.click(scaleButton('Menor melódica'))
+
+      expect(scaleButton('Menor melódica')).toHaveAttribute('aria-pressed', 'true')
+      expect(modesTable()).toHaveAccessibleName('Modos de la menor melódica de A')
+      expect(
+        within(modesTable())
+          .getAllByRole('rowheader')
+          .map((header) => header.firstChild?.textContent),
+      ).toEqual([
+        'Menor melódica',
+        'Dórico ♭2',
+        'Lidio aumentado',
+        'Lidio dominante',
+        'Mixolidio ♭6',
+        'Locrio ♮2',
+        'Alterado',
+      ])
+      const melodic = modeRow('Menor melódica')
+      for (const symbol of ['AmMaj7', 'Bm7', 'Cmaj7♯5', 'D7', 'E7', 'F♯m7♭5', 'G♯m7♭5']) {
+        expect(within(melodic).getByText(symbol)).toBeInTheDocument()
+      }
+      expect(
+        within(melodic).getByRole('button', { name: /^V7 E7 ?\(más representativo\)/ }),
+      ).toBeInTheDocument()
+      expect(within(modesTable()).queryByText('tu tonalidad')).toBeNull()
+      expect(window.location.search).toContain('scale=melodic')
+      expect(
+        screen.getByRole('button', { name: 'V7 y vii°7 en la menor armónica' }),
+      ).toBeInTheDocument()
+    })
+
     it('opens, plays and places the V7 of A harmonic minor', async () => {
       const user = userEvent.setup()
       const played: string[][] = []
@@ -2023,6 +2070,7 @@ describe('AppShell', () => {
       expect(modesWithChord()).toEqual([
         'Jónico V7 (Escala mayor)',
         'Menor armónica V7 ⭐ (más representativo) (Menor armónica)',
+        'Menor melódica V7 ⭐ (más representativo) (Menor melódica)',
       ])
       expect(window.location.search).toContain('chord=harmonic-minor.5')
     })

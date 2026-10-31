@@ -449,8 +449,8 @@ describe('getModesContaining', () => {
 })
 
 // ORACLE — hand-written (specs/chord-extensions, "E7 en La en todas las escalas" and "Acorde de
-// calidad nueva"): the lookup across PARENT_SCALES, in parent-scale order (major, harmonic).
-// The ionian never stars; harmonic minor stars its V.
+// calidad nueva"): the lookup across PARENT_SCALES, in parent-scale order (major, harmonic,
+// melodic). The ionian never stars; harmonic and melodic minor star their V.
 const ACROSS_PARENT_SCALES: Array<[string, string, string[], Match[]]> = [
   [
     'E7 in A',
@@ -459,13 +459,17 @@ const ACROSS_PARENT_SCALES: Array<[string, string, string[], Match[]]> = [
     [
       { mode: 'ionian', roman: 'V7', star: false },
       { mode: 'harmonic-minor', roman: 'V7', star: true },
+      { mode: 'melodic-minor', roman: 'V7', star: true },
     ],
   ],
   [
     'CmMaj7 in C',
     'C',
     ['C', 'Eb', 'G', 'B'],
-    [{ mode: 'harmonic-minor', roman: 'i(maj7)', star: false }],
+    [
+      { mode: 'harmonic-minor', roman: 'i(maj7)', star: false },
+      { mode: 'melodic-minor', roman: 'i(maj7)', star: false },
+    ],
   ],
 ]
 
@@ -803,6 +807,230 @@ describe('getParallelModes with the harmonic minor as parent scale', () => {
   })
 })
 
+// ORACLE — melodic minor as parent scale (v2.0 slice 2), copied verbatim from the hand-verified
+// tables of openspec/changes/add-melodic-minor/specs/parent-scales/spec.md. NEVER regenerate
+// them with tonal (circular). Changing an expected value requires human (musical) approval.
+const C_MELODIC_MODES: HarmonicOracleCase[] = [
+  {
+    name: 'melodic-minor',
+    scale: ['C', 'D', 'Eb', 'F', 'G', 'A', 'B'],
+    characteristic: { note: 'B', interval: '7M' },
+    stars: [5],
+    symbols: ['Cm', 'Dm', 'Eb+', 'F', 'G', 'A°', 'B°'],
+    romans: ['i', 'ii', 'bIII+', 'IV', 'V', 'vi°', 'vii°'],
+    seventhSymbols: ['CmMaj7', 'Dm7', 'Ebmaj7#5', 'F7', 'G7', 'Am7b5', 'Bm7b5'],
+  },
+  {
+    name: 'dorian-b2',
+    scale: ['C', 'Db', 'Eb', 'F', 'G', 'A', 'Bb'],
+    characteristic: { note: 'A', interval: '6M' },
+    stars: [4],
+    symbols: ['Cm', 'Db+', 'Eb', 'F', 'G°', 'A°', 'Bbm'],
+    romans: ['i', 'bII+', 'bIII', 'IV', 'v°', 'vi°', 'bvii'],
+    seventhSymbols: ['Cm7', 'Dbmaj7#5', 'Eb7', 'F7', 'Gm7b5', 'Am7b5', 'BbmMaj7'],
+  },
+  {
+    name: 'lydian-augmented',
+    scale: ['C', 'D', 'E', 'F#', 'G#', 'A', 'B'],
+    characteristic: { note: 'G#', interval: '5A' },
+    stars: [1],
+    symbols: ['C+', 'D', 'E', 'F#°', 'G#°', 'Am', 'Bm'],
+    romans: ['I+', 'II', 'III', '#iv°', '#v°', 'vi', 'vii'],
+    seventhSymbols: ['Cmaj7#5', 'D7', 'E7', 'F#m7b5', 'G#m7b5', 'AmMaj7', 'Bm7'],
+  },
+  {
+    name: 'lydian-dominant',
+    scale: ['C', 'D', 'E', 'F#', 'G', 'A', 'Bb'],
+    characteristic: { note: 'Bb', interval: '7m' },
+    stars: [1],
+    symbols: ['C', 'D', 'E°', 'F#°', 'Gm', 'Am', 'Bb+'],
+    romans: ['I', 'II', 'iii°', '#iv°', 'v', 'vi', 'bVII+'],
+    seventhSymbols: ['C7', 'D7', 'Em7b5', 'F#m7b5', 'GmMaj7', 'Am7', 'Bbmaj7#5'],
+  },
+  {
+    name: 'mixolydian-b6',
+    scale: ['C', 'D', 'E', 'F', 'G', 'Ab', 'Bb'],
+    characteristic: { note: 'Ab', interval: '6m' },
+    stars: [4],
+    symbols: ['C', 'D°', 'E°', 'Fm', 'Gm', 'Ab+', 'Bb'],
+    romans: ['I', 'ii°', 'iii°', 'iv', 'v', 'bVI+', 'bVII'],
+    seventhSymbols: ['C7', 'Dm7b5', 'Em7b5', 'FmMaj7', 'Gm7', 'Abmaj7#5', 'Bb7'],
+  },
+  {
+    name: 'locrian-nat2',
+    scale: ['C', 'D', 'Eb', 'F', 'Gb', 'Ab', 'Bb'],
+    characteristic: { note: 'D', interval: '2M' },
+    stars: [7],
+    symbols: ['C°', 'D°', 'Ebm', 'Fm', 'Gb+', 'Ab', 'Bb'],
+    romans: ['i°', 'ii°', 'biii', 'iv', 'bV+', 'bVI', 'bVII'],
+    seventhSymbols: ['Cm7b5', 'Dm7b5', 'EbmMaj7', 'Fm7', 'Gbmaj7#5', 'Ab7', 'Bb7'],
+  },
+  {
+    name: 'altered',
+    scale: ['C', 'Db', 'Eb', 'Fb', 'Gb', 'Ab', 'Bb'],
+    characteristic: { note: 'Fb', interval: '4d' },
+    stars: [2],
+    symbols: ['C°', 'Dbm', 'Ebm', 'Fb+', 'Gb', 'Ab', 'Bb°'],
+    romans: ['i°', 'bii', 'biii', 'bIV+', 'bV', 'bVI', 'bvii°'],
+    seventhSymbols: ['Cm7b5', 'DbmMaj7', 'Ebm7', 'Fbmaj7#5', 'Gb7', 'Ab7', 'Bbm7b5'],
+  },
+]
+
+const A_MELODIC_MODES: HarmonicOracleSubset[] = [
+  {
+    name: 'melodic-minor',
+    scale: ['A', 'B', 'C', 'D', 'E', 'F#', 'G#'],
+    characteristic: { note: 'G#', interval: '7M' },
+    seventhSymbols: ['AmMaj7', 'Bm7', 'Cmaj7#5', 'D7', 'E7', 'F#m7b5', 'G#m7b5'],
+  },
+  {
+    name: 'dorian-b2',
+    scale: ['A', 'Bb', 'C', 'D', 'E', 'F#', 'G'],
+    characteristic: { note: 'F#', interval: '6M' },
+    seventhSymbols: ['Am7', 'Bbmaj7#5', 'C7', 'D7', 'Em7b5', 'F#m7b5', 'GmMaj7'],
+  },
+  {
+    name: 'lydian-augmented',
+    scale: ['A', 'B', 'C#', 'D#', 'E#', 'F#', 'G#'],
+    characteristic: { note: 'E#', interval: '5A' },
+    seventhSymbols: ['Amaj7#5', 'B7', 'C#7', 'D#m7b5', 'E#m7b5', 'F#mMaj7', 'G#m7'],
+  },
+  {
+    name: 'lydian-dominant',
+    scale: ['A', 'B', 'C#', 'D#', 'E', 'F#', 'G'],
+    characteristic: { note: 'G', interval: '7m' },
+    seventhSymbols: ['A7', 'B7', 'C#m7b5', 'D#m7b5', 'EmMaj7', 'F#m7', 'Gmaj7#5'],
+  },
+  {
+    name: 'mixolydian-b6',
+    scale: ['A', 'B', 'C#', 'D', 'E', 'F', 'G'],
+    characteristic: { note: 'F', interval: '6m' },
+    seventhSymbols: ['A7', 'Bm7b5', 'C#m7b5', 'DmMaj7', 'Em7', 'Fmaj7#5', 'G7'],
+  },
+  {
+    name: 'locrian-nat2',
+    scale: ['A', 'B', 'C', 'D', 'Eb', 'F', 'G'],
+    characteristic: { note: 'B', interval: '2M' },
+    seventhSymbols: ['Am7b5', 'Bm7b5', 'CmMaj7', 'Dm7', 'Ebmaj7#5', 'F7', 'G7'],
+  },
+  {
+    name: 'altered',
+    scale: ['A', 'Bb', 'C', 'Db', 'Eb', 'F', 'G'],
+    characteristic: { note: 'Db', interval: '4d' },
+    seventhSymbols: ['Am7b5', 'BbmMaj7', 'Cm7', 'Dbmaj7#5', 'Eb7', 'F7', 'Gm7b5'],
+  },
+]
+
+const melodicModeOf = (root: string, name: ModeName) => {
+  const mode = getParallelModes(root, 'melodic').find((m) => m.name === name)
+  if (mode === undefined) throw new Error(`no melodic ${name} mode for ${root}`)
+  return mode
+}
+
+describe('getParallelModes with the melodic minor as parent scale', () => {
+  it('lists the seven melodic-minor modes in rotation order', () => {
+    expect(getParallelModes('C', 'melodic').map((m) => m.name)).toEqual([
+      'melodic-minor',
+      'dorian-b2',
+      'lydian-augmented',
+      'lydian-dominant',
+      'mixolydian-b6',
+      'locrian-nat2',
+      'altered',
+    ])
+  })
+
+  describe.each(C_MELODIC_MODES)('C $name', (c) => {
+    it('spells the scale from the root', () => {
+      expect(melodicModeOf('C', c.name).scale).toEqual(c.scale)
+    })
+
+    it('names its characteristic note and interval', () => {
+      const characteristic = melodicModeOf('C', c.name).characteristic
+
+      expect(
+        characteristic && { note: characteristic.note, interval: characteristic.interval },
+      ).toEqual(c.characteristic)
+    })
+
+    it('stars its curated degree', () => {
+      const chords = melodicModeOf('C', c.name).chords
+
+      expect(chords.filter((chord) => chord.star).map((chord) => chord.degree)).toEqual(c.stars)
+    })
+
+    it('builds the seven triads', () => {
+      expect(melodicModeOf('C', c.name).chords.map((chord) => chord.symbol)).toEqual(c.symbols)
+    })
+
+    it('labels each triad with its degree altered against the major scale', () => {
+      expect(melodicModeOf('C', c.name).chords.map((chord) => chord.roman)).toEqual(c.romans)
+    })
+
+    it('builds the seven seventh chords', () => {
+      const chords = melodicModeOf('C', c.name).chords
+
+      expect(chords.map((chord) => chord.seventh.symbol)).toEqual(c.seventhSymbols)
+    })
+  })
+
+  it('labels the C melodic-minor sevenths', () => {
+    const chords = melodicModeOf('C', 'melodic-minor').chords
+
+    expect(chords.map((chord) => chord.seventh.roman)).toEqual([
+      'i(maj7)',
+      'ii7',
+      'bIII+maj7',
+      'IV7',
+      'V7',
+      'viø7',
+      'viiø7',
+    ])
+  })
+
+  describe.each(A_MELODIC_MODES)('A $name', (a) => {
+    it('spells the scale from the root', () => {
+      expect(melodicModeOf('A', a.name).scale).toEqual(a.scale)
+    })
+
+    it('names its characteristic note and interval', () => {
+      const characteristic = melodicModeOf('A', a.name).characteristic
+
+      expect(
+        characteristic && { note: characteristic.note, interval: characteristic.interval },
+      ).toEqual(a.characteristic)
+    })
+
+    it('builds the seven seventh chords', () => {
+      const chords = melodicModeOf('A', a.name).chords
+
+      expect(chords.map((chord) => chord.seventh.symbol)).toEqual(a.seventhSymbols)
+    })
+  })
+
+  it('spells Cb altered with double flats only', () => {
+    expect(melodicModeOf('Cb', 'altered').scale).toEqual([
+      'Cb',
+      'Dbb',
+      'Ebb',
+      'Fbb',
+      'Gbb',
+      'Abb',
+      'Bbb',
+    ])
+  })
+
+  it('has no triple accidental on any root of the circle', () => {
+    const tripled = CIRCLE_ROOTS.flatMap((root) =>
+      getParallelModes(root, 'melodic')
+        .filter((mode) => mode.scale.some((note) => /bbb|###/.test(note)))
+        .map((mode) => `${root} ${mode.name}`),
+    )
+
+    expect(tripled).toEqual([])
+  })
+})
+
 describe('getParallelModes with the major scale as parent', () => {
   // Characterization: the v1 suite above pins the default; 'major' must be the same thing.
   it.each(CIRCLE_ROOTS)('%s: passing major gives exactly the default result', (root) => {
@@ -825,6 +1053,13 @@ const PARENT_SCALE_OF: Array<[ModeName, ParentScale]> = [
   ['phrygian-dominant', 'harmonic'],
   ['lydian-sharp2', 'harmonic'],
   ['superlocrian-bb7', 'harmonic'],
+  ['melodic-minor', 'melodic'],
+  ['dorian-b2', 'melodic'],
+  ['lydian-augmented', 'melodic'],
+  ['lydian-dominant', 'melodic'],
+  ['mixolydian-b6', 'melodic'],
+  ['locrian-nat2', 'melodic'],
+  ['altered', 'melodic'],
 ]
 
 describe('parent scales catalog', () => {
@@ -832,12 +1067,12 @@ describe('parent scales catalog', () => {
     expect(parentScaleOf(mode)).toBe(parent)
   })
 
-  it('lists the parent scales major then harmonic', () => {
-    expect(PARENT_SCALES).toEqual(['major', 'harmonic'])
+  it('lists the parent scales major, harmonic, melodic', () => {
+    expect(PARENT_SCALES).toEqual(['major', 'harmonic', 'melodic'])
   })
 
-  it('lists the 14 mode names of both parent scales', () => {
-    expect(MODE_NAMES).toHaveLength(14)
+  it('lists the 21 mode names of the three parent scales', () => {
+    expect(MODE_NAMES).toHaveLength(21)
     expect(MODE_NAMES).toEqual(expect.arrayContaining(PARENT_SCALE_OF.map(([mode]) => mode)))
   })
 })

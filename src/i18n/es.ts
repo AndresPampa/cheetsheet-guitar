@@ -18,6 +18,13 @@ const MODE_NAMES: Messages['modeName'] = {
   'phrygian-dominant': 'Frigio dominante',
   'lydian-sharp2': 'Lidio ♯2',
   'superlocrian-bb7': 'Superlocrio ♭♭7',
+  'melodic-minor': 'Menor melódica',
+  'dorian-b2': 'Dórico ♭2',
+  'lydian-augmented': 'Lidio aumentado',
+  'lydian-dominant': 'Lidio dominante',
+  'mixolydian-b6': 'Mixolidio ♭6',
+  'locrian-nat2': 'Locrio ♮2',
+  altered: 'Alterado',
 }
 
 const MODE_SPOKEN: Messages['modeSpoken'] = {
@@ -27,11 +34,15 @@ const MODE_SPOKEN: Messages['modeSpoken'] = {
   'dorian-sharp4': 'Dórico sostenido 4',
   'lydian-sharp2': 'Lidio sostenido 2',
   'superlocrian-bb7': 'Superlocrio doble bemol 7',
+  'dorian-b2': 'Dórico bemol 2',
+  'mixolydian-b6': 'Mixolidio bemol 6',
+  'locrian-nat2': 'Locrio natural 2',
 }
 
 const PARENT_SCALE_NAMES: Messages['parentScaleName'] = {
   major: 'Escala mayor',
   harmonic: 'Menor armónica',
+  melodic: 'Menor melódica',
 }
 
 /** `sin alteraciones`, `1 sostenido`, `3 bemoles`. */
@@ -117,7 +128,7 @@ export function es(notation: Notation): Messages {
       '#11': '11ª aumentada',
       '13': '13ª mayor',
       b13: '13ª menor',
-      // Degrees only the harmonic minor's modes reach.
+      // Degrees only the minor parent scales' modes reach.
       '#5': '5ª aumentada',
       bb7: '7ª disminuida',
       '#9': '9ª aumentada',
@@ -142,7 +153,7 @@ export function es(notation: Notation): Messages {
     modesCaption: (root, scale) =>
       `Modos de la ${PARENT_SCALE_NAMES[scale].toLowerCase()} de ${root}`,
     parentScaleGroup: 'Escala madre',
-    parentScaleShort: { major: 'Mayor', harmonic: 'Armónica' },
+    parentScaleShort: { major: 'Mayor', harmonic: 'Armónica', melodic: 'Melódica' },
     parentScaleName: PARENT_SCALE_NAMES,
     yourKey: 'tu tonalidad',
     modeColumn: 'Modo',

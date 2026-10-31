@@ -199,6 +199,19 @@ describe('parent scale in the URL', () => {
     expect(parseState(search)).toEqual(state)
   })
 
+  it('reads and writes back a chord of a melodic-minor mode', () => {
+    const search = '?chord=altered.2&scale=melodic'
+
+    const state = parseState(search)
+
+    expect(state).toEqual({
+      ...DEFAULT_STATE,
+      scale: 'melodic',
+      chord: { source: 'altered', degree: 2 },
+    })
+    expect(serializeState(state)).toBe(search)
+  })
+
   it('omits scale when it is major', () => {
     expect(serializeState(DEFAULT_STATE)).toBe('')
   })
@@ -206,6 +219,7 @@ describe('parent scale in the URL', () => {
   const outsideScale: Array<[string, string]> = [
     ['a harmonic-minor mode with the major scale', '?chord=phrygian-dominant.1'],
     ['a major mode with the harmonic minor', '?scale=harmonic&chord=dorian.4'],
+    ['a melodic-minor mode with the harmonic minor', '?scale=harmonic&chord=altered.2'],
   ]
 
   it.each(outsideScale)('falls back to the I of the key for %s', (_, search) => {

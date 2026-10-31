@@ -18,6 +18,13 @@ const MODE_NAMES: Messages['modeName'] = {
   'phrygian-dominant': 'Phrygian dominant',
   'lydian-sharp2': 'Lydian ♯2',
   'superlocrian-bb7': 'Superlocrian ♭♭7',
+  'melodic-minor': 'Melodic minor',
+  'dorian-b2': 'Dorian ♭2',
+  'lydian-augmented': 'Lydian augmented',
+  'lydian-dominant': 'Lydian dominant',
+  'mixolydian-b6': 'Mixolydian ♭6',
+  'locrian-nat2': 'Locrian ♮2',
+  altered: 'Altered',
 }
 
 const MODE_SPOKEN: Messages['modeSpoken'] = {
@@ -27,6 +34,15 @@ const MODE_SPOKEN: Messages['modeSpoken'] = {
   'dorian-sharp4': 'Dorian sharp 4',
   'lydian-sharp2': 'Lydian sharp 2',
   'superlocrian-bb7': 'Superlocrian double flat 7',
+  'dorian-b2': 'Dorian flat 2',
+  'mixolydian-b6': 'Mixolydian flat 6',
+  'locrian-nat2': 'Locrian natural 2',
+}
+
+const PARENT_SCALE_NAMES: Messages['parentScaleName'] = {
+  major: 'Major scale',
+  harmonic: 'Harmonic minor',
+  melodic: 'Melodic minor',
 }
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`
@@ -104,7 +120,7 @@ export function en(notation: Notation): Messages {
       '#11': 'augmented 11th',
       '13': 'major 13th',
       b13: 'minor 13th',
-      // Degrees only the harmonic minor's modes reach.
+      // Degrees only the minor parent scales' modes reach.
       '#5': 'augmented 5th',
       bb7: 'diminished 7th',
       '#9': 'augmented 9th',
@@ -127,10 +143,12 @@ export function en(notation: Notation): Messages {
     position: (current, total) => `Position ${current} of ${total}`,
 
     modesCaption: (root, scale) =>
-      scale === 'major' ? `Modes of the ${root} major scale` : `Modes of ${root} harmonic minor`,
+      scale === 'major'
+        ? `Modes of the ${root} major scale`
+        : `Modes of ${root} ${PARENT_SCALE_NAMES[scale].toLowerCase()}`,
     parentScaleGroup: 'Parent scale',
-    parentScaleShort: { major: 'Major', harmonic: 'Harmonic' },
-    parentScaleName: { major: 'Major scale', harmonic: 'Harmonic minor' },
+    parentScaleShort: { major: 'Major', harmonic: 'Harmonic', melodic: 'Melodic' },
+    parentScaleName: PARENT_SCALE_NAMES,
     yourKey: 'your key',
     modeColumn: 'Mode',
     characteristicColumn: 'Characteristic note',

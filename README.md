@@ -16,8 +16,9 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
 la escala de la tonalidad o del modo (♭9, ♯11 y ♭13 donde corresponde), con cifrado, fórmula,
 diagrama y sonido.
 
-🚧 **v2.0 menor armónica (en curso).** La tabla de modos ya muestra los 7 modos de la escala mayor
-o de la menor armónica, con selector, acordes aumentados, mMaj7 y °7; falta la menor melódica.
+🚧 **v2.0 menor armónica y melódica (en curso).** La tabla de modos ya muestra los 7 modos de la
+escala mayor, la menor armónica o la menor melódica, con selector, acordes aumentados, mMaj7 y °7;
+falta el cierre (pruebas sobre las 24 raíces).
 
 | Versión | Alcance | Estado |
 |---|---|---|
@@ -47,13 +48,15 @@ o de la menor armónica, con selector, acordes aumentados, mMaj7 y °7; falta la
   característica y grados alterados (♭II, ♯iv°, ♭VII). Se marcan los acordes que contienen la nota
   característica, los prestados del jónico, ⭐ el más representativo y la fila de tu tonalidad. En
   el celular el nombre del modo queda fijo al desplazar la tabla.
-- ✅ **Escala madre: Mayor / Armónica** (arriba de la tabla de modos): cambia la tabla por los 7
-  modos de la menor armónica de la misma raíz (menor armónica, locrio ♮6, jónico ♯5, dórico ♯4,
-  frigio dominante, lidio ♯2, superlocrio ♭♭7), con sus acordes aumentados, mMaj7 y °7. En una
+- ✅ **Escala madre: Mayor / Armónica / Melódica** (arriba de la tabla de modos): cambia la tabla
+  por los 7 modos de la menor armónica (menor armónica, locrio ♮6, jónico ♯5, dórico ♯4, frigio
+  dominante, lidio ♯2, superlocrio ♭♭7) o de la menor melódica (menor melódica, dórico ♭2, lidio
+  aumentado, lidio dominante, mixolidio ♭6, locrio ♮2, alterado) de la misma raíz, con sus acordes
+  aumentados, mMaj7 y °7. En una
   tonalidad menor, el atajo "V7 y vii°7 → menor armónica" lleva directo ahí.
 - ✅ **Panel de acorde**: al hacer click en un acorde (panel de tonalidad o tabla de modos) suena
   como un rasgueo y muestra grado, la fórmula (tabla de grados `1 ♭3 5` sobre sus notas), ▶ para
-  repetirlo y en qué modos aparece (de las dos escalas madre, con la escala de cada uno).
+  repetirlo y en qué modos aparece (de las tres escalas madre, con la escala de cada uno).
 - ✅ **Diagramas en la guitarra** del acorde (trastes, dedos, cejilla, cuerdas al aire y
   silenciadas), con 4 posiciones por acorde para recorrer con ◀ ▶.
 - ✅ **Idioma ES / EN** (español por defecto): se traduce todo, incluidos los modos, las calidades
@@ -83,7 +86,7 @@ flowchart LR
         KE["AppShell<br/>encabezado + interruptores<br/>+ 3 paneles"]
         COF["CircleOfFifths"]
         KP["KeyPanel<br/>+ Triadas / Séptimas<br/>+ extensiones 9 / 11 / 13"]
-        MT["ModesTable<br/>+ escala madre (Mayor / Armónica)"]
+        MT["ModesTable<br/>+ escala madre (Mayor / Armónica / Melódica)"]
         CP["ChordPanel<br/>▶ + fórmula + modos donde aparece"]
         KE --> COF & KP & MT & CP
     end
@@ -104,7 +107,7 @@ flowchart LR
 
     subgraph theory["src/theory — TS puro"]
         KEY["key.ts<br/>getKey"]
-        MOD["modes.ts<br/>getParallelModes<br/>getModesContaining<br/>(escalas madre: mayor, menor armónica)"]
+        MOD["modes.ts<br/>getParallelModes<br/>getModesContaining<br/>(escalas madre: mayor, menor armónica, menor melódica)"]
         CIR["circle.ts<br/>CIRCLE_OF_FIFTHS"]
         EXT["extensions.ts<br/>getExtendedChord<br/>(9 / 11 / 13 + cifrado)"]
         FOR["formula.ts<br/>getChordFormula"]

@@ -16,10 +16,17 @@ export type ModeName =
   | 'phrygian-dominant'
   | 'lydian-sharp2'
   | 'superlocrian-bb7'
+  | 'melodic-minor'
+  | 'dorian-b2'
+  | 'lydian-augmented'
+  | 'lydian-dominant'
+  | 'mixolydian-b6'
+  | 'locrian-nat2'
+  | 'altered'
 
 /** The scale a family of modes rotates; `major` is the one v1 shows. */
-export type ParentScale = 'major' | 'harmonic'
-export const PARENT_SCALES: readonly ParentScale[] = ['major', 'harmonic']
+export type ParentScale = 'major' | 'harmonic' | 'melodic'
+export const PARENT_SCALES: readonly ParentScale[] = ['major', 'harmonic', 'melodic']
 
 /** Flags shared by a modal triad and its seventh chord. */
 interface ModalFlags {
@@ -82,6 +89,20 @@ const CATALOG: Record<ParentScale, { template: string[]; modes: ModeDefinition[]
       { name: 'lydian-sharp2', characteristicDegree: 2, starDegrees: [7] },
       // Differs from locrian in b4 too; only bb7, the one that names it, is marked.
       { name: 'superlocrian-bb7', characteristicDegree: 7, starDegrees: [1] },
+    ],
+  },
+  melodic: {
+    template: ['C', 'D', 'Eb', 'F', 'G', 'A', 'B'],
+    modes: [
+      { name: 'melodic-minor', characteristicDegree: 7, starDegrees: [5] },
+      // As close to dorian (b2) as to phrygian (6M); the PRD measures it against phrygian.
+      { name: 'dorian-b2', characteristicDegree: 6, starDegrees: [4] },
+      { name: 'lydian-augmented', characteristicDegree: 5, starDegrees: [1] },
+      // As close to mixolydian (#4) as to lydian (b7); the PRD measures it against lydian.
+      { name: 'lydian-dominant', characteristicDegree: 7, starDegrees: [1] },
+      { name: 'mixolydian-b6', characteristicDegree: 6, starDegrees: [4] },
+      { name: 'locrian-nat2', characteristicDegree: 2, starDegrees: [7] },
+      { name: 'altered', characteristicDegree: 4, starDegrees: [2] },
     ],
   },
 }
