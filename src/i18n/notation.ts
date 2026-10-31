@@ -64,6 +64,8 @@ const CHARACTERISTIC_SIGNS: Record<string, string> = {
   '5A': '♯5',
   '2A': '♯2',
   '7d': '♭♭7',
+  '2M': '♮2',
+  '4d': '♭4',
 }
 
 /** `6M` + `A` + `6ª mayor` → `6ª mayor (A)`; `4A` + `F#` → `♯4 (F♯)`. */

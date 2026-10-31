@@ -6,6 +6,7 @@ import {
   type ChordBase,
   type Extension,
   type ModeName,
+  type ParentScale,
 } from '../theory/index.ts'
 import { displayRoman, getMessages } from './index.ts'
 
@@ -310,9 +311,9 @@ const REACHABLE_LABELS = new Set('1 3 b3 5 b5 #5 7 b7 bb7 9 b9 #9 11 #11 b11 13 
 const BASES: ChordBase[] = ['triads', 'sevenths']
 const EXTENSION_COMBOS: Extension[][] = [[], [9], [11], [13], [9, 11], [9, 13], [11, 13]]
 
-const harmonicFormulaLabels = (root: string): Set<string> =>
+const formulaLabels = (root: string, parent: ParentScale): Set<string> =>
   new Set(
-    getParallelModes(root, 'harmonic').flatMap((mode) =>
+    getParallelModes(root, parent).flatMap((mode) =>
       [1, 2, 3, 4, 5, 6, 7].flatMap((degree) =>
         BASES.flatMap((base) =>
           EXTENSION_COMBOS.flatMap((exts) =>
@@ -323,11 +324,16 @@ const harmonicFormulaLabels = (root: string): Set<string> =>
     ),
   )
 
-describe('intervalName over the harmonic minor parent scale', () => {
-  it.each(CIRCLE_ROOTS)(
-    '%s: every reachable formula degree is a known label named in Spanish and English',
-    (root) => {
-      const labels = [...harmonicFormulaLabels(root)]
+const HARMONIC_AND_MELODIC: Array<[string, ParentScale]> = CIRCLE_ROOTS.flatMap((root) => [
+  [root, 'harmonic'],
+  [root, 'melodic'],
+])
+
+describe('intervalName over the harmonic and melodic minor parent scales', () => {
+  it.each(HARMONIC_AND_MELODIC)(
+    '%s %s: every reachable formula degree is a known label named in Spanish and English',
+    (root, parent) => {
+      const labels = [...formulaLabels(root, parent)]
 
       expect(labels.filter((label) => !REACHABLE_LABELS.has(label))).toEqual([])
       expect(labels.filter((label) => es.intervalName[label] === undefined)).toEqual([])
@@ -392,9 +398,71 @@ describe('the harmonic minor parent scale', () => {
   })
 
   it('names each parent scale short on the switch and in full elsewhere', () => {
-    expect(es.parentScaleShort).toEqual({ major: 'Mayor', harmonic: 'Armónica' })
-    expect(es.parentScaleName).toEqual({ major: 'Escala mayor', harmonic: 'Menor armónica' })
-    expect(en.parentScaleShort).toEqual({ major: 'Major', harmonic: 'Harmonic' })
-    expect(en.parentScaleName).toEqual({ major: 'Major scale', harmonic: 'Harmonic minor' })
+    expect(es.parentScaleShort).toEqual({
+      major: 'Mayor',
+      harmonic: 'Armónica',
+      melodic: 'Melódica',
+    })
+    expect(es.parentScaleName).toEqual({
+      major: 'Escala mayor',
+      harmonic: 'Menor armónica',
+      melodic: 'Menor melódica',
+    })
+    expect(en.parentScaleShort).toEqual({
+      major: 'Major',
+      harmonic: 'Harmonic',
+      melodic: 'Melodic',
+    })
+    expect(en.parentScaleName).toEqual({
+      major: 'Major scale',
+      harmonic: 'Harmonic minor',
+      melodic: 'Melodic minor',
+    })
+  })
+})
+
+describe('the melodic minor parent scale', () => {
+  const names: Array<[ModeName, string, string, string, string]> = [
+    ['melodic-minor', 'Menor melódica', 'Menor melódica', 'Melodic minor', 'Melodic minor'],
+    ['dorian-b2', 'Dórico ♭2', 'Dórico bemol 2', 'Dorian ♭2', 'Dorian flat 2'],
+    [
+      'lydian-augmented',
+      'Lidio aumentado',
+      'Lidio aumentado',
+      'Lydian augmented',
+      'Lydian augmented',
+    ],
+    ['lydian-dominant', 'Lidio dominante', 'Lidio dominante', 'Lydian dominant', 'Lydian dominant'],
+    ['mixolydian-b6', 'Mixolidio ♭6', 'Mixolidio bemol 6', 'Mixolydian ♭6', 'Mixolydian flat 6'],
+    ['locrian-nat2', 'Locrio ♮2', 'Locrio natural 2', 'Locrian ♮2', 'Locrian natural 2'],
+    ['altered', 'Alterado', 'Alterado', 'Altered', 'Altered'],
+  ]
+
+  it.each(names)(
+    'shows %s with signs and reads it in words',
+    (mode, esShown, esSpoken, enShown, enSpoken) => {
+      expect([es.modeName[mode], es.modeSpoken[mode]]).toEqual([esShown, esSpoken])
+      expect([en.modeName[mode], en.modeSpoken[mode]]).toEqual([enShown, enSpoken])
+    },
+  )
+
+  // The characteristic note of each mode of C melodic minor, against its closest Greek mode.
+  const characteristics: Array<[string, string, string]> = [
+    ['7M', 'B', '♮7 (B)'],
+    ['6M', 'A', '6ª mayor (A)'],
+    ['5A', 'G#', '♯5 (G♯)'],
+    ['7m', 'Bb', '♭7 (B♭)'],
+    ['6m', 'Ab', '♭6 (A♭)'],
+    ['2M', 'D', '♮2 (D)'],
+    ['4d', 'Fb', '♭4 (F♭)'],
+  ]
+
+  it.each(characteristics)('names the characteristic %s (%s) as %s', (interval, note, text) => {
+    expect(es.characteristic(interval, note)).toBe(text)
+  })
+
+  it('names the modes table after the melodic minor', () => {
+    expect(es.modesCaption('C', 'melodic')).toBe('Modos de la menor melódica de C')
+    expect(en.modesCaption('A', 'melodic')).toBe('Modes of A melodic minor')
   })
 })
