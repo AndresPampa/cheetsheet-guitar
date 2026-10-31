@@ -1031,6 +1031,181 @@ describe('getParallelModes with the melodic minor as parent scale', () => {
   })
 })
 
+// ORACLE — C# in the minor parent scales (v2.0 slice 3), written by hand: C# keeps C's letters
+// with every note raised a semitone (b → natural, natural → #, # → ##), so it pins the double
+// sharps. Romans and stars do not depend on the root and are pinned by the C oracles above.
+const C_SHARP_MINOR_PARENT_MODES: Array<[ParentScale, HarmonicOracleSubset]> = [
+  [
+    'harmonic',
+    {
+      name: 'harmonic-minor',
+      scale: ['C#', 'D#', 'E', 'F#', 'G#', 'A', 'B#'],
+      characteristic: { note: 'B#', interval: '7M' },
+      seventhSymbols: ['C#mMaj7', 'D#m7b5', 'Emaj7#5', 'F#m7', 'G#7', 'Amaj7', 'B#°7'],
+    },
+  ],
+  [
+    'harmonic',
+    {
+      name: 'locrian-nat6',
+      scale: ['C#', 'D', 'E', 'F#', 'G', 'A#', 'B'],
+      characteristic: { note: 'A#', interval: '6M' },
+      seventhSymbols: ['C#m7b5', 'Dmaj7#5', 'Em7', 'F#7', 'Gmaj7', 'A#°7', 'BmMaj7'],
+    },
+  ],
+  [
+    'harmonic',
+    {
+      name: 'ionian-sharp5',
+      scale: ['C#', 'D#', 'E#', 'F#', 'G##', 'A#', 'B#'],
+      characteristic: { note: 'G##', interval: '5A' },
+      seventhSymbols: ['C#maj7#5', 'D#m7', 'E#7', 'F#maj7', 'G##°7', 'A#mMaj7', 'B#m7b5'],
+    },
+  ],
+  [
+    'harmonic',
+    {
+      name: 'dorian-sharp4',
+      scale: ['C#', 'D#', 'E', 'F##', 'G#', 'A#', 'B'],
+      characteristic: { note: 'F##', interval: '4A' },
+      seventhSymbols: ['C#m7', 'D#7', 'Emaj7', 'F##°7', 'G#mMaj7', 'A#m7b5', 'Bmaj7#5'],
+    },
+  ],
+  [
+    'harmonic',
+    {
+      name: 'phrygian-dominant',
+      scale: ['C#', 'D', 'E#', 'F#', 'G#', 'A', 'B'],
+      characteristic: { note: 'E#', interval: '3M' },
+      seventhSymbols: ['C#7', 'Dmaj7', 'E#°7', 'F#mMaj7', 'G#m7b5', 'Amaj7#5', 'Bm7'],
+    },
+  ],
+  [
+    'harmonic',
+    {
+      name: 'lydian-sharp2',
+      scale: ['C#', 'D##', 'E#', 'F##', 'G#', 'A#', 'B#'],
+      characteristic: { note: 'D##', interval: '2A' },
+      seventhSymbols: ['C#maj7', 'D##°7', 'E#mMaj7', 'F##m7b5', 'G#maj7#5', 'A#m7', 'B#7'],
+    },
+  ],
+  [
+    'harmonic',
+    {
+      name: 'superlocrian-bb7',
+      scale: ['C#', 'D', 'E', 'F', 'G', 'A', 'Bb'],
+      characteristic: { note: 'Bb', interval: '7d' },
+      seventhSymbols: ['C#°7', 'DmMaj7', 'Em7b5', 'Fmaj7#5', 'Gm7', 'A7', 'Bbmaj7'],
+    },
+  ],
+  [
+    'melodic',
+    {
+      name: 'melodic-minor',
+      scale: ['C#', 'D#', 'E', 'F#', 'G#', 'A#', 'B#'],
+      characteristic: { note: 'B#', interval: '7M' },
+      seventhSymbols: ['C#mMaj7', 'D#m7', 'Emaj7#5', 'F#7', 'G#7', 'A#m7b5', 'B#m7b5'],
+    },
+  ],
+  [
+    'melodic',
+    {
+      name: 'dorian-b2',
+      scale: ['C#', 'D', 'E', 'F#', 'G#', 'A#', 'B'],
+      characteristic: { note: 'A#', interval: '6M' },
+      seventhSymbols: ['C#m7', 'Dmaj7#5', 'E7', 'F#7', 'G#m7b5', 'A#m7b5', 'BmMaj7'],
+    },
+  ],
+  [
+    'melodic',
+    {
+      name: 'lydian-augmented',
+      scale: ['C#', 'D#', 'E#', 'F##', 'G##', 'A#', 'B#'],
+      characteristic: { note: 'G##', interval: '5A' },
+      seventhSymbols: ['C#maj7#5', 'D#7', 'E#7', 'F##m7b5', 'G##m7b5', 'A#mMaj7', 'B#m7'],
+    },
+  ],
+  [
+    'melodic',
+    {
+      name: 'lydian-dominant',
+      scale: ['C#', 'D#', 'E#', 'F##', 'G#', 'A#', 'B'],
+      characteristic: { note: 'B', interval: '7m' },
+      seventhSymbols: ['C#7', 'D#7', 'E#m7b5', 'F##m7b5', 'G#mMaj7', 'A#m7', 'Bmaj7#5'],
+    },
+  ],
+  [
+    'melodic',
+    {
+      name: 'mixolydian-b6',
+      scale: ['C#', 'D#', 'E#', 'F#', 'G#', 'A', 'B'],
+      characteristic: { note: 'A', interval: '6m' },
+      seventhSymbols: ['C#7', 'D#m7b5', 'E#m7b5', 'F#mMaj7', 'G#m7', 'Amaj7#5', 'B7'],
+    },
+  ],
+  [
+    'melodic',
+    {
+      name: 'locrian-nat2',
+      scale: ['C#', 'D#', 'E', 'F#', 'G', 'A', 'B'],
+      characteristic: { note: 'D#', interval: '2M' },
+      seventhSymbols: ['C#m7b5', 'D#m7b5', 'EmMaj7', 'F#m7', 'Gmaj7#5', 'A7', 'B7'],
+    },
+  ],
+  [
+    'melodic',
+    {
+      name: 'altered',
+      scale: ['C#', 'D', 'E', 'F', 'G', 'A', 'B'],
+      characteristic: { note: 'F', interval: '4d' },
+      seventhSymbols: ['C#m7b5', 'DmMaj7', 'Em7', 'Fmaj7#5', 'G7', 'A7', 'Bm7b5'],
+    },
+  ],
+]
+
+describe('C# in the minor parent scales', () => {
+  const cases = C_SHARP_MINOR_PARENT_MODES.map(([parent, c]) => ({ parent, ...c }))
+
+  describe.each(cases)('$parent: C# $name', ({ parent, ...c }) => {
+    const mode = () => {
+      const found = getParallelModes('C#', parent).find((m) => m.name === c.name)
+      if (found === undefined) throw new Error(`no ${parent} ${c.name} mode for C#`)
+      return found
+    }
+
+    it('spells the scale from the root, with double sharps where due', () => {
+      expect(mode().scale).toEqual(c.scale)
+    })
+
+    it('names its characteristic note and interval', () => {
+      const characteristic = mode().characteristic
+
+      expect(
+        characteristic && { note: characteristic.note, interval: characteristic.interval },
+      ).toEqual(c.characteristic)
+    })
+
+    it('builds the seven seventh chords', () => {
+      expect(mode().chords.map((chord) => chord.seventh.symbol)).toEqual(c.seventhSymbols)
+    })
+  })
+})
+
+describe('getParallelModes spelling over every root and parent scale', () => {
+  it.each(CIRCLE_ROOTS)(
+    '%s: every mode of every parent scale uses seven distinct letters starting on the root',
+    (root) => {
+      for (const parent of PARENT_SCALES) {
+        for (const mode of getParallelModes(root, parent)) {
+          expect(mode.scale[0]).toBe(root)
+          expect(mode.scale).toHaveLength(7)
+          expect(new Set(mode.scale.map((note) => note[0])).size).toBe(7)
+        }
+      }
+    },
+  )
+})
+
 describe('getParallelModes with the major scale as parent', () => {
   // Characterization: the v1 suite above pins the default; 'major' must be the same thing.
   it.each(CIRCLE_ROOTS)('%s: passing major gives exactly the default result', (root) => {

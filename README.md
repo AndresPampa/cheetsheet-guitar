@@ -16,9 +16,9 @@ teclado y lector de pantalla, y en el celular. Tests de punta a punta con Playwr
 la escala de la tonalidad o del modo (♭9, ♯11 y ♭13 donde corresponde), con cifrado, fórmula,
 diagrama y sonido.
 
-🚧 **v2.0 menor armónica y melódica (en curso).** La tabla de modos ya muestra los 7 modos de la
-escala mayor, la menor armónica o la menor melódica, con selector, acordes aumentados, mMaj7 y °7;
-falta el cierre (pruebas sobre las 24 raíces).
+✅ **v2.0 menor armónica y melódica.** La tabla de modos muestra los 7 modos de la escala mayor,
+la menor armónica o la menor melódica, con selector, acordes aumentados, mMaj7 y °7, y la
+ortografía verificada en todas las raíces del círculo.
 
 | Versión | Alcance | Estado |
 |---|---|---|
@@ -27,8 +27,8 @@ falta el cierre (pruebas sobre las 24 raíces).
 | v1.6 | Créditos al pie: autor, código en GitHub e Instagram | ✅ Completa |
 | v1.7 | Fórmula del acorde: tabla con los grados (1, 3, 5…) y las notas del acorde seleccionado | ✅ Completa |
 | v2.1 | Extensiones: hasta dos de 9, 11 y 13 sobre la triada o la séptima, con cifrado, fórmula, diagrama y sonido | ✅ Completa |
-| v2.0 | Modos de menor armónica y melódica: selector de escala madre sobre la tabla de modos, acordes aumentados, mMaj7 y °7 con sus extensiones | 🚧 En curso |
-| v2.2 | Armador de progresiones | 💡 Idea |
+| v2.0 | Modos de menor armónica y melódica: selector de escala madre sobre la tabla de modos, acordes aumentados, mMaj7 y °7 con sus extensiones | ✅ Completa |
+| v2.2 | Armador de progresiones | 🔜 Próxima (en definición) |
 | v3 | Backend para guardar progresiones | 💡 Idea |
 
 ## Funcionalidades
