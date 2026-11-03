@@ -10,6 +10,7 @@ const FULL_STATE: AppState = {
   language: 'en',
   extensions: [],
   scale: 'major',
+  progression: [],
 }
 const FULL_SEARCH = '?key=F%23&mode=minor&chords=7th&chord=dorian.4&names=solfege&lang=en'
 
@@ -24,6 +25,7 @@ describe('parseState', () => {
       language: 'es',
       extensions: [],
       scale: 'major',
+      progression: [],
     })
     expect(DEFAULT_STATE).toEqual(parseState(''))
   })
@@ -232,5 +234,62 @@ describe('parent scale in the URL', () => {
       source: 'locrian-nat6',
       degree: 4,
     })
+  })
+})
+
+describe('progression in the URL', () => {
+  it('writes the steps joined by underscores and reads back the same progression', () => {
+    const state: AppState = {
+      ...DEFAULT_STATE,
+      progression: [
+        { source: 'key', degree: 1, kind: 'triads', extensions: [] },
+        { source: 'aeolian', degree: 6, kind: 'sevenths', extensions: [] },
+        { source: 'mixolydian', degree: 7, kind: 'triads', extensions: [] },
+        { source: 'key', degree: 5, kind: 'sevenths', extensions: [9, 13] },
+      ],
+    }
+
+    const search = serializeState(state)
+
+    expect(search).toBe('?prog=key.1_aeolian.6.7_mixolydian.7_key.5.7.9.13')
+    expect(parseState(search)).toEqual(state)
+  })
+
+  it('reads the extensions of a step sorted when the URL has them out of order', () => {
+    expect(parseState('?prog=key.5.7.13.9').progression).toEqual([
+      { source: 'key', degree: 5, kind: 'sevenths', extensions: [9, 13] },
+    ])
+  })
+
+  const invalidSteps: Array<[string, string]> = [
+    ['a degree outside 1–7', '?prog=key.1_key.8&key=G'],
+    ['a repeated extension', '?prog=key.1.9.9&key=G'],
+    ['three extensions', '?prog=key.1.9.11.13&key=G'],
+    ['an unknown source', '?prog=dorien.1&key=G'],
+    ['an empty step', '?prog=key.1__key.2&key=G'],
+  ]
+
+  it.each(invalidSteps)('empties the whole progression on %s, keeping the key', (_, search) => {
+    expect(parseState(search)).toEqual({ ...DEFAULT_STATE, tonic: 'G', progression: [] })
+  })
+
+  it('keeps 32 steps and empties the progression at 33', () => {
+    const steps = (count: number) => `?prog=${Array<string>(count).fill('key.1').join('_')}`
+
+    expect(parseState(steps(32)).progression).toHaveLength(32)
+    expect(parseState(steps(33)).progression).toEqual([])
+  })
+
+  it('keeps a step from another parent scale without changing the visible scale', () => {
+    const state = parseState('?prog=phrygian-dominant.1')
+
+    expect(state.progression).toEqual([
+      { source: 'phrygian-dominant', degree: 1, kind: 'triads', extensions: [] },
+    ])
+    expect(state.scale).toBe('major')
+  })
+
+  it('omits prog when the progression is empty', () => {
+    expect(serializeState({ ...DEFAULT_STATE, progression: [] })).toBe('')
   })
 })

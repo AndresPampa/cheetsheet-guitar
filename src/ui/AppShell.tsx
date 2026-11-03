@@ -1,23 +1,26 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AudioPort } from '../audio/index.ts'
 import { getMessages, MessagesContext, type Language, type Notation } from '../i18n/index.ts'
 import {
   CIRCLE_OF_FIFTHS,
   getCircleHighlights,
   getCircleSpelling,
-  getExtendedChord,
   getKey,
   getModesContaining,
   getParallelModes,
   PARENT_SCALES,
+  parentScaleOf,
+  resolveStep,
+  type ProgressionStep,
 } from '../theory/index.ts'
-import { useTheme, useUrlState, type ChordRef } from '../state/index.ts'
+import { MAX_STEPS, useTheme, useUrlState, type ChordRef } from '../state/index.ts'
 import { ChordDiagram, type VoicingsLoader } from './ChordDiagram.tsx'
 import { ChordPanel } from './ChordPanel.tsx'
 import { CircleOfFifths, type CircleSelection } from './CircleOfFifths.tsx'
 import { Credits } from './Credits.tsx'
 import { KeyPanel } from './KeyPanel.tsx'
 import { ModesTable } from './ModesTable.tsx'
+import { ProgressionPanel } from './ProgressionPanel.tsx'
 import { SegmentedSwitch } from './SegmentedSwitch.tsx'
 import type { DiagramDrawer } from './svguitarDiagram.ts'
 
@@ -48,6 +51,9 @@ interface AppShellProps {
 export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const [state, update] = useUrlState()
   const { tonic, mode, chordKind, chord: chordRef, extensions, language, notation, scale } = state
+  const { progression } = state
+  // Set only by add and remove, so loading a progression from the URL announces nothing.
+  const [announcement, setAnnouncement] = useState({ text: '', id: 0 })
   const t = getMessages(language, notation)
   const [theme, setTheme] = useTheme()
   const keyInfo = getKey(tonic, mode)
@@ -61,20 +67,41 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
 
   const respell = (respelled: string) => update({ tonic: respelled, chord: TONIC_CHORD })
 
-  const resolve = ({ source, degree }: ChordRef) => {
-    const origin = source === 'key' ? keyInfo : modes.find((parallel) => parallel.name === source)!
-    const base = origin.chords[degree - 1]!
-    // The roman stays the base chord's: Imaj7 for Cmaj9.
-    const roman = chordKind === 'sevenths' ? base.seventh.roman : base.roman
-    return { ...getExtendedChord(origin.scale, degree, chordKind, extensions), roman }
+  // The open chord, as a step: what the panel shows and what + Add appends.
+  const openStep: ProgressionStep = { ...chordRef, kind: chordKind, extensions }
+  const chord = resolveStep(tonic, mode, openStep)
+  const steps = progression.map((step) => resolveStep(tonic, mode, step))
+
+  // A new id remounts the text, so the same message twice (two "C quitado") is read twice.
+  const announce = (text: string) => setAnnouncement(({ id }) => ({ text, id: id + 1 }))
+
+  const addStep = () => {
+    update({ progression: [...progression, openStep] })
+    announce(t.stepAdded(t.symbol(chord.symbol), progression.length + 1, progression.length + 1))
+  }
+
+  const removeStep = (index: number) => {
+    update({ progression: progression.filter((_, position) => position !== index) })
+    announce(t.stepRemoved(t.symbol(steps[index]!.symbol)))
+  }
+
+  // A modal step brings its parent scale, so normalize keeps it open; a key step keeps the table.
+  const openStepAt = (index: number) => {
+    const { source, degree, kind, extensions: added } = progression[index]!
+    update({
+      chord: { source, degree },
+      chordKind: kind,
+      extensions: added,
+      ...(source === 'key' ? {} : { scale: parentScaleOf(source) }),
+    })
+    audio.playChord(steps[index]!.notes)
   }
 
   const open = (ref: ChordRef) => {
     update({ chord: ref })
-    audio.playChord(resolve(ref).notes)
+    audio.playChord(resolveStep(tonic, mode, { ...ref, kind: chordKind, extensions }).notes)
   }
 
-  const chord = resolve(chordRef)
   const root = t.symbol(tonic)
   const keyContext = `${root} ${t.keyMode[mode]}`
   const context =
@@ -158,6 +185,8 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               notes={chord.notes}
               modes={getModesContaining(tonic, chord.notes, PARENT_SCALES)}
               onPlay={() => audio.playChord(chord.notes)}
+              onAdd={addStep}
+              full={progression.length >= MAX_STEPS}
               diagram={
                 <ChordDiagram
                   name={t.symbol(chord.symbol)}
@@ -167,6 +196,14 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
                   theme={theme}
                 />
               }
+            />
+          </section>
+          <section className="panel panel-progression" aria-label={t.progressionRegion}>
+            <ProgressionPanel
+              steps={steps}
+              announcement={announcement}
+              onOpen={openStepAt}
+              onRemove={removeStep}
             />
           </section>
           <section className="panel panel-modes" aria-label={t.modesRegion}>

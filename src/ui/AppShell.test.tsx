@@ -41,14 +41,14 @@ describe('AppShell', () => {
     expect(screen.getAllByRole('radio')).toHaveLength(24)
   })
 
-  it('orders the panels as they are laid out: circle, chord, then the full-width modes table', () => {
+  it('orders the panels as they are laid out: circle, chord, then the full-width progression and modes table', () => {
     renderShell()
 
     const panelNames = screen
       .getAllByRole('region')
       .map((region) => region.getAttribute('aria-label'))
       .filter((name) => name !== 'Tonalidad seleccionada')
-    expect(panelNames).toEqual(['Círculo de quintas', 'Acorde seleccionado', 'Modos'])
+    expect(panelNames).toEqual(['Círculo de quintas', 'Acorde seleccionado', 'Progresión', 'Modos'])
   })
 
   it('names the enharmonic sectors with both spellings', () => {
@@ -2113,6 +2113,137 @@ describe('AppShell', () => {
       renderShell()
 
       expect(within(keyPanel()).queryByRole('button', { name: /menor armónica/ })).toBeNull()
+    })
+  })
+
+  describe('progression', () => {
+    const visit = (url: string) => window.history.replaceState(null, '', url)
+    const progressionPanel = () => screen.getByRole('region', { name: 'Progresión' })
+    const chordPanel = () => screen.getByRole('region', { name: 'Acorde seleccionado' })
+    const addButton = () => within(chordPanel()).getByRole('button', { name: /a la progresión$/ })
+    const modeRow = (name: string) =>
+      within(screen.getByRole('table', { name: /^Modos de la / })).getByRole('row', {
+        name: new RegExp(`^${name}`),
+      })
+    // What each step shows: roman and chord, without the hidden ", paso N".
+    const steps = () =>
+      within(progressionPanel())
+        .queryAllByRole('listitem')
+        .map((item) =>
+          within(item)
+            .getAllByRole('button')[0]!
+            .textContent?.replace(/, paso \d+$/, ''),
+        )
+    const step = (name: string) => within(progressionPanel()).getByRole('button', { name })
+    const announcement = () => progressionPanel().querySelector('[aria-live="polite"]')?.textContent
+    const fakeAudio = () => {
+      const played: string[][] = []
+      return { played, audio: { playChord: (notes: string[]) => void played.push(notes) } }
+    }
+
+    it('adds chords from the key panel and the modes table and follows the key and its mode', async () => {
+      const user = userEvent.setup()
+      renderShell()
+
+      for (const chip of ['I C', 'vi Am', 'IV F', 'V G']) {
+        await user.click(within(keyPanel()).getByRole('button', { name: chip }))
+        await user.click(addButton())
+      }
+      await user.click(within(modeRow('Mixolidio')).getByRole('button', { name: /^♭VII B♭/ }))
+      await user.click(addButton())
+
+      expect(steps()).toEqual(['I C', 'vi Am', 'IV F', 'V G', '♭VII B♭'])
+      expect(announcement()).toBe('B♭ agregado, paso 5 de 5')
+      expect(window.location.search).toContain('prog=key.1_key.6_key.4_key.5_mixolydian.7')
+
+      await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
+
+      expect(steps()).toEqual(['I G', 'vi Em', 'IV C', 'V D', '♭VII F'])
+
+      await user.click(screen.getByRole('radio', { name: /^A menor/ }))
+
+      expect(steps()).toEqual(['i Am', 'VI F', 'iv Dm', 'v Em', '♭VII G'])
+    })
+
+    it('adds the open chord with its kind and extensions', async () => {
+      const user = userEvent.setup()
+      visit('/?chords=7th&ext=9&chord=key.5')
+      renderShell()
+
+      await user.click(
+        within(chordPanel()).getByRole('button', { name: 'Agregar G9 a la progresión' }),
+      )
+
+      expect(steps()).toEqual(['V7 G9'])
+      expect(window.location.search).toContain('prog=key.5.7.9')
+    })
+
+    it('stops adding at 32 steps and says why', async () => {
+      const user = userEvent.setup()
+      visit(`/?prog=${Array<string>(32).fill('key.1').join('_')}`)
+      renderShell()
+
+      await user.click(addButton())
+
+      expect(addButton()).toHaveAttribute('aria-disabled', 'true')
+      expect(addButton()).toHaveAccessibleDescription('Máximo 32 pasos')
+      expect(steps()).toHaveLength(32)
+    })
+
+    it('opens a step with its kind and parent scale and plays it, and a key step keeps the table', async () => {
+      const user = userEvent.setup()
+      const { played, audio } = fakeAudio()
+      visit('/?prog=phrygian-dominant.1.7_key.3')
+      renderShell({ audio })
+
+      await user.click(step('I7 C7, paso 1'))
+
+      expect(within(chordPanel()).getByRole('heading', { name: 'C7' })).toBeInTheDocument()
+      expect(screen.getByRole('table', { name: 'Modos de la menor armónica de C' })).toBeVisible()
+      expect(within(keyPanel()).getByRole('button', { name: 'Séptimas' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+      expect(played).toEqual([['C', 'E', 'G', 'Bb']])
+
+      await user.click(screen.getByRole('radio', { name: /^A menor/ }))
+      await user.click(
+        within(screen.getByRole('group', { name: 'Escala madre' })).getByRole('button', {
+          name: 'Menor melódica',
+        }),
+      )
+      await user.click(step('III C, paso 2'))
+
+      expect(within(chordPanel()).getByText('Grado III · A menor')).toBeInTheDocument()
+      expect(screen.getByRole('table', { name: 'Modos de la menor melódica de A' })).toBeVisible()
+    })
+
+    it('removes steps moving the focus to the next ✕, then to the panel heading, and announces it', async () => {
+      const user = userEvent.setup()
+      visit('/?prog=key.1_key.6_key.4')
+      renderShell()
+
+      await user.click(step('Quitar Am, paso 2'))
+
+      expect(steps()).toEqual(['I C', 'IV F'])
+      expect(announcement()).toBe('Am quitado')
+      expect(step('Quitar F, paso 2')).toHaveFocus()
+      expect(window.location.search).toBe('?prog=key.1_key.4')
+
+      await user.click(step('Quitar F, paso 2'))
+
+      expect(step('Quitar C, paso 1')).toHaveFocus()
+
+      await user.click(step('Quitar C, paso 1'))
+
+      expect(within(progressionPanel()).getByRole('heading', { name: 'Progresión' })).toHaveFocus()
+      expect(
+        within(progressionPanel()).getByText(
+          'Abrí un acorde y tocá + Agregar para armar la progresión.',
+        ),
+      ).toBeInTheDocument()
+      expect(steps()).toEqual([])
+      expect(window.location.search).toBe('')
     })
   })
 

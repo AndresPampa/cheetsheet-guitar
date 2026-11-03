@@ -19,6 +19,7 @@ export interface Messages {
   circleRegion: string
   chordRegion: string
   modesRegion: string
+  progressionRegion: string
 
   keyMode: Record<KeyMode, string>
   modeName: Record<ModeName, string>
@@ -101,4 +102,16 @@ export interface Messages {
     dashed: string
     borrowed: string
   }
+
+  // Progression: symbols already displayed (`G9`, `Sol9`).
+  add: string
+  addTo: (shown: string) => string
+  /** Shown, and read on the disabled + Add, when the progression is full. */
+  maxSteps: string
+  progressionEmpty: string
+  /** Hidden after each step's roman and chord: `, paso 3`. */
+  stepNumber: (position: number) => string
+  removeStep: (shown: string, position: number) => string
+  stepAdded: (shown: string, position: number, total: number) => string
+  stepRemoved: (shown: string) => string
 }

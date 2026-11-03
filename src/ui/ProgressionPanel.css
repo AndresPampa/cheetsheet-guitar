@@ -1,0 +1,72 @@
+.progression-panel {
+  padding: 16px;
+}
+
+.progression-panel h2 {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+}
+
+.progression-empty {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* Steps wrap onto new lines: no horizontal scroll, even with 32 of them on a phone. */
+.progression-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progression-steps li {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+
+.progression-step,
+.progression-remove {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.progression-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 48px;
+  padding: 6px 4px 6px 10px;
+  font-weight: 600;
+}
+
+.progression-roman {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.progression-remove {
+  min-width: 24px;
+  padding: 0 8px 0 4px;
+  color: var(--text-muted);
+}
+
+.progression-step:hover,
+.progression-remove:hover {
+  color: var(--accent);
+}
+
+.progression-step:focus-visible,
+.progression-remove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
