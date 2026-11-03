@@ -7,6 +7,7 @@ import {
   type KeyMode,
   type ModeName,
   type ParentScale,
+  type ProgressionStep,
 } from '../theory/index.ts'
 import type { Language, Notation } from '../i18n/index.ts'
 
@@ -35,6 +36,8 @@ export interface AppState {
   language: Language
   /** The parent scale whose modes the modes table shows. */
   scale: ParentScale
+  /** The chord progression being built, up to `MAX_STEPS`. */
+  progression: ProgressionStep[]
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -46,7 +49,10 @@ export const DEFAULT_STATE: AppState = {
   notation: 'letters',
   language: 'es',
   scale: 'major',
+  progression: [],
 }
+
+export const MAX_STEPS = 32
 
 // URL spelling of the non-default value of each two-valued setting.
 const SEVENTHS = '7th'
@@ -54,6 +60,8 @@ const CHORD_SOURCES = new Set<string>(MODE_NAMES)
 const CHORD_PATTERN = /^([a-z0-9-]+)\.([1-7])$/
 // Up to two of 9, 11, 13, comma-separated; repeats are rejected below.
 const EXT_PATTERN = /^(9|11|13)(,(9|11|13))?$/
+// One step of `prog`: source.degree, then .7 for sevenths and up to two extensions.
+const STEP_PATTERN = /^([a-z0-9-]+)\.([1-7])(\.7)?((?:\.(?:9|11|13)){0,2})$/
 
 const isCircleKey = (tonic: string, mode: KeyMode) => {
   try {
@@ -84,6 +92,34 @@ const parseExtensions = (value: string | null): Extension[] => {
   if (new Set(extensions).size !== extensions.length) return []
   return extensions.sort((a, b) => a - b)
 }
+
+const parseStep = (value: string): ProgressionStep | null => {
+  const [, source, degree, seventh, ext] = STEP_PATTERN.exec(value) ?? []
+  if (source === undefined || degree === undefined || !isChordSource(source)) return null
+  const extensions = (ext ?? '').split('.').slice(1).map(Number) as Extension[]
+  if (new Set(extensions).size !== extensions.length) return null
+  return {
+    source,
+    degree: Number(degree),
+    kind: seventh === undefined ? 'triads' : 'sevenths',
+    extensions: extensions.sort((a, b) => a - b),
+  }
+}
+
+// All or nothing: one invalid step, or more than MAX_STEPS, empties the whole progression.
+const parseProgression = (value: string | null): ProgressionStep[] => {
+  if (value === null) return []
+  const steps = value.split('_').map(parseStep)
+  if (steps.length > MAX_STEPS || steps.includes(null)) return []
+  return steps as ProgressionStep[]
+}
+
+const serializeStep = ({ source, degree, kind, extensions }: ProgressionStep) =>
+  [
+    `${source}.${degree}`,
+    ...(kind === 'sevenths' ? ['7'] : []),
+    ...[...extensions].sort((a, b) => a - b),
+  ].join('.')
 
 const parseScale = (value: string | null): ParentScale =>
   PARENT_SCALES.find((scale) => scale === value) ?? DEFAULT_STATE.scale
@@ -116,6 +152,7 @@ export function parseState(search: string): AppState {
     notation: params.get('names') === 'solfege' ? 'solfege' : 'letters',
     language: params.get('lang') === 'en' ? 'en' : 'es',
     scale: parseScale(params.get('scale')),
+    progression: parseProgression(params.get('prog')),
   })
 }
 
@@ -135,6 +172,9 @@ export function serializeState(state: AppState): string {
   if (state.notation !== DEFAULT_STATE.notation) params.set('names', state.notation)
   if (state.language !== DEFAULT_STATE.language) params.set('lang', state.language)
   if (state.scale !== DEFAULT_STATE.scale) params.set('scale', state.scale)
+  if (state.progression.length > 0) {
+    params.set('prog', state.progression.map(serializeStep).join('_'))
+  }
   const query = params.toString()
   return query === '' ? '' : `?${query}`
 }

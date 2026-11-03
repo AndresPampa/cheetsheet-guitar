@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 import { displayRoman, useMessages } from '../i18n/index.ts'
 import { getChordFormula, parentScaleOf, type ModeMatch } from '../theory/index.ts'
 import { ShownSpoken } from './ShownSpoken.tsx'
@@ -14,6 +14,10 @@ interface ChordPanelProps {
   /** Modes of the root, from every parent scale, that contain this chord. */
   modes: ModeMatch[]
   onPlay: () => void
+  /** Appends the open chord to the progression. */
+  onAdd: () => void
+  /** The progression is at its limit: + Add stays focusable but says why and does nothing. */
+  full: boolean
   /** The chord on the fretboard. */
   diagram: ReactNode
 }
@@ -25,9 +29,12 @@ export function ChordPanel({
   notes,
   modes,
   onPlay,
+  onAdd,
+  full,
   diagram,
 }: ChordPanelProps) {
   const t = useMessages()
+  const noticeId = useId()
   const shownSymbol = t.symbol(symbol)
   const formula = getChordFormula(notes)
   return (
@@ -43,7 +50,22 @@ export function ChordPanel({
         >
           ▶ {t.listen}
         </button>
+        <button
+          type="button"
+          className="play"
+          aria-label={t.addTo(shownSymbol)}
+          aria-disabled={full}
+          aria-describedby={full ? noticeId : undefined}
+          onClick={full ? undefined : onAdd}
+        >
+          {t.add}
+        </button>
       </div>
+      {full && (
+        <p id={noticeId} className="chord-panel-notice">
+          {t.maxSteps}
+        </p>
+      )}
       <p>
         <ShownSpoken
           shown={t.degreeIn(displayRoman(roman), context.shown)}

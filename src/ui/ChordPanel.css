@@ -136,3 +136,8 @@
 .chord-diagram-status {
   color: var(--text-muted);
 }
+
+.chord-panel .chord-panel-notice {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}

@@ -25,13 +25,14 @@
   gap: 8px;
 }
 
-/* The modes table gets the full width: seven chord columns do not fit half of it. DOM order
-   (circle, chord, modes) matches the visual order here and on the phone stack. */
+/* The progression and the modes table get the full width: seven chord columns do not fit half
+   of it. DOM order (circle, chord, progression, modes) matches the visual order here and on the phone stack. */
 .app-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
     'circle chord'
+    'progression progression'
     'modes modes';
   gap: 16px;
 }
@@ -56,12 +57,18 @@
   grid-area: chord;
 }
 
+.panel-progression {
+  grid-area: progression;
+  min-height: 0;
+}
+
 @media (max-width: 768px) {
   .app-layout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       'circle'
       'chord'
+      'progression'
       'modes';
   }
 }
