@@ -8,9 +8,10 @@ const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEME_KEY = 'cheetsheet-guitar:theme'
 const OPEN_CHORD = '/?key=G&chords=7th&chord=dorian.4'
 // Spec chord-extensions: C major I with 9 and 13 is Cmaj13, which chords-db can voice.
-// Plus an 8-step progression (spec chord-progression): axe and reflow also cover the steps.
+// Plus an 8-step progression in two key blocks, C and E major (spec chord-progression): axe
+// and reflow also cover the steps and the block labels.
 const EXTENDED_CHORD =
-  '/?chords=7th&ext=9,13&prog=key.1.7.9.13_key.6_aeolian.6.7_mixolydian.7_key.4_key.5.7.9_key.2_key.3'
+  '/?chords=7th&ext=9,13&prog=C.key.1.7.9.13_C.key.6_C.aeolian.6.7_C.mixolydian.7_C.key.4_E.key.5.7.9_E.key.2_E.key.3'
 // WCAG 1.4.3: normal-size text (every circle label is under 18.66px bold).
 const MIN_TEXT_CONTRAST = 4.5
 
