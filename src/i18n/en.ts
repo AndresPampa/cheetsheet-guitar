@@ -133,7 +133,7 @@ export function en(notation: Notation): Messages {
     add: '+ Add',
     addTo: (shown) => `Add ${shown} to the progression`,
     maxSteps: 'Maximum 32 steps',
-    progressionEmpty: 'Open a chord and press + Add to build a progression.',
+    progressionEmpty: 'Press + on a chord, or open it and press + Add, to build a progression.',
     stepNumber: (position) => `, step ${position}`,
     removeStep: (shown, position) => `Remove ${shown}, step ${position}`,
     stepAdded: (shown, position, total) => `${shown} added, step ${position} of ${total}`,

@@ -64,6 +64,27 @@ describe('resolveStep', () => {
     expect(show('A', 'minor', [triad('key', 3), triad('aeolian', 3)])).toEqual(['III C', 'bIII C'])
   })
 
+  it('gives the triad family as the quality, also for seventh steps', () => {
+    const sevenths = (source: ProgressionStep['source'], degree: number): ProgressionStep => ({
+      source,
+      degree,
+      kind: 'sevenths',
+      extensions: [],
+    })
+
+    const resolved = [
+      sevenths('key', 5),
+      sevenths('key', 7),
+      sevenths('harmonic-minor', 1),
+      sevenths('ionian-sharp5', 1),
+    ].map((step) => {
+      const { symbol, quality } = resolveStep('C', 'major', step)
+      return `${symbol} ${quality}`
+    })
+
+    expect(resolved).toEqual(['G7 major', 'Bm7b5 diminished', 'CmMaj7 minor', 'Cmaj7#5 augmented'])
+  })
+
   it.each(MODAL_CASES)(
     'follows only the root for modal steps in $tonic $mode, in their own parent scale',
     ({ tonic, mode, expected }) => {

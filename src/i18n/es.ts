@@ -141,7 +141,7 @@ export function es(notation: Notation): Messages {
     add: '+ Agregar',
     addTo: (shown) => `Agregar ${shown} a la progresión`,
     maxSteps: 'Máximo 32 pasos',
-    progressionEmpty: 'Abrí un acorde y tocá + Agregar para armar la progresión.',
+    progressionEmpty: 'Tocá + en un acorde, o abrilo y tocá + Agregar, para armar la progresión.',
     stepNumber: (position) => `, paso ${position}`,
     removeStep: (shown, position) => `Quitar ${shown}, paso ${position}`,
     stepAdded: (shown, position, total) => `${shown} agregado, paso ${position} de ${total}`,

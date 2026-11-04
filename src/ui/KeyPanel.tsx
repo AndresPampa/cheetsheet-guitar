@@ -2,6 +2,7 @@ import { useId } from 'react'
 import { useMessages } from '../i18n/index.ts'
 import type { ChordKind } from '../state/index.ts'
 import type { Extension, Key } from '../theory/index.ts'
+import { ChipAdd } from './ChipAdd.tsx'
 
 const CHORD_KINDS: ChordKind[] = ['triads', 'sevenths']
 const EXTENSIONS: Extension[] = [9, 11, 13]
@@ -18,6 +19,10 @@ interface KeyPanelProps {
   onExtensionsChange: (extensions: Extension[]) => void
   /** Opens (and plays) the chord on a degree of the key. */
   onChordClick: (degree: number) => void
+  /** Appends the chord on a degree to the progression, as the chip shows it. */
+  onAdd: (degree: number) => void
+  /** The progression is at its limit: the chip + buttons are disabled. */
+  progressionFull: boolean
   /** Switches the modes table to the harmonic minor; the shortcut shows only when given. */
   onHarmonicShortcut?: () => void
 }
@@ -31,6 +36,8 @@ export function KeyPanel({
   extensions,
   onExtensionsChange,
   onChordClick,
+  onAdd,
+  progressionFull,
   onHarmonicShortcut,
 }: KeyPanelProps) {
   const t = useMessages()
@@ -114,6 +121,11 @@ export function KeyPanel({
                 <span className="chord-roman">{roman}</span>{' '}
                 <span className="chord-symbol">{t.symbol(symbol)}</span>
               </button>
+              <ChipAdd
+                title={t.addTo(t.symbol(symbol))}
+                disabled={progressionFull}
+                onClick={() => onAdd(chord.degree)}
+              />
             </li>
           )
         })}

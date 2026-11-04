@@ -3,6 +3,7 @@ import { displayRoman, useMessages } from '../i18n/index.ts'
 import type { ChordKind } from '../state/index.ts'
 import { PARENT_SCALES, type Mode, type ModeName, type ParentScale } from '../theory/index.ts'
 import { SegmentedSwitch } from './SegmentedSwitch.tsx'
+import { ChipAdd } from './ChipAdd.tsx'
 import { ShownSpoken } from './ShownSpoken.tsx'
 import './ModesTable.css'
 
@@ -20,6 +21,10 @@ interface ModesTableProps {
   chordKind: ChordKind
   /** Opens (and plays) the chord on a degree of a mode. */
   onChordClick: (mode: ModeName, degree: number) => void
+  /** Appends the chord on a degree of a mode to the progression, as the chip shows it. */
+  onAdd: (mode: ModeName, degree: number) => void
+  /** The progression is at its limit: the chip + buttons are disabled. */
+  progressionFull: boolean
 }
 
 /**
@@ -35,6 +40,8 @@ export function ModesTable({
   tableRef,
   chordKind,
   onChordClick,
+  onAdd,
+  progressionFull,
 }: ModesTableProps) {
   const t = useMessages()
   return (
@@ -120,6 +127,11 @@ export function ModesTable({
                         )}
                         {shown.differsFromIonian && <span className="sr-only"> {t.borrowed}</span>}
                       </button>
+                      <ChipAdd
+                        title={t.addTo(t.symbol(shown.symbol))}
+                        disabled={progressionFull}
+                        onClick={() => onAdd(mode.name, chord.degree)}
+                      />
                     </td>
                   )
                 })}
