@@ -70,7 +70,12 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   // The open chord, as a step: what the panel shows and what + Add appends.
   const openStep: ProgressionStep = { ...chordRef, kind: chordKind, extensions }
   const chord = resolveStep(tonic, mode, openStep)
-  const steps = progression.map((step) => resolveStep(tonic, mode, step))
+  // Each step in its own key: the circle does not move the progression.
+  const steps = progression.map((step) => ({
+    ...resolveStep(step.tonic, step.mode, step),
+    tonic: step.tonic,
+    mode: step.mode,
+  }))
 
   // A new id remounts the text, so the same message twice (two "C quitado") is read twice.
   const announce = (text: string) => setAnnouncement(({ id }) => ({ text, id: id + 1 }))
@@ -78,7 +83,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const full = progression.length >= MAX_STEPS
   const addStep = (step: ProgressionStep) => {
     const { symbol } = resolveStep(tonic, mode, step)
-    update({ progression: [...progression, step] })
+    update({ progression: [...progression, { ...step, tonic, mode }] })
     announce(t.stepAdded(t.symbol(symbol), progression.length + 1, progression.length + 1))
   }
   // A chip + adds what the chip shows: the global kind, without the open chord's extensions.
@@ -89,10 +94,12 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
     announce(t.stepRemoved(t.symbol(steps[index]!.symbol)))
   }
 
-  // A modal step brings its parent scale, so normalize keeps it open; a key step keeps the table.
+  // Opening a step moves the circle to its key. A modal step brings its parent scale, so
+  // normalize keeps it open; a key step keeps the table.
   const openStepAt = (index: number) => {
-    const { source, degree, kind, extensions: added } = progression[index]!
+    const { source, degree, kind, extensions: added, ...key } = progression[index]!
     update({
+      ...key,
       chord: { source, degree },
       chordKind: kind,
       extensions: added,

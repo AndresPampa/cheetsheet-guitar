@@ -2141,7 +2141,7 @@ describe('AppShell', () => {
       return { played, audio: { playChord: (notes: string[]) => void played.push(notes) } }
     }
 
-    it('adds chords from the key panel and the modes table and follows the key and its mode', async () => {
+    it('adds chords from the key panel and the modes table in the key of the circle, and keeps them when the key changes', async () => {
       const user = userEvent.setup()
       renderShell()
 
@@ -2154,15 +2154,17 @@ describe('AppShell', () => {
 
       expect(steps()).toEqual(['I C', 'vi Am', 'IV F', 'V G', '♭VII B♭'])
       expect(announcement()).toBe('B♭ agregado, paso 5 de 5')
-      expect(window.location.search).toContain('prog=key.1_key.6_key.4_key.5_mixolydian.7')
+      expect(window.location.search).toContain(
+        'prog=C.key.1_C.key.6_C.key.4_C.key.5_C.mixolydian.7',
+      )
 
       await user.click(screen.getByRole('radio', { name: /^G mayor/ }))
 
-      expect(steps()).toEqual(['I G', 'vi Em', 'IV C', 'V D', '♭VII F'])
+      expect(steps()).toEqual(['I C', 'vi Am', 'IV F', 'V G', '♭VII B♭'])
 
       await user.click(screen.getByRole('radio', { name: /^A menor/ }))
 
-      expect(steps()).toEqual(['i Am', 'VI F', 'iv Dm', 'v Em', '♭VII G'])
+      expect(steps()).toEqual(['I C', 'vi Am', 'IV F', 'V G', '♭VII B♭'])
     })
 
     it('adds the open chord with its kind and extensions', async () => {
@@ -2175,7 +2177,7 @@ describe('AppShell', () => {
       )
 
       expect(steps()).toEqual(['V7 G9'])
-      expect(window.location.search).toContain('prog=key.5.7.9')
+      expect(window.location.search).toContain('prog=C.key.5.7.9')
     })
 
     it('stops adding at 32 steps and says why', async () => {
@@ -2203,7 +2205,7 @@ describe('AppShell', () => {
 
         expect(plus).not.toHaveFocus()
         expect(steps()).toEqual(['ii7 Dm7'])
-        expect(window.location.search).toContain('prog=key.2.7')
+        expect(window.location.search).toContain('prog=C.key.2.7')
         expect(within(chordPanel()).getByRole('heading', { name: 'Cmaj9' })).toBeInTheDocument()
         expect(played).toEqual([])
         expect(announcement()).toBe('Dm7 agregado, paso 1 de 1')
@@ -2216,7 +2218,7 @@ describe('AppShell', () => {
         await user.click(within(modeRow('Mixolidio')).getByTitle('Agregar B♭ a la progresión'))
 
         expect(steps()).toEqual(['♭VII B♭'])
-        expect(window.location.search).toContain('prog=mixolydian.7')
+        expect(window.location.search).toContain('prog=C.mixolydian.7')
       })
 
       it('keeps the chip + out of the tab order and away from screen readers', () => {
@@ -2257,10 +2259,24 @@ describe('AppShell', () => {
       expect(items[3]).toHaveClass('chord--augmented')
     })
 
-    it('opens a step with its kind and parent scale and plays it, and a key step keeps the table', async () => {
+    it('opens a step of another key moving the circle to that key, and plays it', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
-      visit('/?prog=phrygian-dominant.1.7_key.3')
+      visit('/?prog=C.key.1_E.key.5')
+      renderShell({ audio })
+
+      await user.click(step('V B, paso 2'))
+
+      expect(screen.getByRole('radio', { name: /^E mayor/ })).toBeChecked()
+      expect(within(chordPanel()).getByText('Grado V · E mayor')).toBeInTheDocument()
+      expect(played).toEqual([['B', 'D#', 'F#']])
+      expect(steps()).toEqual(['I C', 'V B'])
+    })
+
+    it('opens a modal step with its kind and parent scale', async () => {
+      const user = userEvent.setup()
+      const { played, audio } = fakeAudio()
+      visit('/?prog=C.phrygian-dominant.1.7')
       renderShell({ audio })
 
       await user.click(step('I7 C7, paso 1'))
@@ -2272,17 +2288,67 @@ describe('AppShell', () => {
         'true',
       )
       expect(played).toEqual([['C', 'E', 'G', 'Bb']])
+    })
 
-      await user.click(screen.getByRole('radio', { name: /^A menor/ }))
-      await user.click(
-        within(screen.getByRole('group', { name: 'Escala madre' })).getByRole('button', {
-          name: 'Menor melódica',
-        }),
-      )
-      await user.click(step('III C, paso 2'))
+    it('opens a key step in its key without changing the table', async () => {
+      const user = userEvent.setup()
+      visit('/?scale=melodic&prog=Am.key.3')
+      renderShell()
 
+      await user.click(step('III C, paso 1'))
+
+      expect(screen.getByRole('radio', { name: /^A menor/ })).toBeChecked()
       expect(within(chordPanel()).getByText('Grado III · A menor')).toBeInTheDocument()
       expect(screen.getByRole('table', { name: 'Modos de la menor melódica de A' })).toBeVisible()
+    })
+
+    // Each block: its label, then what each of its steps shows.
+    const blocks = () =>
+      within(progressionPanel())
+        .queryAllByRole('group')
+        .map((group) => [
+          document.getElementById(group.getAttribute('aria-labelledby') ?? '')?.textContent,
+          ...within(group)
+            .getAllByRole('listitem')
+            .map((item) =>
+              within(item)
+                .getAllByRole('button')[0]!
+                .textContent?.replace(/, paso \d+$/, ''),
+            ),
+        ])
+
+    it('groups consecutive steps of the same key into labeled blocks, opening a new one on return', async () => {
+      const user = userEvent.setup()
+      renderShell()
+      const plus = (shown: string) =>
+        within(keyPanel()).getByTitle(`Agregar ${shown} a la progresión`)
+
+      await user.click(plus('C'))
+      await user.click(plus('G'))
+      await user.click(screen.getByRole('radio', { name: /^E mayor/ }))
+      await user.click(plus('E'))
+      await user.click(screen.getByRole('radio', { name: /^C mayor/ }))
+      await user.click(plus('F'))
+
+      expect(blocks()).toEqual([
+        ['C mayor', 'I C', 'V G'],
+        ['E mayor', 'I E'],
+        ['C mayor', 'IV F'],
+      ])
+      expect(within(progressionPanel()).getByRole('group', { name: 'E mayor' })).toBeInTheDocument()
+      expect(step('Quitar F, paso 4')).toBeInTheDocument()
+      expect(window.location.search).toContain('prog=C.key.1_C.key.5_E.key.1_C.key.4')
+    })
+
+    it('merges the blocks around a removed single-step block and focuses the next ✕', async () => {
+      const user = userEvent.setup()
+      visit('/?prog=C.key.1_E.key.1_C.key.4')
+      renderShell()
+
+      await user.click(step('Quitar E, paso 2'))
+
+      expect(blocks()).toEqual([['C mayor', 'I C', 'IV F']])
+      expect(step('Quitar F, paso 2')).toHaveFocus()
     })
 
     it('removes steps moving the focus to the next ✕, then to the panel heading, and announces it', async () => {
@@ -2295,7 +2361,7 @@ describe('AppShell', () => {
       expect(steps()).toEqual(['I C', 'IV F'])
       expect(announcement()).toBe('Am quitado')
       expect(step('Quitar F, paso 2')).toHaveFocus()
-      expect(window.location.search).toBe('?prog=key.1_key.4')
+      expect(window.location.search).toBe('?prog=C.key.1_C.key.4')
 
       await user.click(step('Quitar F, paso 2'))
 

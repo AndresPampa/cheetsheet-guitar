@@ -238,26 +238,67 @@ describe('parent scale in the URL', () => {
 })
 
 describe('progression in the URL', () => {
-  it('writes the steps joined by underscores and reads back the same progression', () => {
+  it('writes each step prefixed with its key and reads back the same progression', () => {
     const state: AppState = {
       ...DEFAULT_STATE,
       progression: [
-        { source: 'key', degree: 1, kind: 'triads', extensions: [] },
-        { source: 'aeolian', degree: 6, kind: 'sevenths', extensions: [] },
-        { source: 'mixolydian', degree: 7, kind: 'triads', extensions: [] },
-        { source: 'key', degree: 5, kind: 'sevenths', extensions: [9, 13] },
+        { tonic: 'C', mode: 'major', source: 'key', degree: 1, kind: 'triads', extensions: [] },
+        {
+          tonic: 'F#',
+          mode: 'minor',
+          source: 'aeolian',
+          degree: 6,
+          kind: 'sevenths',
+          extensions: [],
+        },
+        {
+          tonic: 'Bb',
+          mode: 'major',
+          source: 'mixolydian',
+          degree: 7,
+          kind: 'triads',
+          extensions: [],
+        },
+        {
+          tonic: 'C',
+          mode: 'major',
+          source: 'key',
+          degree: 5,
+          kind: 'sevenths',
+          extensions: [9, 13],
+        },
       ],
     }
 
     const search = serializeState(state)
 
-    expect(search).toBe('?prog=key.1_aeolian.6.7_mixolydian.7_key.5.7.9.13')
+    expect(search).toBe('?prog=C.key.1_F%23m.aeolian.6.7_Bb.mixolydian.7_C.key.5.7.9.13')
     expect(parseState(search)).toEqual(state)
   })
 
+  it('reads a step without a prefix in the key and mode of the URL', () => {
+    expect(parseState('?key=G&prog=key.1_E.key.5').progression).toEqual([
+      { tonic: 'G', mode: 'major', source: 'key', degree: 1, kind: 'triads', extensions: [] },
+      { tonic: 'E', mode: 'major', source: 'key', degree: 5, kind: 'triads', extensions: [] },
+    ])
+    expect(parseState('?key=A&mode=minor&prog=key.1').progression).toEqual([
+      { tonic: 'A', mode: 'minor', source: 'key', degree: 1, kind: 'triads', extensions: [] },
+    ])
+    expect(parseState('?key=H&prog=key.1').progression).toEqual([
+      { tonic: 'C', mode: 'major', source: 'key', degree: 1, kind: 'triads', extensions: [] },
+    ])
+  })
+
   it('reads the extensions of a step sorted when the URL has them out of order', () => {
-    expect(parseState('?prog=key.5.7.13.9').progression).toEqual([
-      { source: 'key', degree: 5, kind: 'sevenths', extensions: [9, 13] },
+    expect(parseState('?prog=C.key.5.7.13.9').progression).toEqual([
+      {
+        tonic: 'C',
+        mode: 'major',
+        source: 'key',
+        degree: 5,
+        kind: 'sevenths',
+        extensions: [9, 13],
+      },
     ])
   })
 
@@ -267,6 +308,9 @@ describe('progression in the URL', () => {
     ['three extensions', '?prog=key.1.9.11.13&key=G'],
     ['an unknown source', '?prog=dorien.1&key=G'],
     ['an empty step', '?prog=key.1__key.2&key=G'],
+    ['a prefix off the circle', '?prog=key.1_A%23.key.1&key=G'],
+    ['an unknown note as prefix', '?prog=H.key.1&key=G'],
+    ['a lowercase prefix', '?prog=c.key.1&key=G'],
   ]
 
   it.each(invalidSteps)('empties the whole progression on %s, keeping the key', (_, search) => {
@@ -274,17 +318,24 @@ describe('progression in the URL', () => {
   })
 
   it('keeps 32 steps and empties the progression at 33', () => {
-    const steps = (count: number) => `?prog=${Array<string>(count).fill('key.1').join('_')}`
+    const steps = (count: number) => `?prog=${Array<string>(count).fill('C.key.1').join('_')}`
 
     expect(parseState(steps(32)).progression).toHaveLength(32)
     expect(parseState(steps(33)).progression).toEqual([])
   })
 
   it('keeps a step from another parent scale without changing the visible scale', () => {
-    const state = parseState('?prog=phrygian-dominant.1')
+    const state = parseState('?prog=C.phrygian-dominant.1')
 
     expect(state.progression).toEqual([
-      { source: 'phrygian-dominant', degree: 1, kind: 'triads', extensions: [] },
+      {
+        tonic: 'C',
+        mode: 'major',
+        source: 'phrygian-dominant',
+        degree: 1,
+        kind: 'triads',
+        extensions: [],
+      },
     ])
     expect(state.scale).toBe('major')
   })

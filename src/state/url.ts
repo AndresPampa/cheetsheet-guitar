@@ -24,6 +24,9 @@ export interface ChordRef {
   degree: number
 }
 
+/** A progression step fixed in the key it was added in: the circle does not move it. */
+export type KeyedStep = ProgressionStep & { tonic: string; mode: KeyMode }
+
 /** Everything the URL carries. The theme is not here: it is a device preference. */
 export interface AppState {
   tonic: string
@@ -37,7 +40,7 @@ export interface AppState {
   /** The parent scale whose modes the modes table shows. */
   scale: ParentScale
   /** The chord progression being built, up to `MAX_STEPS`. */
-  progression: ProgressionStep[]
+  progression: KeyedStep[]
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -60,8 +63,9 @@ const CHORD_SOURCES = new Set<string>(MODE_NAMES)
 const CHORD_PATTERN = /^([a-z0-9-]+)\.([1-7])$/
 // Up to two of 9, 11, 13, comma-separated; repeats are rejected below.
 const EXT_PATTERN = /^(9|11|13)(,(9|11|13))?$/
-// One step of `prog`: source.degree, then .7 for sevenths and up to two extensions.
-const STEP_PATTERN = /^([a-z0-9-]+)\.([1-7])(\.7)?((?:\.(?:9|11|13)){0,2})$/
+// One step of `prog`: an optional key prefix (`C.`, `F#m.`), source.degree, then .7 for
+// sevenths and up to two extensions. Tonics are uppercase and sources lowercase: no ambiguity.
+const STEP_PATTERN = /^(?:([A-G][#b]?)(m?)\.)?([a-z0-9-]+)\.([1-7])(\.7)?((?:\.(?:9|11|13)){0,2})$/
 
 const isCircleKey = (tonic: string, mode: KeyMode) => {
   try {
@@ -93,12 +97,18 @@ const parseExtensions = (value: string | null): Extension[] => {
   return extensions.sort((a, b) => a - b)
 }
 
-const parseStep = (value: string): ProgressionStep | null => {
-  const [, source, degree, seventh, ext] = STEP_PATTERN.exec(value) ?? []
+// A step without a prefix is in the URL's (already valid) key: links from before the prefix.
+const parseStep = (value: string, urlTonic: string, urlMode: KeyMode): KeyedStep | null => {
+  const [, prefix, minor, source, degree, seventh, ext] = STEP_PATTERN.exec(value) ?? []
   if (source === undefined || degree === undefined || !isChordSource(source)) return null
+  const tonic = prefix ?? urlTonic
+  const mode = prefix === undefined ? urlMode : minor === 'm' ? 'minor' : 'major'
+  if (!isCircleKey(tonic, mode)) return null
   const extensions = (ext ?? '').split('.').slice(1).map(Number) as Extension[]
   if (new Set(extensions).size !== extensions.length) return null
   return {
+    tonic,
+    mode,
     source,
     degree: Number(degree),
     kind: seventh === undefined ? 'triads' : 'sevenths',
@@ -107,16 +117,16 @@ const parseStep = (value: string): ProgressionStep | null => {
 }
 
 // All or nothing: one invalid step, or more than MAX_STEPS, empties the whole progression.
-const parseProgression = (value: string | null): ProgressionStep[] => {
+const parseProgression = (value: string | null, tonic: string, mode: KeyMode): KeyedStep[] => {
   if (value === null) return []
-  const steps = value.split('_').map(parseStep)
+  const steps = value.split('_').map((step) => parseStep(step, tonic, mode))
   if (steps.length > MAX_STEPS || steps.includes(null)) return []
-  return steps as ProgressionStep[]
+  return steps as KeyedStep[]
 }
 
-const serializeStep = ({ source, degree, kind, extensions }: ProgressionStep) =>
+const serializeStep = ({ tonic, mode, source, degree, kind, extensions }: KeyedStep) =>
   [
-    `${source}.${degree}`,
+    `${tonic}${mode === 'minor' ? 'm' : ''}.${source}.${degree}`,
     ...(kind === 'sevenths' ? ['7'] : []),
     ...[...extensions].sort((a, b) => a - b),
   ].join('.')
@@ -142,9 +152,10 @@ export function normalize(state: AppState): AppState {
 export function parseState(search: string): AppState {
   const params = new URLSearchParams(search)
   const mode = parseMode(params.get('mode'))
-  const tonic = params.get('key') ?? DEFAULT_STATE.tonic
+  const requested = params.get('key') ?? DEFAULT_STATE.tonic
+  const tonic = isCircleKey(requested, mode) ? requested : DEFAULT_STATE.tonic
   return normalize({
-    tonic: isCircleKey(tonic, mode) ? tonic : DEFAULT_STATE.tonic,
+    tonic,
     mode,
     chordKind: params.get('chords') === SEVENTHS ? 'sevenths' : 'triads',
     chord: parseChord(params.get('chord')),
@@ -152,7 +163,7 @@ export function parseState(search: string): AppState {
     notation: params.get('names') === 'solfege' ? 'solfege' : 'letters',
     language: params.get('lang') === 'en' ? 'en' : 'es',
     scale: parseScale(params.get('scale')),
-    progression: parseProgression(params.get('prog')),
+    progression: parseProgression(params.get('prog'), tonic, mode),
   })
 }
 

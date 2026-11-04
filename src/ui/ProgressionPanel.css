@@ -12,7 +12,27 @@
   color: var(--text-muted);
 }
 
-/* Steps wrap onto new lines: no horizontal scroll, even with 32 of them on a phone. */
+/* Blocks and their steps wrap onto new lines: no horizontal scroll, even with 32 steps on a
+   phone. */
+.progression-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+.progression-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.progression-key {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .progression-steps {
   display: flex;
   flex-wrap: wrap;
