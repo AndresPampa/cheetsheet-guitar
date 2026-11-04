@@ -98,3 +98,21 @@ test('a Cmaj13 built with two extensions shows its formula and survives a reload
   await expect(extension('9')).toHaveAttribute('aria-pressed', 'true')
   await expect(extension('13')).toHaveAttribute('aria-pressed', 'true')
 })
+
+// Spec chord-progression "Reproducir la cinta": the real timer and Tone.js, one bar per step.
+test('plays the progression step by step and stops on ■', async ({ page }) => {
+  await page.goto('/?bpm=200&prog=C.key.1_C.key.5')
+  const panel = page.getByRole('region', { name: 'Progresión' })
+  const sounding = panel.locator('[aria-current="step"]')
+
+  await panel.getByRole('button', { name: 'Reproducir' }).click()
+
+  await expect(sounding).toHaveText(/^I C/)
+  // 200 BPM: a bar is 1.2 s.
+  await expect(sounding).toHaveText(/^V G/, { timeout: 3000 })
+
+  await panel.getByRole('button', { name: 'Detener' }).click()
+
+  await expect(sounding).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: 'Reproducir' })).toBeVisible()
+})

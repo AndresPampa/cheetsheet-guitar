@@ -92,3 +92,46 @@
   outline-offset: -2px;
   border-radius: 8px;
 }
+
+/* The step sounding: a ring in the text color around its colored background (aria-current also
+   says it). */
+.progression-steps li.is-playing {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+.progression-playback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 16px;
+}
+
+.progression-playback .play:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.progression-playback label {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.progression-playback input {
+  width: 4.5rem;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+/* Pressed is not color-only: weight + raised surface, like the segmented switches. */
+.progression-playback .play[aria-pressed='true'] {
+  color: var(--text);
+  font-weight: 700;
+  background: var(--surface-raised);
+}
