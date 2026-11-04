@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { displayRoman, useMessages } from '../i18n/index.ts'
+import type { ChordQuality } from '../theory/index.ts'
 import './ProgressionPanel.css'
 
 interface ProgressionPanelProps {
   /** Each step already resolved in the current key; `symbol` in theory spelling. */
-  steps: Array<{ roman: string; symbol: string }>
+  steps: Array<{ roman: string; symbol: string; quality: ChordQuality }>
   /** Last add or remove, for screen readers (`''` until the first); `id` changes on each one. */
   announcement: { text: string; id: number }
   onOpen: (index: number) => void
@@ -36,11 +37,12 @@ export function ProgressionPanel({ steps, announcement, onOpen, onRemove }: Prog
         <p className="progression-empty">{t.progressionEmpty}</p>
       ) : (
         <ol ref={listRef} className="progression-steps">
-          {steps.map(({ roman, symbol }, index) => {
+          {steps.map(({ roman, symbol, quality }, index) => {
             const shown = t.symbol(symbol)
             return (
               // Steps have no identity of their own: the same chord may repeat.
-              <li key={index}>
+              // Colored like the chips (CircleOfFifths.css); roman and symbol also say the quality.
+              <li key={index} className={`chord--${quality}`}>
                 <button type="button" className="progression-step" onClick={() => onOpen(index)}>
                   <span className="progression-roman">{displayRoman(roman)}</span> {shown}
                   <span className="sr-only">{t.stepNumber(index + 1)}</span>

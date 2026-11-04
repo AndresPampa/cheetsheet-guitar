@@ -2190,6 +2190,73 @@ describe('AppShell', () => {
       expect(steps()).toHaveLength(32)
     })
 
+    // The chip "+" is a pointer shortcut hidden from assistive tech: found by its title.
+    describe('+ on the chips', () => {
+      it('adds a key panel chip with the global kind and no extensions, without opening or playing it', async () => {
+        const user = userEvent.setup()
+        const { played, audio } = fakeAudio()
+        visit('/?chords=7th&ext=9')
+        renderShell({ audio })
+
+        const plus = within(keyPanel()).getByTitle('Agregar Dm7 a la progresión')
+        await user.click(plus)
+
+        expect(plus).not.toHaveFocus()
+        expect(steps()).toEqual(['ii7 Dm7'])
+        expect(window.location.search).toContain('prog=key.2.7')
+        expect(within(chordPanel()).getByRole('heading', { name: 'Cmaj9' })).toBeInTheDocument()
+        expect(played).toEqual([])
+        expect(announcement()).toBe('Dm7 agregado, paso 1 de 1')
+      })
+
+      it('adds a modes-table chip as a modal step', async () => {
+        const user = userEvent.setup()
+        renderShell()
+
+        await user.click(within(modeRow('Mixolidio')).getByTitle('Agregar B♭ a la progresión'))
+
+        expect(steps()).toEqual(['♭VII B♭'])
+        expect(window.location.search).toContain('prog=mixolydian.7')
+      })
+
+      it('keeps the chip + out of the tab order and away from screen readers', () => {
+        renderShell()
+
+        const pluses = within(keyPanel()).getAllByTitle(/a la progresión$/)
+
+        expect(pluses).toHaveLength(7)
+        for (const plus of pluses) {
+          expect(plus).toHaveAttribute('tabindex', '-1')
+          expect(plus).toHaveAttribute('aria-hidden', 'true')
+        }
+        expect(within(keyPanel()).queryAllByRole('button', { name: /progresión/ })).toEqual([])
+      })
+
+      it('disables the chip + at 32 steps', async () => {
+        const user = userEvent.setup()
+        visit(`/?prog=${Array<string>(32).fill('key.1').join('_')}`)
+        renderShell()
+
+        const plus = within(keyPanel()).getByTitle('Agregar Dm a la progresión')
+        await user.click(plus)
+
+        expect(plus).toBeDisabled()
+        expect(steps()).toHaveLength(32)
+      })
+    })
+
+    it('colors each step with the triad family of its chord, like the chips', () => {
+      visit('/?chords=7th&prog=key.1.7_key.2.7_key.7.7_ionian-sharp5.1.7')
+      renderShell()
+
+      const items = within(progressionPanel()).getAllByRole('listitem')
+
+      expect(items[0]).toHaveClass('chord--major')
+      expect(items[1]).toHaveClass('chord--minor')
+      expect(items[2]).toHaveClass('chord--diminished')
+      expect(items[3]).toHaveClass('chord--augmented')
+    })
+
     it('opens a step with its kind and parent scale and plays it, and a key step keeps the table', async () => {
       const user = userEvent.setup()
       const { played, audio } = fakeAudio()
@@ -2239,7 +2306,7 @@ describe('AppShell', () => {
       expect(within(progressionPanel()).getByRole('heading', { name: 'Progresión' })).toHaveFocus()
       expect(
         within(progressionPanel()).getByText(
-          'Abrí un acorde y tocá + Agregar para armar la progresión.',
+          'Tocá + en un acorde, o abrilo y tocá + Agregar, para armar la progresión.',
         ),
       ).toBeInTheDocument()
       expect(steps()).toEqual([])

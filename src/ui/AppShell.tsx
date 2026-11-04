@@ -75,10 +75,14 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   // A new id remounts the text, so the same message twice (two "C quitado") is read twice.
   const announce = (text: string) => setAnnouncement(({ id }) => ({ text, id: id + 1 }))
 
-  const addStep = () => {
-    update({ progression: [...progression, openStep] })
-    announce(t.stepAdded(t.symbol(chord.symbol), progression.length + 1, progression.length + 1))
+  const full = progression.length >= MAX_STEPS
+  const addStep = (step: ProgressionStep) => {
+    const { symbol } = resolveStep(tonic, mode, step)
+    update({ progression: [...progression, step] })
+    announce(t.stepAdded(t.symbol(symbol), progression.length + 1, progression.length + 1))
   }
+  // A chip + adds what the chip shows: the global kind, without the open chord's extensions.
+  const addChip = (ref: ChordRef) => addStep({ ...ref, kind: chordKind, extensions: [] })
 
   const removeStep = (index: number) => {
     update({ progression: progression.filter((_, position) => position !== index) })
@@ -171,6 +175,8 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
                 extensions={extensions}
                 onExtensionsChange={(chosen) => update({ extensions: chosen })}
                 onChordClick={(degree) => open({ source: 'key', degree })}
+                onAdd={(degree) => addChip({ source: 'key', degree })}
+                progressionFull={full}
                 onHarmonicShortcut={
                   mode === 'minor' && scale !== 'harmonic' ? showHarmonic : undefined
                 }
@@ -185,8 +191,8 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               notes={chord.notes}
               modes={getModesContaining(tonic, chord.notes, PARENT_SCALES)}
               onPlay={() => audio.playChord(chord.notes)}
-              onAdd={addStep}
-              full={progression.length >= MAX_STEPS}
+              onAdd={() => addStep(openStep)}
+              full={full}
               diagram={
                 <ChordDiagram
                   name={t.symbol(chord.symbol)}
@@ -216,6 +222,8 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               tableRef={modesTableRef}
               chordKind={chordKind}
               onChordClick={(source, degree) => open({ source, degree })}
+              onAdd={(source, degree) => addChip({ source, degree })}
+              progressionFull={full}
             />
           </section>
         </main>

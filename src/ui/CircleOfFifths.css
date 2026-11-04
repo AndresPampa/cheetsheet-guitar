@@ -330,3 +330,37 @@
 .harmonic-shortcut:focus-visible {
   border-color: var(--accent);
 }
+
+/* The chip + (ChipAdd): a full-width strip under the chord, inside the chip, so it covers no text
+   and makes the chip taller, not wider (the modes table already scrolls on a phone). The negative
+   margins undo the chip's 6px 10px padding. Shared by the key panel and the modes table. */
+.chip-add {
+  display: block;
+  width: calc(100% + 20px);
+  height: 24px;
+  margin: 6px -10px -6px;
+  padding: 0;
+  border: none;
+  border-radius: 0 0 8px 8px;
+  font: inherit;
+  font-weight: 700;
+  line-height: 24px;
+  color: var(--on-highlight);
+  background: color-mix(in srgb, var(--on-highlight) 14%, transparent);
+  cursor: pointer;
+}
+
+/* inline-block: the characteristic cell's underline does not reach it. */
+.chip-add::before {
+  content: '+';
+  display: inline-block;
+}
+
+.chip-add:hover {
+  background: color-mix(in srgb, var(--on-highlight) 26%, transparent);
+}
+
+.chip-add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
