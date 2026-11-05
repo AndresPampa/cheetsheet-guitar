@@ -41,6 +41,10 @@ export interface AppState {
   scale: ParentScale
   /** The chord progression being built, up to `MAX_STEPS`. */
   progression: KeyedStep[]
+  /** Playback tempo: one 4/4 bar per step. */
+  bpm: number
+  /** Playback starts over at the end of the progression. */
+  loop: boolean
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -53,9 +57,13 @@ export const DEFAULT_STATE: AppState = {
   language: 'es',
   scale: 'major',
   progression: [],
+  bpm: 80,
+  loop: true,
 }
 
 export const MAX_STEPS = 32
+export const MIN_BPM = 40
+export const MAX_BPM = 200
 
 // URL spelling of the non-default value of each two-valued setting.
 const SEVENTHS = '7th'
@@ -131,6 +139,14 @@ const serializeStep = ({ tonic, mode, source, degree, kind, extensions }: KeyedS
     ...[...extensions].sort((a, b) => a - b),
   ].join('.')
 
+// A whole number within MIN_BPM–MAX_BPM; anything else is the default.
+const parseBpm = (value: string | null): number => {
+  const bpm = Number(value)
+  return value !== null && /^\d+$/.test(value) && bpm >= MIN_BPM && bpm <= MAX_BPM
+    ? bpm
+    : DEFAULT_STATE.bpm
+}
+
 const parseScale = (value: string | null): ParentScale =>
   PARENT_SCALES.find((scale) => scale === value) ?? DEFAULT_STATE.scale
 
@@ -164,6 +180,8 @@ export function parseState(search: string): AppState {
     language: params.get('lang') === 'en' ? 'en' : 'es',
     scale: parseScale(params.get('scale')),
     progression: parseProgression(params.get('prog'), tonic, mode),
+    bpm: parseBpm(params.get('bpm')),
+    loop: params.get('loop') !== 'off',
   })
 }
 
@@ -186,6 +204,8 @@ export function serializeState(state: AppState): string {
   if (state.progression.length > 0) {
     params.set('prog', state.progression.map(serializeStep).join('_'))
   }
+  if (state.bpm !== DEFAULT_STATE.bpm) params.set('bpm', String(state.bpm))
+  if (!state.loop) params.set('loop', 'off')
   const query = params.toString()
   return query === '' ? '' : `?${query}`
 }

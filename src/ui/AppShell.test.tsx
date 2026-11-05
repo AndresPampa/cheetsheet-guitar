@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ComponentProps } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -2302,10 +2302,10 @@ describe('AppShell', () => {
       expect(screen.getByRole('table', { name: 'Modos de la menor melódica de A' })).toBeVisible()
     })
 
-    // Each block: its label, then what each of its steps shows.
+    // Each block (named by its key, unlike the playback group): its label, then its steps.
     const blocks = () =>
       within(progressionPanel())
-        .queryAllByRole('group')
+        .queryAllByRole('group', { name: / (mayor|menor)$/ })
         .map((group) => [
           document.getElementById(group.getAttribute('aria-labelledby') ?? '')?.textContent,
           ...within(group)
@@ -2377,6 +2377,176 @@ describe('AppShell', () => {
       ).toBeInTheDocument()
       expect(steps()).toEqual([])
       expect(window.location.search).toBe('')
+    })
+
+    // Fake timers drive the bars; the fake audio records each chord with its duration. fireEvent,
+    // not userEvent: Testing Library's async wrapper waits on a real timeout under Vitest's fakes.
+    describe('playback', () => {
+      beforeEach(() => vi.useFakeTimers())
+      afterEach(() => vi.useRealTimers())
+
+      const recorder = () => {
+        const played: Array<[string[], number | undefined]> = []
+        const audio = {
+          playChord: (notes: string[], seconds?: number) => void played.push([notes, seconds]),
+        }
+        return { played, audio }
+      }
+      const playButton = () =>
+        within(progressionPanel()).getByRole('button', { name: /^(Reproducir|Detener)$/ })
+      const sounding = () =>
+        within(progressionPanel())
+          .queryAllByRole('button', { current: 'step' })
+          .map((button) => button.textContent?.replace(/, paso \d+$/, ''))
+      const wait = (ms: number) => act(() => vi.advanceTimersByTime(ms))
+
+      it('plays each step in its own key for a bar and loops, without moving the circle', () => {
+        const { played, audio } = recorder()
+        visit('/?key=A&mode=minor&bpm=120&prog=C.key.1_E.key.5')
+        renderShell({ audio })
+
+        fireEvent.click(playButton())
+
+        expect(played).toEqual([[['C', 'E', 'G'], 2]])
+        expect(sounding()).toEqual(['I C'])
+        expect(playButton()).toHaveAccessibleName('Detener')
+
+        wait(2000)
+
+        expect(played.at(-1)).toEqual([['B', 'D#', 'F#'], 2])
+        expect(sounding()).toEqual(['V B'])
+
+        wait(2000)
+
+        expect(played).toHaveLength(3)
+        expect(played.at(-1)).toEqual([['C', 'E', 'G'], 2])
+        expect(sounding()).toEqual(['I C'])
+        expect(screen.getByRole('radio', { name: /^A menor/ })).toBeChecked()
+      })
+
+      it('ends after the last step when the loop is off', () => {
+        const { played, audio } = recorder()
+        visit('/?bpm=120&loop=off&prog=C.key.1_C.key.5')
+        renderShell({ audio })
+
+        fireEvent.click(playButton())
+        wait(4000)
+
+        expect(played.map(([notes]) => notes)).toEqual([
+          ['C', 'E', 'G'],
+          ['G', 'B', 'D'],
+        ])
+        expect(sounding()).toEqual([])
+        expect(playButton()).toHaveAccessibleName('Reproducir')
+      })
+
+      it('stops on ■', () => {
+        const { played, audio } = recorder()
+        visit('/?bpm=120&prog=C.key.1_C.key.5')
+        renderShell({ audio })
+
+        fireEvent.click(playButton())
+        fireEvent.click(playButton())
+        wait(10000)
+
+        expect(played).toHaveLength(1)
+        expect(sounding()).toEqual([])
+      })
+
+      it('applies a new tempo from the next bar', () => {
+        const { played, audio } = recorder()
+        visit('/?bpm=120&prog=C.key.1_C.key.5_C.key.4')
+        renderShell({ audio })
+
+        fireEvent.click(playButton())
+        const bpm = within(progressionPanel()).getByRole('spinbutton', { name: 'BPM' })
+        fireEvent.change(bpm, { target: { value: '60' } })
+        wait(1999)
+
+        expect(played).toHaveLength(1)
+
+        wait(1)
+
+        expect(played.at(-1)).toEqual([['G', 'B', 'D'], 4])
+
+        wait(3999)
+
+        expect(played).toHaveLength(2)
+
+        wait(1)
+
+        expect(played.at(-1)).toEqual([['F', 'A', 'C'], 4])
+      })
+
+      const stoppers: Array<[string, () => HTMLElement]> = [
+        ['the + of a chip', () => within(keyPanel()).getByTitle('Agregar Dm a la progresión')],
+        ['a key panel chip', () => within(keyPanel()).getByRole('button', { name: 'ii Dm' })],
+        ['a step of the progression', () => step('V G, paso 2')],
+        ['▶ Escuchar', () => within(chordPanel()).getByRole('button', { name: /^Escuchar/ })],
+        ['the ✕ of a step', () => step('Quitar G, paso 2')],
+      ]
+
+      it.each(stoppers)('stops when %s is pressed', (_, target) => {
+        visit('/?bpm=120&prog=C.key.1_C.key.5')
+        renderShell()
+
+        fireEvent.click(playButton())
+        fireEvent.click(target())
+
+        expect(sounding()).toEqual([])
+        expect(playButton()).toHaveAccessibleName('Reproducir')
+      })
+
+      it('keeps playing when the key, the chord kind or the loop change', () => {
+        const { played, audio } = recorder()
+        visit('/?bpm=120&prog=C.key.1_C.key.5')
+        renderShell({ audio })
+
+        fireEvent.click(playButton())
+        fireEvent.click(screen.getByRole('radio', { name: /^G mayor/ }))
+        fireEvent.click(within(keyPanel()).getByRole('button', { name: 'Séptimas' }))
+        fireEvent.click(within(progressionPanel()).getByRole('button', { name: 'Loop' }))
+
+        expect(sounding()).toEqual(['I C'])
+
+        wait(2000)
+
+        expect(played.at(-1)).toEqual([['G', 'B', 'D'], 2])
+      })
+
+      const outOfRange: Array<[string, string]> = [
+        ['under 40', '1'],
+        ['over 200', '500'],
+        ['fractional', '120.5'],
+        ['empty', ''],
+      ]
+
+      it.each(outOfRange)(
+        'keeps the tempo when the BPM typed is %s, and shows it again on blur',
+        (_, typed) => {
+          const { played, audio } = recorder()
+          visit('/?bpm=120&prog=C.key.1_C.key.5')
+          renderShell({ audio })
+
+          fireEvent.click(playButton())
+          const bpm = within(progressionPanel()).getByRole('spinbutton', { name: 'BPM' })
+          fireEvent.change(bpm, { target: { value: typed } })
+          wait(2000)
+
+          expect(played.at(-1)).toEqual([['G', 'B', 'D'], 2])
+
+          fireEvent.blur(bpm)
+
+          expect(bpm).toHaveValue(120)
+          expect(window.location.search).toContain('bpm=120')
+        },
+      )
+
+      it('disables ▶ when the progression is empty', () => {
+        renderShell()
+
+        expect(playButton()).toBeDisabled()
+      })
     })
   })
 

@@ -114,4 +114,9 @@ export interface Messages {
   removeStep: (shown: string, position: number) => string
   stepAdded: (shown: string, position: number, total: number) => string
   stepRemoved: (shown: string) => string
+  playback: string
+  play: string
+  stop: string
+  bpm: string
+  loop: string
 }

@@ -22,6 +22,7 @@ import { KeyPanel } from './KeyPanel.tsx'
 import { ModesTable } from './ModesTable.tsx'
 import { ProgressionPanel } from './ProgressionPanel.tsx'
 import { SegmentedSwitch } from './SegmentedSwitch.tsx'
+import { usePlayback } from './usePlayback.ts'
 import type { DiagramDrawer } from './svguitarDiagram.ts'
 
 const TONIC_CHORD: ChordRef = { source: 'key', degree: 1 }
@@ -51,7 +52,7 @@ interface AppShellProps {
 export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const [state, update] = useUrlState()
   const { tonic, mode, chordKind, chord: chordRef, extensions, language, notation, scale } = state
-  const { progression } = state
+  const { progression, bpm, loop } = state
   // Set only by add and remove, so loading a progression from the URL announces nothing.
   const [announcement, setAnnouncement] = useState({ text: '', id: 0 })
   const t = getMessages(language, notation)
@@ -77,12 +78,16 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
     mode: step.mode,
   }))
 
+  // Changing the progression or opening a chord stops it; the circle, tempo and loop do not.
+  const playback = usePlayback(audio, steps, bpm, loop)
+
   // A new id remounts the text, so the same message twice (two "C quitado") is read twice.
   const announce = (text: string) => setAnnouncement(({ id }) => ({ text, id: id + 1 }))
 
   const full = progression.length >= MAX_STEPS
   const addStep = (step: ProgressionStep) => {
     const { symbol } = resolveStep(tonic, mode, step)
+    playback.stop()
     update({ progression: [...progression, { ...step, tonic, mode }] })
     announce(t.stepAdded(t.symbol(symbol), progression.length + 1, progression.length + 1))
   }
@@ -90,6 +95,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const addChip = (ref: ChordRef) => addStep({ ...ref, kind: chordKind, extensions: [] })
 
   const removeStep = (index: number) => {
+    playback.stop()
     update({ progression: progression.filter((_, position) => position !== index) })
     announce(t.stepRemoved(t.symbol(steps[index]!.symbol)))
   }
@@ -98,6 +104,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   // normalize keeps it open; a key step keeps the table.
   const openStepAt = (index: number) => {
     const { source, degree, kind, extensions: added, ...key } = progression[index]!
+    playback.stop()
     update({
       ...key,
       chord: { source, degree },
@@ -109,6 +116,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   }
 
   const open = (ref: ChordRef) => {
+    playback.stop()
     update({ chord: ref })
     audio.playChord(resolveStep(tonic, mode, { ...ref, kind: chordKind, extensions }).notes)
   }
@@ -197,7 +205,10 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               context={context}
               notes={chord.notes}
               modes={getModesContaining(tonic, chord.notes, PARENT_SCALES)}
-              onPlay={() => audio.playChord(chord.notes)}
+              onPlay={() => {
+                playback.stop()
+                audio.playChord(chord.notes)
+              }}
               onAdd={() => addStep(openStep)}
               full={full}
               diagram={
@@ -217,6 +228,13 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               announcement={announcement}
               onOpen={openStepAt}
               onRemove={removeStep}
+              playing={playback.current}
+              onPlay={playback.play}
+              onStop={playback.stop}
+              bpm={bpm}
+              onBpmChange={(chosen) => update({ bpm: chosen })}
+              loop={loop}
+              onLoopChange={(chosen) => update({ loop: chosen })}
             />
           </section>
           <section className="panel panel-modes" aria-label={t.modesRegion}>

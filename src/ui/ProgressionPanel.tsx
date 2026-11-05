@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react'
 import { displayRoman, useMessages } from '../i18n/index.ts'
+import { MAX_BPM, MIN_BPM } from '../state/index.ts'
 import type { ChordQuality, KeyMode } from '../theory/index.ts'
 import './ProgressionPanel.css'
 
@@ -30,12 +31,33 @@ interface ProgressionPanelProps {
   announcement: { text: string; id: number }
   onOpen: (index: number) => void
   onRemove: (index: number) => void
+  /** Index of the step sounding, `null` when stopped. */
+  playing: number | null
+  onPlay: () => void
+  onStop: () => void
+  bpm: number
+  onBpmChange: (bpm: number) => void
+  loop: boolean
+  onLoopChange: (loop: boolean) => void
 }
 
-export function ProgressionPanel({ steps, announcement, onOpen, onRemove }: ProgressionPanelProps) {
+export function ProgressionPanel({
+  steps,
+  announcement,
+  onOpen,
+  onRemove,
+  playing,
+  onPlay,
+  onStop,
+  bpm,
+  onBpmChange,
+  loop,
+  onLoopChange,
+}: ProgressionPanelProps) {
   const t = useMessages()
   const blocksRef = useRef<HTMLDivElement>(null)
   const labelId = useId()
+  const bpmId = useId()
   const headingRef = useRef<HTMLHeadingElement>(null)
   // Index of the removed step, until the list re-renders without it.
   const removed = useRef<number | null>(null)
@@ -75,10 +97,14 @@ export function ProgressionPanel({ steps, announcement, onOpen, onRemove }: Prog
                   return (
                     // Steps have no identity of their own: the same chord may repeat.
                     // Colored like the chips (CircleOfFifths.css); roman and symbol also say the quality.
-                    <li key={index} className={`chord--${quality}`}>
+                    <li
+                      key={index}
+                      className={`chord--${quality}${playing === index ? ' is-playing' : ''}`}
+                    >
                       <button
                         type="button"
                         className="progression-step"
+                        aria-current={playing === index ? 'step' : undefined}
                         onClick={() => onOpen(index)}
                       >
                         <span className="progression-roman">{displayRoman(roman)}</span> {shown}
@@ -103,6 +129,42 @@ export function ProgressionPanel({ steps, announcement, onOpen, onRemove }: Prog
           ))}
         </div>
       )}
+      <div role="group" aria-label={t.playback} className="progression-playback">
+        <button
+          type="button"
+          className="play"
+          aria-label={playing === null ? t.play : t.stop}
+          disabled={steps.length === 0}
+          onClick={playing === null ? onPlay : onStop}
+        >
+          {playing === null ? `▶ ${t.play}` : `■ ${t.stop}`}
+        </button>
+        <label htmlFor={bpmId}>{t.bpm}</label>
+        {/* Uncontrolled, so a value can be typed through out-of-range ones (1, 12, 120); only a
+            valid tempo is applied, and leaving the field shows the tempo in use. */}
+        <input
+          id={bpmId}
+          type="number"
+          min={MIN_BPM}
+          max={MAX_BPM}
+          defaultValue={bpm}
+          onChange={({ currentTarget: { valueAsNumber: value } }) => {
+            if (Number.isInteger(value) && value >= MIN_BPM && value <= MAX_BPM) onBpmChange(value)
+          }}
+          onBlur={({ currentTarget }) => {
+            currentTarget.value = String(bpm)
+          }}
+        />
+        {/* `play` is the shared pill style of the chord panel's buttons, not a play action. */}
+        <button
+          type="button"
+          className="play"
+          aria-pressed={loop}
+          onClick={() => onLoopChange(!loop)}
+        >
+          {t.loop}
+        </button>
+      </div>
       <div className="sr-only" aria-live="polite">
         <span key={announcement.id}>{announcement.text}</span>
       </div>

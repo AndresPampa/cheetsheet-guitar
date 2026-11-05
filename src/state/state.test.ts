@@ -11,6 +11,8 @@ const FULL_STATE: AppState = {
   extensions: [],
   scale: 'major',
   progression: [],
+  bpm: 80,
+  loop: true,
 }
 const FULL_SEARCH = '?key=F%23&mode=minor&chords=7th&chord=dorian.4&names=solfege&lang=en'
 
@@ -26,6 +28,8 @@ describe('parseState', () => {
       extensions: [],
       scale: 'major',
       progression: [],
+      bpm: 80,
+      loop: true,
     })
     expect(DEFAULT_STATE).toEqual(parseState(''))
   })
@@ -342,5 +346,28 @@ describe('progression in the URL', () => {
 
   it('omits prog when the progression is empty', () => {
     expect(serializeState({ ...DEFAULT_STATE, progression: [] })).toBe('')
+  })
+})
+
+describe('tempo and loop in the URL', () => {
+  it('writes a non-default tempo and the loop off, and reads them back', () => {
+    const state: AppState = { ...DEFAULT_STATE, bpm: 120, loop: false }
+
+    const search = serializeState(state)
+
+    expect(search).toBe('?bpm=120&loop=off')
+    expect(parseState(search)).toEqual(state)
+  })
+
+  const invalid: Array<[string, string]> = [
+    ['a tempo under 40', '?bpm=39&key=G'],
+    ['a tempo over 200', '?bpm=201&key=G'],
+    ['a tempo that is not a number', '?bpm=abc&key=G'],
+    ['a fractional tempo', '?bpm=120.5&key=G'],
+    ['an unknown loop value', '?loop=no&key=G'],
+  ]
+
+  it.each(invalid)('falls back to 80 BPM with the loop on for %s, keeping the key', (_, search) => {
+    expect(parseState(search)).toEqual({ ...DEFAULT_STATE, tonic: 'G' })
   })
 })

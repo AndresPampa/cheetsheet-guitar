@@ -44,7 +44,7 @@ function load(audioContext: AudioContext): Promise<Ready> {
 }
 
 export const toneAudio: AudioPort = {
-  playChord(notes) {
+  playChord(notes, seconds = RING_SECONDS) {
     const pitches = playbackPitches(notes)
     load(unlock())
       .then(({ Tone, synth }) => {
@@ -52,7 +52,7 @@ export const toneAudio: AudioPort = {
         synth.releaseAll()
         const start = Tone.immediate()
         pitches.forEach((pitch, i) => {
-          synth.triggerAttackRelease(pitch, RING_SECONDS, start + i * STRUM_SECONDS)
+          synth.triggerAttackRelease(pitch, seconds, start + i * STRUM_SECONDS)
         })
       })
       .catch((error: unknown) => console.error('[audio] could not play the chord', error))

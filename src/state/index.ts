@@ -1,4 +1,4 @@
-export { DEFAULT_STATE, MAX_STEPS, parseState, serializeState } from './url.ts'
+export { DEFAULT_STATE, MAX_BPM, MAX_STEPS, MIN_BPM, parseState, serializeState } from './url.ts'
 export type { AppState, ChordKind, ChordRef, KeyedStep, Language, Notation } from './url.ts'
 export { useUrlState } from './useUrlState.ts'
 export { useTheme } from './theme.ts'
