@@ -24,10 +24,10 @@ ortografía verificada en todas las raíces del círculo.
 con el "+" de cada acorde de la tonalidad y de la tabla de modos, o abriendo el acorde y tocando
 "+ Agregar" (que suma también las extensiones). Cada paso muestra su grado y su cifrado con el
 color de su calidad, se abre y suena con un click, se mueve con ◀ ▶ y se quita con ✕; "Vaciar"
-borra la cinta entera después de confirmarlo. Cada paso guarda la
-tonalidad en que se agregó: cambiar el círculo no toca la cinta, y para modular se elige otra
-tonalidad y se sigue agregando. Los pasos seguidos de una misma tonalidad se agrupan en un
-bloque con su nombre ("C mayor", "E mayor"), y abrir un paso lleva el círculo a su tonalidad.
+borra la cinta entera después de confirmarlo. Cada paso guarda la tonalidad en que se agregó:
+cambiar el círculo no toca la cinta, y para modular se elige otra tonalidad y se sigue
+agregando. Los pasos seguidos de una misma tonalidad se agrupan en un bloque con su nombre
+("C mayor", "E mayor"), y abrir un paso lleva el círculo a su tonalidad.
 La cinta se reproduce paso a paso, un compás por acorde, con BPM y loop, y el paso que suena se
 resalta; cambiar la tonalidad o el tempo no la corta. Todo queda guardado en la URL y el sonido
 separa el bajo del resto del acorde. Próximo: progresiones sugeridas.
@@ -71,13 +71,18 @@ separa el bajo del resto del acorde. Próximo: progresiones sugeridas.
   repetirlo y en qué modos aparece (de las tres escalas madre, con la escala de cada uno).
 - ✅ **Diagramas en la guitarra** del acorde (trastes, dedos, cejilla, cuerdas al aire y
   silenciadas), con 4 posiciones por acorde para recorrer con ◀ ▶.
+- 🚧 **Armador de progresiones** (panel entre el acorde y los modos): cinta de hasta 32 acordes
+  agregados con el "+" de cada chip o con "+ Agregar" (con extensiones), agrupada en bloques por
+  tonalidad. Cada paso se abre, se mueve con ◀ ▶ y se quita con ✕, y "Vaciar" pide confirmación.
+  Se reproduce un compás por acorde, con BPM (40–200) y loop.
 - ✅ **Idioma ES / EN** (español por defecto): se traduce todo, incluidos los modos, las calidades
   y lo que anuncia el lector de pantalla.
 - ✅ **C D E / Do Re Mi** (C D E por defecto), independiente del idioma: cambia los nombres de las
   notas en toda la app y deja los sufijos de acorde como están (`Fa♯m7`).
 - ✅ **Tema claro / oscuro**: sigue al del sistema hasta que elijas uno, y lo recuerda.
 - ✅ **La selección queda en la URL** (tonalidad, Triadas / Séptimas, extensiones, escala madre,
-  acorde abierto, idioma y nombres de notas), así que se puede guardar en favoritos o compartir. Por ejemplo,
+  acorde abierto, idioma, nombres de notas, la progresión con su BPM y loop), así que se puede
+  guardar en favoritos o compartir. Por ejemplo,
   `?key=G&mode=minor&chords=7th&chord=dorian.4&ext=9` abre G menor con séptimas y el IV7 de G
   dórico con su 9ª (`C9`).
 - ✅ **Accesible**: todo se usa con teclado (flechas en el círculo), el lector de pantalla anuncia
@@ -99,8 +104,9 @@ flowchart LR
         COF["CircleOfFifths"]
         KP["KeyPanel<br/>+ Triadas / Séptimas<br/>+ extensiones 9 / 11 / 13"]
         MT["ModesTable<br/>+ escala madre (Mayor / Armónica / Melódica)"]
-        CP["ChordPanel<br/>▶ + fórmula + modos donde aparece"]
-        KE --> COF & KP & MT & CP
+        CP["ChordPanel<br/>▶ + fórmula + modos donde aparece<br/>+ Agregar"]
+        PP["ProgressionPanel<br/>cinta por bloques, ◀ ▶ ✕, Vaciar<br/>+ usePlayback (BPM, loop)"]
+        KE --> COF & KP & MT & CP & PP
     end
 
     subgraph state["src/state"]
@@ -123,13 +129,15 @@ flowchart LR
         CIR["circle.ts<br/>CIRCLE_OF_FIFTHS"]
         EXT["extensions.ts<br/>getExtendedChord<br/>(9 / 11 / 13 + cifrado)"]
         FOR["formula.ts<br/>getChordFormula"]
+        PRG["progression.ts<br/>resolveStep"]
+        PRG --> KEY & MOD & EXT
         MOD --> KEY
         CIR --> KEY
         EXT --> KEY & FOR
     end
 
     subgraph audio["src/audio"]
-        PORT["AudioPort<br/>playChord(notas)"]
+        PORT["AudioPort<br/>playChord(notas, segundos?)"]
         TONEA["toneAudio<br/>rasgueo, carga diferida"]
         PORT --- TONEA
     end
@@ -137,7 +145,7 @@ flowchart LR
     TONAL[("tonal")]
     TONEJS[("Tone.js")]
 
-    KE --> KEY & CIR & MOD & EXT
+    KE --> KEY & CIR & MOD & EXT & PRG
     KE --> PORT
     TONEA --> TONEJS
     KEY & MOD & CIR --> TONAL
