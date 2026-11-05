@@ -52,6 +52,7 @@
 }
 
 .progression-step,
+.progression-move,
 .progression-remove {
   font: inherit;
   color: inherit;
@@ -79,14 +80,32 @@
   padding: 0 8px 0 4px;
 }
 
+.progression-move {
+  min-width: 24px;
+  padding: 0 4px;
+  font-size: 0.75rem;
+}
+
+.progression-step + .progression-move {
+  padding-left: 0;
+}
+
+/* At an end there is nowhere to go: the arrow fades but keeps its place, so steps don't jump. */
+.progression-move:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 /* Like the chips: on a colored step the accent would not contrast, so hover dims and the ring
    uses the step's text color. */
 .progression-step:hover,
+.progression-move:enabled:hover,
 .progression-remove:hover {
   opacity: 0.85;
 }
 
 .progression-step:focus-visible,
+.progression-move:focus-visible,
 .progression-remove:focus-visible {
   outline: 2px solid var(--on-highlight);
   outline-offset: -2px;
@@ -100,15 +119,26 @@
   outline-offset: 2px;
 }
 
-.progression-playback {
+/* Playback, then Clear (or its confirmation), wrapping on a phone. */
+.progression-controls,
+.progression-playback,
+.progression-clear {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
+}
+
+.progression-controls {
+  column-gap: 24px;
   margin-top: 16px;
 }
 
-.progression-playback .play:disabled {
+.progression-clear span {
+  font-size: 0.875rem;
+}
+
+.progression-controls .play:disabled {
   color: var(--text-muted);
   cursor: not-allowed;
 }

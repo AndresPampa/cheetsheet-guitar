@@ -114,6 +114,14 @@ export interface Messages {
   removeStep: (shown: string, position: number) => string
   stepAdded: (shown: string, position: number, total: number) => string
   stepRemoved: (shown: string) => string
+  moveEarlier: (shown: string, position: number) => string
+  moveLater: (shown: string, position: number) => string
+  stepMoved: (shown: string, position: number, total: number) => string
+  clear: string
+  clearQuestion: string
+  clearConfirm: string
+  cancel: string
+  cleared: string
   playback: string
   play: string
   stop: string

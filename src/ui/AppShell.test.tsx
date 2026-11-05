@@ -2125,15 +2125,13 @@ describe('AppShell', () => {
       within(screen.getByRole('table', { name: /^Modos de la / })).getByRole('row', {
         name: new RegExp(`^${name}`),
       })
-    // What each step shows: roman and chord, without the hidden ", paso N".
-    const steps = () =>
-      within(progressionPanel())
-        .queryAllByRole('listitem')
-        .map((item) =>
-          within(item)
-            .getAllByRole('button')[0]!
-            .textContent?.replace(/, paso \d+$/, ''),
-        )
+    // What a step shows: roman and chord, without the hidden ", paso N". Its button is the one
+    // between ◀ ▶ (Mover…) and ✕ (Quitar…).
+    const shownStep = (item: HTMLElement) =>
+      within(item)
+        .getByRole('button', { name: /^(?!Mover|Quitar)/ })
+        .textContent?.replace(/, paso \d+$/, '')
+    const steps = () => within(progressionPanel()).queryAllByRole('listitem').map(shownStep)
     const step = (name: string) => within(progressionPanel()).getByRole('button', { name })
     const announcement = () => progressionPanel().querySelector('[aria-live="polite"]')?.textContent
     const fakeAudio = () => {
@@ -2308,13 +2306,7 @@ describe('AppShell', () => {
         .queryAllByRole('group', { name: / (mayor|menor)$/ })
         .map((group) => [
           document.getElementById(group.getAttribute('aria-labelledby') ?? '')?.textContent,
-          ...within(group)
-            .getAllByRole('listitem')
-            .map((item) =>
-              within(item)
-                .getAllByRole('button')[0]!
-                .textContent?.replace(/, paso \d+$/, ''),
-            ),
+          ...within(group).getAllByRole('listitem').map(shownStep),
         ])
 
     it('groups consecutive steps of the same key into labeled blocks, opening a new one on return', async () => {
@@ -2377,6 +2369,117 @@ describe('AppShell', () => {
       ).toBeInTheDocument()
       expect(steps()).toEqual([])
       expect(window.location.search).toBe('')
+    })
+
+    describe('moving steps', () => {
+      it('swaps a step with the previous one, keeping the focus on its ◀, and announces it', async () => {
+        const user = userEvent.setup()
+        visit('/?prog=C.key.1_C.key.6_C.key.4')
+        renderShell()
+
+        await user.click(step('Mover F antes, paso 3'))
+
+        expect(steps()).toEqual(['I C', 'IV F', 'vi Am'])
+        expect(window.location.search).toBe('?prog=C.key.1_C.key.4_C.key.6')
+        expect(announcement()).toBe('F movido al paso 2 de 3')
+        expect(step('Mover F antes, paso 2')).toHaveFocus()
+      })
+
+      it('disables ◀ on the first step and moves the focus to its ▶ when it gets there', async () => {
+        const user = userEvent.setup()
+        visit('/?prog=C.key.1_C.key.5')
+        renderShell()
+
+        await user.click(step('Mover G antes, paso 2'))
+
+        expect(steps()).toEqual(['V G', 'I C'])
+        expect(step('Mover G antes, paso 1')).toBeDisabled()
+        expect(step('Mover C después, paso 2')).toBeDisabled()
+        expect(step('Mover G después, paso 1')).toHaveFocus()
+      })
+
+      it('keeps the key of a step moved into another block, regrouping the blocks', async () => {
+        const user = userEvent.setup()
+        visit('/?prog=C.key.1_C.key.5_F.key.1')
+        renderShell()
+
+        await user.click(step('Mover G después, paso 2'))
+
+        expect(blocks()).toEqual([
+          ['C mayor', 'I C'],
+          ['F mayor', 'I F'],
+          ['C mayor', 'V G'],
+        ])
+        expect(window.location.search).toBe('?prog=C.key.1_F.key.1_C.key.5')
+      })
+    })
+
+    describe('clearing', () => {
+      const clearButton = () => within(progressionPanel()).getByRole('button', { name: 'Vaciar' })
+      const confirmation = () =>
+        within(progressionPanel()).queryByRole('group', { name: '¿Vaciar la progresión?' })
+
+      it('asks in place, focusing Cancelar, and empties the progression on Sí, vaciar', async () => {
+        const user = userEvent.setup()
+        visit('/?prog=C.key.1_C.key.5')
+        renderShell()
+
+        await user.click(clearButton())
+
+        expect(confirmation()).toBeInTheDocument()
+        expect(within(confirmation()!).getByRole('button', { name: 'Cancelar' })).toHaveFocus()
+        expect(steps()).toEqual(['I C', 'V G'])
+
+        await user.click(within(confirmation()!).getByRole('button', { name: 'Sí, vaciar' }))
+
+        expect(steps()).toEqual([])
+        expect(window.location.search).toBe('')
+        expect(
+          within(progressionPanel()).getByRole('heading', { name: 'Progresión' }),
+        ).toHaveFocus()
+        expect(announcement()).toBe('Progresión vaciada')
+      })
+
+      const cancels: Array<[string, (user: ReturnType<typeof userEvent.setup>) => Promise<void>]> =
+        [
+          [
+            'Cancelar',
+            (user) => user.click(within(confirmation()!).getByRole('button', { name: 'Cancelar' })),
+          ],
+          ['Escape', (user) => user.keyboard('{Escape}')],
+        ]
+
+      it.each(cancels)('keeps the progression and refocuses Vaciar on %s', async (_, cancel) => {
+        const user = userEvent.setup()
+        visit('/?prog=C.key.1_C.key.5')
+        renderShell()
+
+        await user.click(clearButton())
+        await cancel(user)
+
+        expect(confirmation()).not.toBeInTheDocument()
+        expect(steps()).toEqual(['I C', 'V G'])
+        expect(clearButton()).toHaveFocus()
+      })
+
+      it('does not bring the question back after the steps were removed with ✕ and one is added', async () => {
+        const user = userEvent.setup()
+        visit('/?prog=C.key.1')
+        renderShell()
+
+        await user.click(clearButton())
+        await user.click(step('Quitar C, paso 1'))
+        await user.click(within(keyPanel()).getByTitle('Agregar G a la progresión'))
+
+        expect(confirmation()).not.toBeInTheDocument()
+        expect(clearButton()).toBeEnabled()
+      })
+
+      it('disables Vaciar when the progression is empty', () => {
+        renderShell()
+
+        expect(clearButton()).toBeDisabled()
+      })
     })
 
     // Fake timers drive the bars; the fake audio records each chord with its duration. fireEvent,
@@ -2484,6 +2587,8 @@ describe('AppShell', () => {
         ['a step of the progression', () => step('V G, paso 2')],
         ['▶ Escuchar', () => within(chordPanel()).getByRole('button', { name: /^Escuchar/ })],
         ['the ✕ of a step', () => step('Quitar G, paso 2')],
+        ['the ▶ of a step', () => step('Mover C después, paso 1')],
+        ['the ◀ of a step', () => step('Mover G antes, paso 2')],
       ]
 
       it.each(stoppers)('stops when %s is pressed', (_, target) => {
@@ -2512,6 +2617,28 @@ describe('AppShell', () => {
         wait(2000)
 
         expect(played.at(-1)).toEqual([['G', 'B', 'D'], 2])
+      })
+
+      it('keeps playing while Vaciar is only being confirmed or cancelled, and stops once it is confirmed', () => {
+        const { played, audio } = recorder()
+        visit('/?bpm=120&prog=C.key.1_C.key.5')
+        renderShell({ audio })
+        const clearButton = () => within(progressionPanel()).getByRole('button', { name: 'Vaciar' })
+
+        fireEvent.click(playButton())
+        fireEvent.click(clearButton())
+        fireEvent.click(within(progressionPanel()).getByRole('button', { name: 'Cancelar' }))
+        fireEvent.click(clearButton())
+        wait(2000)
+
+        expect(played.at(-1)).toEqual([['G', 'B', 'D'], 2])
+        expect(sounding()).toEqual(['V G'])
+
+        fireEvent.click(within(progressionPanel()).getByRole('button', { name: 'Sí, vaciar' }))
+
+        expect(sounding()).toEqual([])
+        expect(playButton()).toHaveAccessibleName('Reproducir')
+        expect(playButton()).toBeDisabled()
       })
 
       const outOfRange: Array<[string, string]> = [
