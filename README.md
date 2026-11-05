@@ -20,19 +20,17 @@ diagrama y sonido.
 la menor armónica o la menor melódica, con selector, acordes aumentados, mMaj7 y °7, y la
 ortografía verificada en todas las raíces del círculo.
 
-🚧 **v2.2 armador de progresiones, en curso.** Ya se puede armar una cinta de acordes: se agrega
-con el "+" de cada acorde de la tonalidad y de la tabla de modos, o abriendo el acorde y tocando
-"+ Agregar" (que suma también las extensiones). Cada paso muestra su grado y su cifrado con el
-color de su calidad, se abre y suena con un click, se mueve con ◀ ▶ y se quita con ✕; "Vaciar"
-borra la cinta entera después de confirmarlo. Cada paso guarda la tonalidad en que se agregó:
-cambiar el círculo no toca la cinta, y para modular se elige otra tonalidad y se sigue
-agregando. Los pasos seguidos de una misma tonalidad se agrupan en un bloque con su nombre
-("C mayor", "E mayor"), y abrir un paso lleva el círculo a su tonalidad.
-La cinta se reproduce paso a paso, un compás por acorde, con BPM y loop, y el paso que suena se
-resalta; cambiar la tonalidad o el tempo no la corta. Todo queda guardado en la URL y el sonido
-separa el bajo del resto del acorde. Para arrancar hay 6 progresiones sugeridas (pop, ii–V–I,
-turnaround, andaluza, mixolidia y blues de 12 compases) que se suman en la tonalidad del círculo
-y conservan su carácter también en menor.
+✅ **v2.2 armador de progresiones.** Una cinta de hasta 32 acordes para componer: se arma con el
+"+" de cada acorde de la tonalidad y de la tabla de modos, abriendo el acorde y tocando
+"+ Agregar" (que suma también las extensiones), o partiendo de una de las 6 progresiones
+sugeridas (pop, ii–V–I, turnaround, andaluza, mixolidia y blues de 12 compases), que conservan
+su carácter también en tonalidades menores. Cada paso muestra su grado y su cifrado con el color
+de su calidad, se abre y suena con un click, se mueve con ◀ ▶ y se quita con ✕; "Vaciar" borra
+la cinta entera después de confirmarlo. Cada paso guarda la tonalidad en que se agregó: cambiar
+el círculo no toca la cinta, y para modular se elige otra tonalidad y se sigue agregando; los
+pasos seguidos de una misma tonalidad se agrupan en un bloque con su nombre ("C mayor",
+"E mayor"). La cinta se reproduce un compás por acorde, con BPM y loop, resaltando el paso que
+suena. Todo queda guardado en la URL, y el sonido separa el bajo del resto del acorde.
 
 | Versión | Alcance | Estado |
 |---|---|---|
@@ -42,7 +40,7 @@ y conservan su carácter también en menor.
 | v1.7 | Fórmula del acorde: tabla con los grados (1, 3, 5…) y las notas del acorde seleccionado | ✅ Completa |
 | v2.1 | Extensiones: hasta dos de 9, 11 y 13 sobre la triada o la séptima, con cifrado, fórmula, diagrama y sonido | ✅ Completa |
 | v2.0 | Modos de menor armónica y melódica: selector de escala madre sobre la tabla de modos, acordes aumentados, mMaj7 y °7 con sus extensiones | ✅ Completa |
-| v2.2 | Armador de progresiones: cinta de acordes agrupada por tonalidad (para modular), reproducción, edición y progresiones sugeridas | 🚧 En curso (partes 1, 1b, 1c, 2, 3 y 4 de 5 publicadas) |
+| v2.2 | Armador de progresiones: cinta de acordes agrupada por tonalidad (para modular), reproducción, edición y progresiones sugeridas | ✅ Completa |
 | v3 | Backend para guardar progresiones | 💡 Idea |
 
 ## Funcionalidades
@@ -73,7 +71,7 @@ y conservan su carácter también en menor.
   repetirlo y en qué modos aparece (de las tres escalas madre, con la escala de cada uno).
 - ✅ **Diagramas en la guitarra** del acorde (trastes, dedos, cejilla, cuerdas al aire y
   silenciadas), con 4 posiciones por acorde para recorrer con ◀ ▶.
-- 🚧 **Armador de progresiones** (panel entre el acorde y los modos): cinta de hasta 32 acordes
+- ✅ **Armador de progresiones** (panel entre el acorde y los modos): cinta de hasta 32 acordes
   agregados con el "+" de cada chip o con "+ Agregar" (con extensiones), agrupada en bloques por
   tonalidad. Cada paso se abre, se mueve con ◀ ▶ y se quita con ✕, y "Vaciar" pide confirmación.
   Se reproduce un compás por acorde, con BPM (40–200) y loop. Seis progresiones sugeridas
