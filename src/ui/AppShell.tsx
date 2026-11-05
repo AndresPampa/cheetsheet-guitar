@@ -11,7 +11,9 @@ import {
   PARENT_SCALES,
   parentScaleOf,
   resolveStep,
+  SUGGESTED_PROGRESSIONS,
   type ProgressionStep,
+  type SuggestionId,
 } from '../theory/index.ts'
 import { MAX_STEPS, useTheme, useUrlState, type ChordRef } from '../state/index.ts'
 import { ChordDiagram, type VoicingsLoader } from './ChordDiagram.tsx'
@@ -98,6 +100,17 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
     playback.stop()
     update({ progression: progression.filter((_, position) => position !== index) })
     announce(t.stepRemoved(t.symbol(steps[index]!.symbol)))
+  }
+
+  // Relative steps, fixed to the circle's key like a chip +; the panel only offers what fits.
+  const addSuggestion = (id: SuggestionId) => {
+    const added = SUGGESTED_PROGRESSIONS.find((suggestion) => suggestion.id === id)!.steps.map(
+      (step) => ({ ...step, tonic, mode }),
+    )
+    playback.stop()
+    update({ progression: [...progression, ...added] })
+    const from = progression.length + 1
+    announce(t.suggestionAdded(t.suggestions[id], from, progression.length + added.length))
   }
 
   // Swaps with a neighbor; the step keeps its key, so it may land in another block.
@@ -245,6 +258,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               onRemove={removeStep}
               onMove={moveStep}
               onClear={clear}
+              onAddSuggestion={addSuggestion}
               playing={playback.current}
               onPlay={playback.play}
               onStop={playback.stop}

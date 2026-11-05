@@ -1,7 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { displayRoman, useMessages } from '../i18n/index.ts'
-import { MAX_BPM, MIN_BPM } from '../state/index.ts'
-import type { ChordQuality, KeyMode } from '../theory/index.ts'
+import { MAX_BPM, MAX_STEPS, MIN_BPM } from '../state/index.ts'
+import {
+  SUGGESTED_PROGRESSIONS,
+  type ChordQuality,
+  type KeyMode,
+  type SuggestionId,
+} from '../theory/index.ts'
 import './ProgressionPanel.css'
 
 interface Step {
@@ -34,6 +39,8 @@ interface ProgressionPanelProps {
   /** Swaps the step at `index` with its neighbor at `to`. */
   onMove: (index: number, to: number) => void
   onClear: () => void
+  /** Appends a suggested progression; only called when it fits in the 32 steps. */
+  onAddSuggestion: (id: SuggestionId) => void
   /** Index of the step sounding, `null` when stopped. */
   playing: number | null
   onPlay: () => void
@@ -51,6 +58,7 @@ export function ProgressionPanel({
   onRemove,
   onMove,
   onClear,
+  onAddSuggestion,
   playing,
   onPlay,
   onStop,
@@ -71,6 +79,10 @@ export function ProgressionPanel({
   if (confirming && steps.length === 0) setConfirming(false)
   // Set by an edit, run once the list re-renders: picks the element that gets the focus.
   const focusAfter = useRef<(() => HTMLElement | null | undefined) | null>(null)
+  const suggestionId = useId()
+  const [suggestion, setSuggestion] = useState<SuggestionId>('pop')
+  const left = MAX_STEPS - steps.length
+  const fits = SUGGESTED_PROGRESSIONS.find(({ id }) => id === suggestion)!.steps.length <= left
 
   useEffect(() => {
     const target = focusAfter.current?.()
@@ -184,6 +196,36 @@ export function ProgressionPanel({
           ))}
         </div>
       )}
+      <div className="progression-suggestions">
+        <label htmlFor={suggestionId}>{t.suggested}</label>
+        {/* Choosing does nothing until + Add: arrow keys on a closed select change it (WCAG 3.2.2). */}
+        <select
+          id={suggestionId}
+          value={suggestion}
+          onChange={(event) => setSuggestion(event.currentTarget.value as SuggestionId)}
+        >
+          {SUGGESTED_PROGRESSIONS.map(({ id }) => (
+            <option key={id} value={id}>
+              {t.suggestions[id]}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="play"
+          aria-label={t.addTo(t.suggestions[suggestion])}
+          aria-disabled={!fits}
+          aria-describedby={fits ? undefined : `${suggestionId}-notice`}
+          onClick={fits ? () => onAddSuggestion(suggestion) : undefined}
+        >
+          {t.add}
+        </button>
+        {!fits && (
+          <p id={`${suggestionId}-notice`} className="progression-notice">
+            {t.doesNotFit(left)}
+          </p>
+        )}
+      </div>
       <div className="progression-controls">
         <div role="group" aria-label={t.playback} className="progression-playback">
           <button
