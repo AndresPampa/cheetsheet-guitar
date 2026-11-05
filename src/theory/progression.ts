@@ -41,3 +41,48 @@ export function resolveStep(
     quality: base.quality,
   }
 }
+
+export type SuggestionId = 'pop' | 'ii-V-I' | 'turnaround' | 'andalusian' | 'mixolydian' | 'blues'
+
+const chords = (kind: ChordBase, ...steps: Array<[ModeName, number]>): ProgressionStep[] =>
+  steps.map(([source, degree]) => ({ source, degree, kind, extensions: [] }))
+
+// Blues dominants: I7 from mixolydian, IV7 from dorian, V7 from ionian.
+const I7: [ModeName, number] = ['mixolydian', 1]
+const IV7: [ModeName, number] = ['dorian', 4]
+const V7: [ModeName, number] = ['ionian', 5]
+
+/**
+ * Curated progressions, relative to a root. Explicit modes, never `'key'`: loaded in a minor key
+ * they keep the sound their name says (`I–V–vi–IV` in A minor is A E F#m D).
+ */
+export const SUGGESTED_PROGRESSIONS: ReadonlyArray<{
+  id: SuggestionId
+  steps: ProgressionStep[]
+}> = [
+  {
+    id: 'pop',
+    steps: chords('triads', ['ionian', 1], ['ionian', 5], ['ionian', 6], ['ionian', 4]),
+  },
+  {
+    id: 'ii-V-I',
+    steps: chords('sevenths', ['ionian', 2], ['ionian', 5], ['ionian', 1]),
+  },
+  {
+    id: 'turnaround',
+    steps: chords('triads', ['ionian', 1], ['ionian', 6], ['ionian', 2], ['ionian', 5]),
+  },
+  // The major V comes from harmonic minor: Am G F E.
+  {
+    id: 'andalusian',
+    steps: chords('triads', ['aeolian', 1], ['aeolian', 7], ['aeolian', 6], ['harmonic-minor', 5]),
+  },
+  {
+    id: 'mixolydian',
+    steps: chords('triads', ['mixolydian', 1], ['mixolydian', 7], ['mixolydian', 4]),
+  },
+  {
+    id: 'blues',
+    steps: chords('sevenths', I7, I7, I7, I7, IV7, IV7, I7, I7, V7, IV7, I7, V7),
+  },
+]

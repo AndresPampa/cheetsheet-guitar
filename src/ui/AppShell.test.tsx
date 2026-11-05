@@ -2482,6 +2482,65 @@ describe('AppShell', () => {
       })
     })
 
+    describe('suggested progressions', () => {
+      const suggestions = () =>
+        within(progressionPanel()).getByRole('combobox', { name: 'Sugeridas' })
+      const addSuggestion = () =>
+        within(progressionPanel()).getByRole('button', { name: /^Agregar .+ a la progresión$/ })
+      const filled = (count: number) => `/?prog=${Array<string>(count).fill('C.key.1').join('_')}`
+
+      it('appends the chosen one in the key of the circle, without opening or playing it', async () => {
+        const user = userEvent.setup()
+        const { played, audio } = fakeAudio()
+        visit('/?key=G&prog=C.key.1')
+        renderShell({ audio })
+
+        await user.selectOptions(suggestions(), 'ii–V–I (jazz)')
+        await user.click(addSuggestion())
+
+        expect(blocks()).toEqual([
+          ['C mayor', 'I C'],
+          ['G mayor', 'ii7 Am7', 'V7 D7', 'Imaj7 Gmaj7'],
+        ])
+        expect(window.location.search).toContain(
+          'prog=C.key.1_G.ionian.2.7_G.ionian.5.7_G.ionian.1.7',
+        )
+        expect(announcement()).toBe('ii–V–I (jazz): pasos 2 a 4 de 4 agregados')
+        expect(played).toEqual([])
+        expect(addSuggestion()).toHaveAccessibleName('Agregar ii–V–I (jazz) a la progresión')
+        expect(addSuggestion()).toHaveFocus()
+      })
+
+      it('does not add one that does not fit in 32 steps, and says why', async () => {
+        const user = userEvent.setup()
+        visit(filled(21))
+        renderShell()
+
+        await user.selectOptions(suggestions(), 'Blues de 12 compases')
+
+        expect(addSuggestion()).toHaveAttribute('aria-disabled', 'true')
+        expect(addSuggestion()).toHaveAccessibleDescription('No entra: quedan 11 de 32 pasos')
+        expect(
+          within(progressionPanel()).getByText('No entra: quedan 11 de 32 pasos'),
+        ).toBeVisible()
+
+        await user.click(addSuggestion())
+
+        expect(steps()).toHaveLength(21)
+      })
+
+      it('adds one that exactly fills the 32 steps', async () => {
+        const user = userEvent.setup()
+        visit(filled(20))
+        renderShell()
+
+        await user.selectOptions(suggestions(), 'Blues de 12 compases')
+        await user.click(addSuggestion())
+
+        expect(steps()).toHaveLength(32)
+      })
+    })
+
     // Fake timers drive the bars; the fake audio records each chord with its duration. fireEvent,
     // not userEvent: Testing Library's async wrapper waits on a real timeout under Vitest's fakes.
     describe('playback', () => {
@@ -2589,6 +2648,7 @@ describe('AppShell', () => {
         ['the ✕ of a step', () => step('Quitar G, paso 2')],
         ['the ▶ of a step', () => step('Mover C después, paso 1')],
         ['the ◀ of a step', () => step('Mover G antes, paso 2')],
+        ['the + Agregar of a suggestion', () => step('Agregar I–V–vi–IV (pop) a la progresión')],
       ]
 
       it.each(stoppers)('stops when %s is pressed', (_, target) => {

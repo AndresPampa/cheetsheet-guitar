@@ -1,4 +1,4 @@
-import type { KeyMode, KeySignature, ModeName, ParentScale } from '../theory/index.ts'
+import type { KeyMode, KeySignature, ModeName, ParentScale, SuggestionId } from '../theory/index.ts'
 
 export type Language = 'es' | 'en'
 
@@ -122,6 +122,12 @@ export interface Messages {
   clearConfirm: string
   cancel: string
   cleared: string
+  suggested: string
+  /** Option names; romans as shown (`♭VII`), the same in both notations. */
+  suggestions: Record<SuggestionId, string>
+  suggestionAdded: (name: string, from: number, to: number) => string
+  /** Shown, and read on the disabled + Add, when the suggestion does not fit in 32 steps. */
+  doesNotFit: (left: number) => string
   playback: string
   play: string
   stop: string

@@ -30,7 +30,9 @@ agregando. Los pasos seguidos de una misma tonalidad se agrupan en un bloque con
 ("C mayor", "E mayor"), y abrir un paso lleva el círculo a su tonalidad.
 La cinta se reproduce paso a paso, un compás por acorde, con BPM y loop, y el paso que suena se
 resalta; cambiar la tonalidad o el tempo no la corta. Todo queda guardado en la URL y el sonido
-separa el bajo del resto del acorde. Próximo: progresiones sugeridas.
+separa el bajo del resto del acorde. Para arrancar hay 6 progresiones sugeridas (pop, ii–V–I,
+turnaround, andaluza, mixolidia y blues de 12 compases) que se suman en la tonalidad del círculo
+y conservan su carácter también en menor.
 
 | Versión | Alcance | Estado |
 |---|---|---|
@@ -40,7 +42,7 @@ separa el bajo del resto del acorde. Próximo: progresiones sugeridas.
 | v1.7 | Fórmula del acorde: tabla con los grados (1, 3, 5…) y las notas del acorde seleccionado | ✅ Completa |
 | v2.1 | Extensiones: hasta dos de 9, 11 y 13 sobre la triada o la séptima, con cifrado, fórmula, diagrama y sonido | ✅ Completa |
 | v2.0 | Modos de menor armónica y melódica: selector de escala madre sobre la tabla de modos, acordes aumentados, mMaj7 y °7 con sus extensiones | ✅ Completa |
-| v2.2 | Armador de progresiones: cinta de acordes agrupada por tonalidad (para modular), reproducción, edición y progresiones sugeridas | 🚧 En curso (partes 1, 1b, 1c, 2 y 3 de 5 publicadas) |
+| v2.2 | Armador de progresiones: cinta de acordes agrupada por tonalidad (para modular), reproducción, edición y progresiones sugeridas | 🚧 En curso (partes 1, 1b, 1c, 2, 3 y 4 de 5 publicadas) |
 | v3 | Backend para guardar progresiones | 💡 Idea |
 
 ## Funcionalidades
@@ -74,7 +76,8 @@ separa el bajo del resto del acorde. Próximo: progresiones sugeridas.
 - 🚧 **Armador de progresiones** (panel entre el acorde y los modos): cinta de hasta 32 acordes
   agregados con el "+" de cada chip o con "+ Agregar" (con extensiones), agrupada en bloques por
   tonalidad. Cada paso se abre, se mueve con ◀ ▶ y se quita con ✕, y "Vaciar" pide confirmación.
-  Se reproduce un compás por acorde, con BPM (40–200) y loop.
+  Se reproduce un compás por acorde, con BPM (40–200) y loop. Seis progresiones sugeridas
+  (`I–V–vi–IV`, `ii–V–I`, turnaround, andaluza, mixolidia, blues) se agregan al final.
 - ✅ **Idioma ES / EN** (español por defecto): se traduce todo, incluidos los modos, las calidades
   y lo que anuncia el lector de pantalla.
 - ✅ **C D E / Do Re Mi** (C D E por defecto), independiente del idioma: cambia los nombres de las
@@ -105,7 +108,7 @@ flowchart LR
         KP["KeyPanel<br/>+ Triadas / Séptimas<br/>+ extensiones 9 / 11 / 13"]
         MT["ModesTable<br/>+ escala madre (Mayor / Armónica / Melódica)"]
         CP["ChordPanel<br/>▶ + fórmula + modos donde aparece<br/>+ Agregar"]
-        PP["ProgressionPanel<br/>cinta por bloques, ◀ ▶ ✕, Vaciar<br/>+ usePlayback (BPM, loop)"]
+        PP["ProgressionPanel<br/>cinta por bloques, ◀ ▶ ✕, Vaciar, sugeridas<br/>+ usePlayback (BPM, loop)"]
         KE --> COF & KP & MT & CP & PP
     end
 
@@ -129,7 +132,7 @@ flowchart LR
         CIR["circle.ts<br/>CIRCLE_OF_FIFTHS"]
         EXT["extensions.ts<br/>getExtendedChord<br/>(9 / 11 / 13 + cifrado)"]
         FOR["formula.ts<br/>getChordFormula"]
-        PRG["progression.ts<br/>resolveStep"]
+        PRG["progression.ts<br/>resolveStep<br/>SUGGESTED_PROGRESSIONS"]
         PRG --> KEY & MOD & EXT
         MOD --> KEY
         CIR --> KEY

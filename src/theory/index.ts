@@ -9,8 +9,8 @@ export { getExtendedChord } from './extensions.ts'
 export type { ChordBase, ExtendedChord, Extension } from './extensions.ts'
 export { getChordFormula } from './formula.ts'
 export { getKey } from './key.ts'
-export { resolveStep } from './progression.ts'
-export type { ProgressionStep } from './progression.ts'
+export { resolveStep, SUGGESTED_PROGRESSIONS } from './progression.ts'
+export type { ProgressionStep, SuggestionId } from './progression.ts'
 export {
   getModesContaining,
   getParallelModes,
