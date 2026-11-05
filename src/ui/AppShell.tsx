@@ -53,7 +53,7 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
   const [state, update] = useUrlState()
   const { tonic, mode, chordKind, chord: chordRef, extensions, language, notation, scale } = state
   const { progression, bpm, loop } = state
-  // Set only by add and remove, so loading a progression from the URL announces nothing.
+  // Set only by the edit handlers, so loading a progression from the URL announces nothing.
   const [announcement, setAnnouncement] = useState({ text: '', id: 0 })
   const t = getMessages(language, notation)
   const [theme, setTheme] = useTheme()
@@ -98,6 +98,21 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
     playback.stop()
     update({ progression: progression.filter((_, position) => position !== index) })
     announce(t.stepRemoved(t.symbol(steps[index]!.symbol)))
+  }
+
+  // Swaps with a neighbor; the step keeps its key, so it may land in another block.
+  const moveStep = (index: number, to: number) => {
+    const moved = [...progression]
+    ;[moved[index], moved[to]] = [moved[to]!, moved[index]!]
+    playback.stop()
+    update({ progression: moved })
+    announce(t.stepMoved(t.symbol(steps[index]!.symbol), to + 1, progression.length))
+  }
+
+  const clear = () => {
+    playback.stop()
+    update({ progression: [] })
+    announce(t.cleared)
   }
 
   // Opening a step moves the circle to its key. A modal step brings its parent scale, so
@@ -228,6 +243,8 @@ export function AppShell({ audio, voicings, drawDiagram }: AppShellProps) {
               announcement={announcement}
               onOpen={openStepAt}
               onRemove={removeStep}
+              onMove={moveStep}
+              onClear={clear}
               playing={playback.current}
               onPlay={playback.play}
               onStop={playback.stop}

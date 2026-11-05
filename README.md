@@ -23,13 +23,14 @@ ortografía verificada en todas las raíces del círculo.
 🚧 **v2.2 armador de progresiones, en curso.** Ya se puede armar una cinta de acordes: se agrega
 con el "+" de cada acorde de la tonalidad y de la tabla de modos, o abriendo el acorde y tocando
 "+ Agregar" (que suma también las extensiones). Cada paso muestra su grado y su cifrado con el
-color de su calidad, se abre y suena con un click y se quita con ✕. Cada paso guarda la
+color de su calidad, se abre y suena con un click, se mueve con ◀ ▶ y se quita con ✕; "Vaciar"
+borra la cinta entera después de confirmarlo. Cada paso guarda la
 tonalidad en que se agregó: cambiar el círculo no toca la cinta, y para modular se elige otra
 tonalidad y se sigue agregando. Los pasos seguidos de una misma tonalidad se agrupan en un
 bloque con su nombre ("C mayor", "E mayor"), y abrir un paso lleva el círculo a su tonalidad.
 La cinta se reproduce paso a paso, un compás por acorde, con BPM y loop, y el paso que suena se
 resalta; cambiar la tonalidad o el tempo no la corta. Todo queda guardado en la URL y el sonido
-separa el bajo del resto del acorde. Próximo: mover pasos y progresiones sugeridas.
+separa el bajo del resto del acorde. Próximo: progresiones sugeridas.
 
 | Versión | Alcance | Estado |
 |---|---|---|
@@ -39,7 +40,7 @@ separa el bajo del resto del acorde. Próximo: mover pasos y progresiones sugeri
 | v1.7 | Fórmula del acorde: tabla con los grados (1, 3, 5…) y las notas del acorde seleccionado | ✅ Completa |
 | v2.1 | Extensiones: hasta dos de 9, 11 y 13 sobre la triada o la séptima, con cifrado, fórmula, diagrama y sonido | ✅ Completa |
 | v2.0 | Modos de menor armónica y melódica: selector de escala madre sobre la tabla de modos, acordes aumentados, mMaj7 y °7 con sus extensiones | ✅ Completa |
-| v2.2 | Armador de progresiones: cinta de acordes agrupada por tonalidad (para modular), reproducción, edición y progresiones sugeridas | 🚧 En curso (partes 1, 1b, 1c y 2 de 5 publicadas) |
+| v2.2 | Armador de progresiones: cinta de acordes agrupada por tonalidad (para modular), reproducción, edición y progresiones sugeridas | 🚧 En curso (partes 1, 1b, 1c, 2 y 3 de 5 publicadas) |
 | v3 | Backend para guardar progresiones | 💡 Idea |
 
 ## Funcionalidades

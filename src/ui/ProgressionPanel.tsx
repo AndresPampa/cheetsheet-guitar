@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { displayRoman, useMessages } from '../i18n/index.ts'
 import { MAX_BPM, MIN_BPM } from '../state/index.ts'
 import type { ChordQuality, KeyMode } from '../theory/index.ts'
@@ -27,10 +27,13 @@ const toBlocks = (steps: Step[]) =>
 interface ProgressionPanelProps {
   /** Each step already resolved in its own key; `symbol` and `tonic` in theory spelling. */
   steps: Step[]
-  /** Last add or remove, for screen readers (`''` until the first); `id` changes on each one. */
+  /** Last edit, for screen readers (`''` until the first); `id` changes on each one. */
   announcement: { text: string; id: number }
   onOpen: (index: number) => void
   onRemove: (index: number) => void
+  /** Swaps the step at `index` with its neighbor at `to`. */
+  onMove: (index: number, to: number) => void
+  onClear: () => void
   /** Index of the step sounding, `null` when stopped. */
   playing: number | null
   onPlay: () => void
@@ -46,6 +49,8 @@ export function ProgressionPanel({
   announcement,
   onOpen,
   onRemove,
+  onMove,
+  onClear,
   playing,
   onPlay,
   onStop,
@@ -59,17 +64,52 @@ export function ProgressionPanel({
   const labelId = useId()
   const bpmId = useId()
   const headingRef = useRef<HTMLHeadingElement>(null)
-  // Index of the removed step, until the list re-renders without it.
-  const removed = useRef<number | null>(null)
+  const clearRef = useRef<HTMLButtonElement>(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
+  const [confirming, setConfirming] = useState(false)
+  // Emptied another way (✕): close the question, or the next add would bring it back unasked.
+  if (confirming && steps.length === 0) setConfirming(false)
+  // Set by an edit, run once the list re-renders: picks the element that gets the focus.
+  const focusAfter = useRef<(() => HTMLElement | null | undefined) | null>(null)
 
-  // Focus goes to the ✕ now in the removed step's place, else the one before, else the heading.
   useEffect(() => {
-    if (removed.current === null) return
-    const removes = blocksRef.current?.querySelectorAll<HTMLButtonElement>('.progression-remove')
-    const next = removes?.[Math.min(removed.current, removes.length - 1)]
-    removed.current = null
-    ;(next ?? headingRef.current)?.focus()
+    const target = focusAfter.current?.()
+    focusAfter.current = null
+    target?.focus()
   })
+
+  const buttons = (selector: string) =>
+    blocksRef.current?.querySelectorAll<HTMLButtonElement>(selector) ?? []
+
+  // The ✕ now in the removed step's place, else the one before, else the heading.
+  const remove = (index: number) => {
+    focusAfter.current = () => {
+      const removes = buttons('.progression-remove')
+      return removes[Math.min(index, removes.length - 1)] ?? headingRef.current
+    }
+    onRemove(index)
+  }
+
+  // The same arrow of the moved step, or its other one if that end was reached.
+  const move = (index: number, to: number) => {
+    const [same, other] = to < index ? ['earlier', 'later'] : ['later', 'earlier']
+    focusAfter.current = () => {
+      const arrow = buttons(`.progression-move-${same}`)[to]
+      return arrow?.disabled ? buttons(`.progression-move-${other}`)[to] : arrow
+    }
+    onMove(index, to)
+  }
+
+  const ask = (open: boolean) => {
+    focusAfter.current = () => (open ? cancelRef : clearRef).current
+    setConfirming(open)
+  }
+
+  const clear = () => {
+    focusAfter.current = () => headingRef.current
+    setConfirming(false)
+    onClear()
+  }
 
   return (
     <div className="progression-panel">
@@ -103,6 +143,15 @@ export function ProgressionPanel({
                     >
                       <button
                         type="button"
+                        className="progression-move progression-move-earlier"
+                        aria-label={t.moveEarlier(shown, index + 1)}
+                        disabled={index === 0}
+                        onClick={() => move(index, index - 1)}
+                      >
+                        ◀
+                      </button>
+                      <button
+                        type="button"
                         className="progression-step"
                         aria-current={playing === index ? 'step' : undefined}
                         onClick={() => onOpen(index)}
@@ -112,12 +161,18 @@ export function ProgressionPanel({
                       </button>
                       <button
                         type="button"
+                        className="progression-move progression-move-later"
+                        aria-label={t.moveLater(shown, index + 1)}
+                        disabled={index === steps.length - 1}
+                        onClick={() => move(index, index + 1)}
+                      >
+                        ▶
+                      </button>
+                      <button
+                        type="button"
                         className="progression-remove"
                         aria-label={t.removeStep(shown, index + 1)}
-                        onClick={() => {
-                          removed.current = index
-                          onRemove(index)
-                        }}
+                        onClick={() => remove(index)}
                       >
                         ✕
                       </button>
@@ -129,41 +184,74 @@ export function ProgressionPanel({
           ))}
         </div>
       )}
-      <div role="group" aria-label={t.playback} className="progression-playback">
-        <button
-          type="button"
-          className="play"
-          aria-label={playing === null ? t.play : t.stop}
-          disabled={steps.length === 0}
-          onClick={playing === null ? onPlay : onStop}
-        >
-          {playing === null ? `▶ ${t.play}` : `■ ${t.stop}`}
-        </button>
-        <label htmlFor={bpmId}>{t.bpm}</label>
-        {/* Uncontrolled, so a value can be typed through out-of-range ones (1, 12, 120); only a
+      <div className="progression-controls">
+        <div role="group" aria-label={t.playback} className="progression-playback">
+          <button
+            type="button"
+            className="play"
+            aria-label={playing === null ? t.play : t.stop}
+            disabled={steps.length === 0}
+            onClick={playing === null ? onPlay : onStop}
+          >
+            {playing === null ? `▶ ${t.play}` : `■ ${t.stop}`}
+          </button>
+          <label htmlFor={bpmId}>{t.bpm}</label>
+          {/* Uncontrolled, so a value can be typed through out-of-range ones (1, 12, 120); only a
             valid tempo is applied, and leaving the field shows the tempo in use. */}
-        <input
-          id={bpmId}
-          type="number"
-          min={MIN_BPM}
-          max={MAX_BPM}
-          defaultValue={bpm}
-          onChange={({ currentTarget: { valueAsNumber: value } }) => {
-            if (Number.isInteger(value) && value >= MIN_BPM && value <= MAX_BPM) onBpmChange(value)
-          }}
-          onBlur={({ currentTarget }) => {
-            currentTarget.value = String(bpm)
-          }}
-        />
-        {/* `play` is the shared pill style of the chord panel's buttons, not a play action. */}
-        <button
-          type="button"
-          className="play"
-          aria-pressed={loop}
-          onClick={() => onLoopChange(!loop)}
-        >
-          {t.loop}
-        </button>
+          <input
+            id={bpmId}
+            type="number"
+            min={MIN_BPM}
+            max={MAX_BPM}
+            defaultValue={bpm}
+            onChange={({ currentTarget: { valueAsNumber: value } }) => {
+              if (Number.isInteger(value) && value >= MIN_BPM && value <= MAX_BPM)
+                onBpmChange(value)
+            }}
+            onBlur={({ currentTarget }) => {
+              currentTarget.value = String(bpm)
+            }}
+          />
+          {/* `play` is the shared pill style of the chord panel's buttons, not a play action. */}
+          <button
+            type="button"
+            className="play"
+            aria-pressed={loop}
+            onClick={() => onLoopChange(!loop)}
+          >
+            {t.loop}
+          </button>
+        </div>
+        {/* Confirmed in place: the viewer has no usable confirm(). Cancel, the safe answer, gets
+          the focus. */}
+        {confirming ? (
+          <div
+            role="group"
+            aria-labelledby={`${labelId}-clear`}
+            className="progression-clear"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') ask(false)
+            }}
+          >
+            <span id={`${labelId}-clear`}>{t.clearQuestion}</span>
+            <button type="button" className="play" onClick={clear}>
+              {t.clearConfirm}
+            </button>
+            <button ref={cancelRef} type="button" className="play" onClick={() => ask(false)}>
+              {t.cancel}
+            </button>
+          </div>
+        ) : (
+          <button
+            ref={clearRef}
+            type="button"
+            className="play"
+            disabled={steps.length === 0}
+            onClick={() => ask(true)}
+          >
+            {t.clear}
+          </button>
+        )}
       </div>
       <div className="sr-only" aria-live="polite">
         <span key={announcement.id}>{announcement.text}</span>
